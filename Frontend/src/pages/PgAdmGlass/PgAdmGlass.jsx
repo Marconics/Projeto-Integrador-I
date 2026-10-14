@@ -653,9 +653,9 @@ function saudacao() {
 }
 
 // Título do destaque: a saudação + quantos alertas novos (em verificação) existem.
-// null = sem login de admin, não dá para saber dos alertas → fica só a saudação
+// null = alertas ainda carregando (ou a busca falhou) → fica só a saudação
 function textoSaudacao(alertasNovos) {
-  if (alertasNovos === null) return `${saudacao()}, equipe`
+  if (alertasNovos === null) return saudacao()
   if (alertasNovos === 0) return `${saudacao()}, nenhum alerta novo`
   if (alertasNovos === 1) return `${saudacao()}, 1 alerta novo`
   return `${saudacao()}, um total de ${alertasNovos} alertas novos`
