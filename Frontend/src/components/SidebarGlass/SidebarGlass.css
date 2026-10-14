@@ -1,0 +1,224 @@
+/* Sidebar azul sólido — flutua sobre o fundo com respiro nas bordas.
+   No celular (até 960px) vira uma barra azul no topo + gaveta lateral. */
+
+.sbg-azul {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background: #072246;
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, .6);
+}
+
+.sbg {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  height: calc(100vh - 32px);
+  padding: 18px 14px 16px;
+  border-radius: var(--sv-raio-xl);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .3) transparent;
+}
+
+/* ─── Marca ─── */
+.sbg-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px;
+}
+.sbg-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+/* O logo fica num selo branco para manter as cores originais sobre o azul */
+.sbg-marca-selo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 52px;
+  padding: 6px 8px;
+  border-radius: var(--sv-raio-s);
+  background: linear-gradient(150deg, #FFFFFF, #EAF1FF);
+  border-bottom: 3px solid var(--sv-sirene);
+  box-shadow: inset 0 -2px 0 rgba(36, 87, 214, .12), 0 10px 20px -10px rgba(5, 20, 70, .6);
+}
+.sbg-marca-selo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.sbg-marca-nome {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-family: var(--sv-fonte-display);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+.sbg-marca-nome small {
+  font-family: var(--sv-fonte-texto);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, .72);
+}
+
+/* Botões redondos sobre o azul */
+.sbg-azul .sv-btn--icone {
+  color: #fff;
+  background: rgba(255, 255, 255, .14);
+  border-color: rgba(255, 255, 255, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2);
+}
+.sbg-azul .sv-btn--icone:hover { background: rgba(255, 255, 255, .24); color: #fff; }
+.sbg-fechar { display: none; }
+
+/* ─── Navegação ─── */
+.sbg-nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sbg-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px 7px 7px;
+  border-radius: var(--sv-raio-s);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .82);
+  transition: background-color .2s, color .2s;
+  position: relative;
+}
+.sbg-link-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, .78);
+  background: rgba(255, 255, 255, .08);
+  transition: color .25s, background .25s, box-shadow .25s;
+}
+.sbg-link-texto { min-width: 0; line-height: 1.25; }
+
+.sbg-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .12);
+}
+.sbg-link:hover .sbg-link-icone { color: #fff; background: rgba(255, 255, 255, .16); }
+
+/* Item atual: pílula branca, texto e ícone azuis */
+.sbg-link--ativo,
+.sbg-link--ativo:hover {
+  color: var(--sv-azul-forte);
+  font-weight: 600;
+  background: linear-gradient(145deg, #FFFFFF, #E8F0FF);
+  box-shadow: 0 10px 22px -12px rgba(5, 20, 70, .7);
+}
+/* Marcador vermelho do item atual (cor do logo) */
+.sbg-link--ativo::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  right: 10px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--sv-sirene);
+}
+.sbg-link--ativo .sbg-link-icone,
+.sbg-link--ativo:hover .sbg-link-icone {
+  color: #fff;
+  background: linear-gradient(150deg, #4C82FA, var(--sv-azul));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 8px 14px -8px rgba(36, 87, 214, .9);
+}
+
+.sbg-azul :focus-visible { outline-color: #fff; }
+
+/* ─── Rodapé ─── */
+.sbg-rodape {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .14);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sbg-sair {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.sbg-sair:hover { color: #fff; background: rgba(217, 52, 62, .28); }
+.sbg-sair:hover .sbg-link-icone { background: var(--sv-sirene); }
+
+
+/* ─── Barra e véu do celular (escondidos no desktop) ─── */
+.sbg-barra,
+.sbg-veu { display: none; }
+
+@media (max-width: 960px) {
+  .sbg-barra {
+    position: sticky;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    border-radius: var(--sv-raio-l);
+  }
+  .sbg-barra .sbg-marca-selo { width: 56px; height: 42px; }
+
+  .sbg-veu {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(10, 25, 70, .35);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .sbg-veu--visivel { opacity: 1; pointer-events: auto; }
+
+  .sbg {
+    position: fixed;
+    z-index: 50;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    width: min(300px, calc(100vw - 48px));
+    height: auto;
+    align-self: stretch; /* com "start" a gaveta encolhe ao conteúdo */
+    transform: translateX(calc(-100% - 24px));
+    transition: transform .45s var(--sv-suave);
+  }
+  .sbg--aberta { transform: translateX(0); }
+  .sbg-fechar { display: inline-flex; }
+}

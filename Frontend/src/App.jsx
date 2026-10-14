@@ -5,6 +5,7 @@ import Sosvale from './pages/sosvale';
 import LoginAdm from './pages/login_adm';
 import Login from './pages/login';
 import PgAdm from './pages/pg_adm';
+import PgAdmGlass from './pages/PgAdmGlass/PgAdmGlass';
 import Cadastro from './pages/cadastro';
 import ListarAbrigos from './pages/abrigos/Hub-Abrigos';
 import CadastroVitima from './pages/vitimas/Cadastro-Vitima';
@@ -41,6 +42,8 @@ function App() {
           <Route path="/login-adm" element={<LoginAdm />} />
           <Route path="/login" element={<Login />} />
           <Route path="/pg_adm" element={<PgAdm />} />
+          {/* Rota de teste do novo design da home (a /pg_adm continua sendo a oficial) */}
+          <Route path="/adm-nova" element={<PgAdmGlass />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/abrigos" element={<ListarAbrigos />} />
           <Route path="/cadastro-vitima" element={<CadastroVitima />} />

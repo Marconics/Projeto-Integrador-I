@@ -1,0 +1,493 @@
+/* ═══════════════════════════════════════════════════════════════════
+   S.O.S Vale · Tema "vidro"
+   Base reutilizável para o resto do sistema: tokens, superfícies de
+   vidro, superfícies neumórficas, botões, poços de ícone, abas,
+   selects, etiquetas e as animações dos ícones.
+
+   Regra de cor: azul conduz a interface; o vermelho do logo
+   (--sv-sirene) aparece como acento da marca (filete, item ativo,
+   destaques) e em tudo que é urgente.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Lexend:wght@300;400;500;600&display=swap');
+
+:root {
+  /* ── Cor ── */
+  --sv-nevoa: #FFFFFF;          /* fundo da página (branco) */
+  --sv-superficie: #E4EDFA;     /* superfícies neumórficas (quase o fundo) */
+  --sv-branco: #FFFFFF;
+  --sv-tinta: #0F2341;          /* texto principal */
+  --sv-tinta-2: #475A76;        /* texto de apoio */
+  --sv-tinta-3: #7587A1;        /* ícones e textos terciários */
+  --sv-azul: #2457D6;           /* ação principal */
+  --sv-azul-forte: #173E9E;
+  --sv-azul-claro: #6E9EFF;
+  --sv-celeste: #2389D1;
+  --sv-ciano: #0A88C2;          /* do degradê do logo */
+  --sv-anil: #5046E0;
+  --sv-petroleo: #0B7D8A;
+  --sv-sirene: #D0323A;         /* vermelho do logo: marca e urgência */
+  --sv-sirene-suave: #FCEBEC;
+  --sv-linha: rgba(71, 90, 118, .14);
+
+  /* ── Vidro ── */
+  --sv-vidro: linear-gradient(150deg, rgba(246, 248, 252, .97), rgba(234, 238, 245, .95));
+  --sv-vidro-borda: rgba(15, 35, 65, .08);
+  --sv-vidro-blur: blur(22px) saturate(150%);
+  --sv-sombra-vidro: inset 0 1px 0 rgba(255, 255, 255, .95), 0 18px 36px -24px rgba(15, 35, 65, .35);
+
+  /* ── Sombras (suaves, só a sombra de baixo) ── */
+  --sv-sombra-alta: inset 0 1px 0 rgba(255, 255, 255, .7), 0 16px 30px -14px rgba(15, 35, 65, .35);
+  --sv-sombra-media: inset 0 1px 0 rgba(255, 255, 255, .6), 0 10px 22px -14px rgba(15, 35, 65, .3);
+  --sv-sombra-baixa: inset 0 1px 0 rgba(255, 255, 255, .8), 0 3px 8px -2px rgba(15, 35, 65, .22);
+  --sv-sombra-funda: inset 3px 3px 7px rgba(34, 66, 128, .18), inset -3px -3px 7px rgba(255, 255, 255, .75);
+
+  /* ── Tipo ── */
+  --sv-fonte-display: 'Lexend', 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sv-fonte-texto: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* ── Raios por hierarquia: cantos mais retos, visual mais sóbrio ── */
+  --sv-raio-xl: 18px;   /* destaque da página */
+  --sv-raio-l: 14px;    /* painéis */
+  --sv-raio-m: 12px;    /* cards */
+  --sv-raio-s: 10px;    /* poços de ícone, botões, campos */
+  --sv-raio-xs: 6px;    /* etiquetas, marcadores */
+  --sv-raio-pilula: 999px;
+  --sv-raio-corte: 2px;   /* canto "pontiagudo" da identidade (cards em teste) */
+
+  /* ── Fundo único dos cards: o mesmo leve degradê azul do destaque ── */
+  --sv-fundo-card: linear-gradient(120deg, #EEF4FF 0%, #DCE8FD 55%, #CADCF8 100%);
+  --sv-borda-card: rgba(36, 87, 214, .12);
+
+  /* ── Movimento ── */
+  --sv-suave: cubic-bezier(.22, 1, .36, 1);
+  --sv-mola: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* ─── App e fundo ─────────────────────────────────────────────────── */
+
+.sv-app {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: var(--sv-nevoa);
+  color: var(--sv-tinta);
+  font-family: var(--sv-fonte-texto);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* O .App do projeto é um flex centralizado: sem largura a página encolhe até o conteúdo */
+  width: 100%;
+}
+
+/* O projeto tem um `* { font-family }` global (App.css e pg_adm/style.css) que
+   atinge cada elemento direto e vence a herança. Dentro do tema a herança volta
+   a valer, para as fontes definidas aqui aparecerem. */
+.sv-app * { font-family: inherit; }
+
+.sv-app *,
+.sv-app *::before,
+.sv-app *::after { box-sizing: border-box; }
+
+.sv-app :where(h1, h2, h3, h4, p) { margin: 0; }
+.sv-app :where(h1, h2, h3, h4) {
+  font-family: var(--sv-fonte-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.sv-app :where(a) { color: inherit; text-decoration: none; }
+.sv-app :where(button, select) { font: inherit; color: inherit; }
+.sv-app :where(ul) { list-style: none; margin: 0; padding: 0; }
+
+/* Orbes de luz atrás do vidro: é o que faz o vidro "aparecer" */
+.sv-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sv-fundo {
+  background: var(--sv-nevoa);
+}
+/* Fundo liso: as luzes ficam desligadas; para religar, remova esta linha */
+.sv-fundo span { display: none; }
+.sv-fundo span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: .9;
+}
+.sv-fundo span:nth-child(1) {
+  width: 48vw; height: 48vw;
+  top: -16vw; right: -10vw;
+  background: radial-gradient(circle, #8FB4FF 0%, rgba(143, 180, 255, 0) 70%);
+}
+.sv-fundo span:nth-child(2) {
+  width: 42vw; height: 42vw;
+  bottom: -18vw; left: 6vw;
+  background: radial-gradient(circle, #8DDCFA 0%, rgba(141, 220, 250, 0) 70%);
+}
+.sv-fundo span:nth-child(3) {
+  width: 30vw; height: 30vw;
+  top: 40%; left: 48%;
+  background: radial-gradient(circle, #B9B4FF 0%, rgba(185, 180, 255, 0) 70%);
+}
+
+/* ─── Superfícies ─────────────────────────────────────────────────── */
+
+.sv-vidro {
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  box-shadow: var(--sv-sombra-vidro);
+  -webkit-backdrop-filter: var(--sv-vidro-blur);
+  backdrop-filter: var(--sv-vidro-blur);
+}
+
+.sv-neu {
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  box-shadow: var(--sv-sombra-media);
+}
+
+/* ─── Tons ─────────────────────────────────────────────────────────
+   Uma classe sv-tom--x define a cor; tudo que está dentro herda
+   (poço, card, botão colorido).                                       */
+
+.sv-tom--azul     { --tom: var(--sv-azul); }
+.sv-tom--ciano    { --tom: var(--sv-ciano); }
+.sv-tom--anil     { --tom: var(--sv-anil); }
+.sv-tom--petroleo { --tom: var(--sv-petroleo); }
+.sv-tom--forte    { --tom: var(--sv-azul-forte); }
+.sv-tom--sirene   { --tom: var(--sv-sirene); }
+
+/* ─── Poço de ícone (círculo com o ícone colorido) ────────────────── */
+
+.sv-poco {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--sv-raio-s);
+  color: var(--tom, var(--sv-azul));
+  font-size: 20px;
+  background: linear-gradient(145deg, #FFFFFF, #E2EAF7);
+  box-shadow: var(--sv-sombra-baixa);
+}
+.sv-poco svg { display: block; }
+.sv-poco--p { width: 38px; height: 38px; font-size: 17px; }
+.sv-poco--g { width: 52px; height: 52px; font-size: 23px; }
+
+.sv-poco--azul    { --tom: var(--sv-azul); }
+.sv-poco--celeste { --tom: var(--sv-celeste); }
+.sv-poco--ciano   { --tom: var(--sv-ciano); }
+.sv-poco--anil    { --tom: var(--sv-anil); }
+.sv-poco--petroleo{ --tom: var(--sv-petroleo); }
+.sv-poco--forte   { --tom: var(--sv-azul-forte); }
+.sv-poco--sirene  { --tom: var(--sv-sirene); }
+
+/* "Aceso": fundo na cor do tom, ícone branco */
+.sv-poco--aceso {
+  color: #fff;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--tom, var(--sv-azul)) 70%, #fff), var(--tom, var(--sv-azul)));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 8px 16px -8px var(--tom, var(--sv-azul));
+}
+
+/* ─── Botões ──────────────────────────────────────────────────────── */
+
+.sv-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--sv-raio-s);
+  font-family: var(--sv-fonte-texto);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .25s var(--sv-suave), box-shadow .25s var(--sv-suave), background-color .25s, color .25s;
+}
+.sv-btn:active { transform: translateY(0) scale(.97); }
+.sv-btn .sv-seta { transition: transform .3s var(--sv-mola); }
+.sv-btn:is(:hover, :focus-visible) .sv-seta { transform: translateX(3px); }
+
+/* Primário: azul com brilho que atravessa no hover */
+.sv-btn--primario {
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(180deg, #3B6EF0, var(--sv-azul));
+  border-color: rgba(255, 255, 255, .25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 12px 22px -12px rgba(36, 87, 214, .85);
+}
+.sv-btn--primario::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 -60%;
+  width: 45%;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .45), rgba(255, 255, 255, 0));
+  transform: skewX(-20deg);
+  transition: left .7s var(--sv-suave);
+}
+.sv-btn--primario:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 16px 26px -12px rgba(36, 87, 214, .9); }
+.sv-btn--primario:hover::after { left: 120%; }
+
+/* Vidro: ação secundária */
+.sv-btn--vidro {
+  color: var(--sv-azul);
+  background: rgba(228, 238, 255, .8);
+  border-color: rgba(255, 255, 255, .85);
+  box-shadow: inset 0 1px 0 #fff, 0 6px 14px -8px rgba(34, 66, 128, .35);
+}
+.sv-btn--vidro:hover {
+  color: #fff;
+  background: var(--sv-azul);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 #fff, 0 10px 18px -8px rgba(34, 66, 128, .38);
+}
+.sv-btn--vidro:active { box-shadow: var(--sv-sombra-funda); }
+
+/* Ícone redondo (sino, menu) */
+.sv-btn--icone {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 19px;
+  color: var(--sv-azul);
+  background: linear-gradient(145deg, #F4F8FF, #DCE7F8);
+  border-color: rgba(255, 255, 255, .8);
+  box-shadow: var(--sv-sombra-baixa);
+}
+.sv-btn--icone:hover { color: var(--sv-azul); transform: translateY(-1px); }
+.sv-btn--icone:active { box-shadow: var(--sv-sombra-funda); }
+
+/* ─── Select de vidro ─────────────────────────────────────────────── */
+
+.sv-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  border-radius: var(--sv-raio-s);
+  background: #F3F6FB;
+  border: 1px solid rgba(255, 255, 255, .8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 6px 14px -10px rgba(34, 66, 128, .45);
+  transition: background-color .2s, box-shadow .2s;
+}
+.sv-select:hover { background: #FFFFFF; }
+.sv-select:focus-within { box-shadow: 0 0 0 3px rgba(36, 87, 214, .22), inset 0 1px 0 #fff; }
+.sv-select > svg {
+  position: absolute;
+  pointer-events: none;
+  color: var(--sv-tinta-3);
+  font-size: 16px;
+}
+.sv-select > svg:first-of-type { left: 14px; color: var(--sv-azul); }
+.sv-select .sv-select-seta { right: 14px; left: auto; font-size: 15px; }
+.sv-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 38px 10px 38px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--sv-tinta);
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+.sv-select select:focus { outline: none; }
+
+/* ─── Abas com marcador deslizante ────────────────────────────────── */
+
+.sv-abas {
+  --aba: 0;
+  --abas: 4;
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 4px;
+  border-radius: var(--sv-raio-s);
+  background: rgba(196, 214, 242, .55);
+  box-shadow: var(--sv-sombra-funda);
+}
+.sv-abas-marcador {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--abas));
+  border-radius: var(--sv-raio-xs);
+  background: linear-gradient(150deg, #4C82FA, var(--sv-azul));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 6px 14px -6px rgba(36, 87, 214, .8);
+  transform: translateX(calc(100% * var(--aba)));
+  transition: transform .5s var(--sv-mola);
+}
+.sv-aba {
+  position: relative;
+  z-index: 1;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: var(--sv-raio-xs);
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sv-tinta-2);
+  cursor: pointer;
+  transition: color .25s;
+}
+.sv-aba:hover { color: var(--sv-tinta); }
+.sv-aba[aria-selected="true"] { color: #fff; }
+
+/* ─── Etiquetas de estado ─────────────────────────────────────────── */
+
+.sv-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: var(--sv-raio-xs);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.sv-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.sv-tag--azul   { color: var(--sv-azul); background: rgba(36, 87, 214, .10); }
+.sv-tag--sirene { color: var(--sv-sirene); background: var(--sv-sirene-suave); }
+
+/* ─── Esqueleto de carregamento ───────────────────────────────────── */
+
+.sv-esqueleto {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--sv-raio-l);
+  background: rgba(236, 243, 255, .5);
+  border: 1px solid rgba(255, 255, 255, .7);
+}
+.sv-esqueleto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .75), rgba(255, 255, 255, 0));
+  animation: sv-brilho 1.4s ease-in-out infinite;
+}
+
+/* ─── Foco visível ────────────────────────────────────────────────── */
+
+.sv-app :focus-visible {
+  outline: 2px solid var(--sv-azul);
+  outline-offset: 3px;
+}
+
+.sv-oculto {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ─── Ícones animados ─────────────────────────────────────────────────
+   Envolva o ícone em <span data-anim="nome"> e coloque a classe
+   .sv-anima no elemento que dispara (card, botão, linha). A animação
+   roda no hover e no foco pelo teclado.                              */
+
+[data-anim] { display: inline-flex; }
+
+.sv-anima:is(:hover, :focus-visible) [data-anim] {
+  animation-duration: .8s;
+  animation-timing-function: var(--sv-suave);
+}
+.sv-anima:is(:hover, :focus-visible) [data-anim="toque"]   { animation-name: sv-toque; transform-origin: 50% 10%; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="batida"]  { animation-name: sv-batida; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="giro"]    { animation-name: sv-giro; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="pulo"]    { animation-name: sv-pulo; transform-origin: 50% 100%; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="sirene"]  { animation-name: sv-sirene; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="oferta"]  { animation-name: sv-oferta; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="flutua"]  { animation-name: sv-flutua; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="pulso"]   { animation-name: sv-pulso; }
+.sv-anima:is(:hover, :focus-visible) [data-anim="volta"]   { animation-name: sv-volta; animation-duration: .7s; }
+
+@keyframes sv-toque {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(16deg); }
+  30% { transform: rotate(-14deg); }
+  45% { transform: rotate(9deg); }
+  60% { transform: rotate(-6deg); }
+  75% { transform: rotate(3deg); }
+}
+@keyframes sv-batida {
+  0%, 100% { transform: scale(1); }
+  20% { transform: scale(1.22); }
+  35% { transform: scale(.94); }
+  55% { transform: scale(1.12); }
+  75% { transform: scale(.98); }
+}
+@keyframes sv-giro {
+  0%, 100% { transform: rotate(0); }
+  35% { transform: rotate(-28deg); }
+  70% { transform: rotate(12deg); }
+}
+@keyframes sv-pulo {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  25% { transform: translateY(0) scale(1.08, .9); }
+  50% { transform: translateY(-5px) scale(.95, 1.06); }
+  75% { transform: translateY(0) scale(1.03, .97); }
+}
+@keyframes sv-sirene {
+  0%, 100% { transform: rotate(0) scale(1); }
+  20% { transform: rotate(-10deg) scale(1.1); }
+  40% { transform: rotate(10deg) scale(1.1); }
+  60% { transform: rotate(-6deg) scale(1.05); }
+  80% { transform: rotate(4deg); }
+}
+@keyframes sv-oferta {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  45% { transform: translateY(-4px) rotate(-10deg); }
+}
+@keyframes sv-flutua {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  40% { transform: translate(2px, -4px) rotate(6deg); }
+}
+@keyframes sv-pulso {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+}
+@keyframes sv-volta {
+  to { transform: rotate(360deg); }
+}
+@keyframes sv-brilho {
+  to { transform: translateX(100%); }
+}
+
+/* ─── Menos movimento ─────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-app *,
+  .sv-app *::before,
+  .sv-app *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

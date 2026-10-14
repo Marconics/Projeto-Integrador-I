@@ -1,0 +1,803 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Tela inicial do admin (PgAdmGlass)
+   Layout: sidebar azul à esquerda; à direita, título + filtros, o
+   destaque com o círculo de pendências, os cards e, embaixo,
+   atividades (largo) ao lado de gráfico e ações rápidas (estreito).
+   Os ajustes de tamanho usam container queries no <main>, então
+   funcionam igual com ou sem a sidebar ocupando espaço.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.pga {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: 26px;
+  padding: 16px;
+}
+
+.pga-main {
+  container: pga / inline-size;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-block: 10px 40px;
+  padding-inline: 0 8px;
+}
+
+/* ─── Topo ─────────────────────────────────────────────────────────── */
+
+.pga-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+}
+.pga-titulo {
+  position: relative;
+  padding-left: 16px;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--sv-azul-forte);
+}
+/* Traço vermelho da identidade antes do título */
+.pga-titulo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 5px;
+  border-radius: 1px;
+  background: var(--sv-sirene);
+}
+/* Ícones dos filtros em vermelho */
+.pga-filtros .sv-select > svg:first-of-type { color: var(--sv-sirene); }
+.pga-controles,
+.pga-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.pga-controles { gap: 14px; }
+
+.pga-sino { position: relative; }
+.pga-sino-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--sv-raio-pilula);
+  background: var(--sv-sirene);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px #fff, 0 4px 10px -2px rgba(217, 52, 62, .6);
+}
+/* Pulsa três vezes ao abrir a tela e depois sossega */
+.pga-sino-badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  animation: pga-chamado 1.6s ease-out .6s 3;
+}
+
+/* ─── Destaque: círculo de pendências ──────────────────────────────── */
+
+.pga-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 32px;
+  padding: 36px 40px 36px 44px;
+  border-radius: var(--sv-raio-xl);
+  color: var(--sv-tinta);
+  /* Leve degradê de azuis, estático */
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  box-shadow: 0 18px 36px -24px rgba(15, 35, 65, .35);
+}
+/* Filete azul → vermelho no topo, as duas cores do logo */
+.pga-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #38B6F0 0%, #2457D6 45%, var(--sv-sirene) 100%);
+}
+
+.pga-hero-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.pga-data {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sv-azul);
+}
+.pga-saudacao {
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.pga-resumo {
+  max-width: 44ch;
+  font-size: 15.5px;
+  color: var(--sv-tinta-2);
+}
+
+.pga-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.pga-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 14px 5px 5px;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-s) var(--sv-raio-corte) var(--sv-raio-s);
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 35, 65, .08);
+  box-shadow: 0 6px 14px -10px rgba(15, 35, 65, .5);
+  font-size: 14px;
+  color: var(--sv-tinta-2);
+  transition: transform .3s var(--sv-suave), box-shadow .3s var(--sv-suave);
+}
+.pga-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -12px rgba(15, 35, 65, .55);
+}
+.pga-chip:active { transform: translateY(0); }
+.pga-chip .sv-poco { width: 30px; height: 30px; font-size: 15px; border-radius: 7px; }
+.pga-chip strong {
+  margin-right: -3px;
+  font-family: var(--sv-fonte-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sv-tinta);
+  font-variant-numeric: tabular-nums;
+}
+.pga-chip--sirene strong { color: var(--sv-sirene); }
+
+/* Círculo de pendências */
+.pga-pend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-right: 18px;
+}
+.pga-pend-caixa {
+  position: relative;
+  width: 196px;
+  aspect-ratio: 1;
+  max-width: 100%;
+}
+.pga-pend-circulo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  color: var(--sv-tinta);
+  /* Sem pendências: círculo claro */
+  background: radial-gradient(circle at 32% 26%, #FFFFFF, #E4ECF8 70%);
+  border: 1px solid #FFFFFF;
+  box-shadow: inset 0 -10px 22px rgba(36, 87, 214, .08), 0 18px 36px -18px rgba(15, 35, 65, .45);
+}
+/* Com pendências: círculo azul, que escurece conforme a quantidade */
+.pga-pend--alerta .pga-pend-circulo {
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #4677EE, #2457D6 70%);
+  border-color: rgba(255, 255, 255, .6);
+}
+.pga-pend-circulo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle at 35% 30%, #22357F, #0B1645 75%);
+  opacity: 0;
+  transition: opacity 2s var(--sv-suave);
+}
+.pga-pend--alerta .pga-pend-circulo::before { opacity: var(--escuro, 0); }
+.pga-pend-num {
+  font-family: var(--sv-fonte-display);
+  font-size: 68px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+.pga-pend-rotulo {
+  font-size: 13.5px;
+  font-weight: 600;
+  opacity: .8;
+}
+
+/* Anéis vermelhos que saem do círculo quando há pendência */
+.pga-pend-onda {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 110, 120, .8);
+  animation: pga-onda 2.6s var(--sv-suave) infinite;
+  pointer-events: none;
+}
+.pga-pend-onda--2 { animation-delay: 1.3s; }
+
+/* Selo de alerta no canto do círculo */
+.pga-pend-selo {
+  position: absolute;
+  z-index: 2;
+  top: 4%;
+  right: 4%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--sv-raio-s);
+  color: #fff;
+  font-size: 19px;
+  background: linear-gradient(150deg, #F0646C, var(--sv-sirene));
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .9), 0 10px 20px -6px rgba(217, 52, 62, .8);
+  animation: pga-selo 3.2s ease-in-out infinite;
+}
+
+.pga-pend-aviso {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: var(--sv-raio-s);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sv-azul);
+  background: rgba(36, 87, 214, .08);
+  border: 1px solid rgba(36, 87, 214, .15);
+}
+.pga-pend--alerta .pga-pend-aviso {
+  color: #fff;
+  background: rgba(217, 52, 62, .88);
+  border-color: rgba(255, 160, 166, .6);
+  box-shadow: 0 10px 22px -12px rgba(217, 52, 62, .9);
+}
+
+/* ─── Cards ────────────────────────────────────────────────────────── */
+
+.pga-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+}
+.pga-stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding: 18px 18px 16px;
+  /* Teste "pontiagudo": cantos opostos retos, os outros arredondados */
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l);
+  transition: transform .35s var(--sv-suave), box-shadow .35s var(--sv-suave);
+}
+/* Canto vermelho da identidade no topo esquerdo de cada card */
+.pga-stat::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 26px;
+  height: 26px;
+  border-top: 3px solid var(--sv-sirene);
+  border-left: 3px solid var(--sv-sirene);
+  border-top-left-radius: var(--sv-raio-corte);
+  pointer-events: none;
+  transition: width .35s var(--sv-suave), height .35s var(--sv-suave);
+}
+.pga-stat:hover::before { width: 44px; height: 44px; }
+/* O card de alertas ganha um filete vermelho inteiro no topo */
+.pga-stat--urgente { border-top: 3px solid var(--sv-sirene); }
+.pga-stat--urgente::before { display: none; }
+.pga-stat .sv-poco { margin-bottom: 14px; }
+.pga-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sv-sombra-alta);
+}
+.pga-stat:active {
+  transform: translateY(0);
+  box-shadow: var(--sv-sombra-funda);
+}
+.pga-stat-seta {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  font-size: 18px;
+  color: var(--sv-azul);
+  opacity: 0;
+  transform: translate(-4px, 4px);
+  transition: opacity .3s, transform .35s var(--sv-mola);
+}
+.pga-stat:is(:hover, :focus-visible) .pga-stat-seta {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+.pga-stat-valor {
+  font-family: var(--sv-fonte-display);
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+.pga-stat-rotulo {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.pga-stat-detalhe {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 12.5px;
+  color: var(--sv-tinta-2);
+}
+.pga-stat-detalhe strong { font-weight: 700; color: var(--sv-tinta); }
+.pga-stat--urgente .pga-stat-detalhe strong { color: var(--sv-sirene); }
+
+.pga-ponto {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-right: 2px;
+  border-radius: 50%;
+  background: var(--sv-azul-claro);
+}
+.pga-ponto--vivo {
+  background: var(--sv-sirene);
+  animation: pga-ponto 2s ease-out infinite;
+}
+
+/* ─── Painéis ──────────────────────────────────────────────────────── */
+
+.pga-conteudo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  align-items: stretch;
+  gap: 22px;
+}
+.pga-atividades {
+  display: flex;
+  flex-direction: column;
+}
+.pga-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+.pga-painel {
+  position: relative;
+  min-width: 0;
+  padding: 22px 24px 24px;
+  border-radius: var(--sv-raio-l);
+}
+/* Painéis em teste com um canto reto, como os cards */
+.pga-painel { border-top-left-radius: var(--sv-raio-corte); }
+.pga-painel h3 {
+  font-size: 18px;
+  font-weight: 500;
+}
+.pga-painel-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--sv-azul-forte);
+}
+.pga-painel-titulo .sv-poco { width: 32px; height: 32px; font-size: 16px; border-radius: 8px; }
+/* Sublinhado vermelho curto nos títulos dos painéis */
+.pga-painel-titulo { position: relative; padding-bottom: 8px; }
+.pga-painel-titulo::after {
+  content: '';
+  position: absolute;
+  left: 44px;
+  bottom: 0;
+  width: 28px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--sv-sirene);
+}
+.pga-painel-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.pga-painel-sub {
+  font-size: 13px;
+  color: var(--sv-tinta-2);
+}
+
+/* Atividades */
+.pga-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+.pga-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 10px;
+  border-radius: var(--sv-raio-s);
+  transition: background-color .25s;
+  animation: pga-entra .5s var(--sv-suave) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+.pga-item:hover { background: rgba(255, 255, 255, .5); }
+.pga-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.pga-item-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.pga-item-titulo > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.pga-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  font-size: 13px;
+  color: var(--sv-tinta-2);
+}
+.pga-item-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.pga-item-meta svg { flex: none; color: var(--sv-tinta-3); }
+.pga-item-btn { padding: 8px 12px 8px 16px; }
+
+.pga-ver-todas {
+  width: 100%;
+  margin-top: auto;
+  padding-block: 11px;
+}
+
+.pga-contagem {
+  margin-top: auto;
+  padding: 12px 10px 0;
+  border-top: 1px solid var(--sv-linha);
+  font-size: 13px;
+  color: var(--sv-tinta-2);
+}
+
+.pga-vazio {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--sv-tinta-2);
+}
+.pga-vazio .sv-poco { margin-bottom: 10px; color: var(--sv-tinta-3); }
+.pga-vazio p:first-of-type { font-weight: 600; color: var(--sv-tinta); }
+.pga-vazio-dica { font-size: 13.5px; }
+
+/* Gráfico */
+.pga-grafico-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.pga-grafico-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 14px;
+  padding-left: 46px;
+}
+.pga-legenda {
+  display: flex;
+  gap: 14px;
+  font-size: 12.5px;
+  color: var(--sv-tinta-2);
+}
+.pga-legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.pga-legenda-cor {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--sv-azul);
+}
+.pga-legenda-cor--urgente { background: var(--sv-sirene); }
+
+.pga-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pga-barra {
+  position: relative;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 12px;
+  padding-block: 3px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  cursor: default;
+}
+.pga-barra-rotulo { font-weight: 500; color: var(--sv-tinta-2); }
+.pga-barra-valor {
+  text-align: right;
+  font-family: var(--sv-fonte-display);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.pga-barra-trilho {
+  height: 12px;
+  padding: 2px;
+  border-radius: 4px;
+  background: rgba(186, 206, 238, .5);
+  box-shadow: var(--sv-sombra-funda);
+}
+.pga-barra-cheio {
+  display: flex;
+  gap: 2px;
+  height: 100%;
+  border-radius: 3px;
+  overflow: hidden;
+  animation: pga-encher 1.2s var(--sv-suave) .25s both;
+}
+.pga-barra-cheio > span { flex-basis: 0; min-width: 4px; }
+.pga-barra-urgente { background: linear-gradient(90deg, #E65A61, var(--sv-sirene)); }
+.pga-barra-demais  { background: linear-gradient(90deg, var(--sv-azul), #3FA0EE); }
+
+.pga-dica {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 2px);
+  z-index: 2;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--sv-tinta);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity .2s, transform .25s var(--sv-suave);
+}
+.pga-barra:is(:hover, :focus-visible) .pga-dica { opacity: 1; transform: translateY(0); }
+.pga-barra:is(:hover, :focus-visible) .pga-barra-rotulo { color: var(--sv-tinta); }
+
+/* Ações rápidas: botões cheios, cada um de uma cor */
+.pga-atalhos h3 { margin-bottom: 16px; }
+.pga-atalhos-grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.pga-atalho {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 14px 12px 12px;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-m) var(--sv-raio-corte) var(--sv-raio-m);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #fff;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--tom) 72%, #fff) -20%, var(--tom) 70%);
+  border: 1px solid rgba(255, 255, 255, .25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 12px 22px -14px var(--tom);
+  transition: transform .35s var(--sv-suave), box-shadow .35s var(--sv-suave);
+}
+/* Brilho que atravessa no hover */
+.pga-atalho::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 -70%;
+  width: 50%;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .3), rgba(255, 255, 255, 0));
+  transform: skewX(-20deg);
+  transition: left .7s var(--sv-suave);
+}
+.pga-atalho:hover::after { left: 130%; }
+.pga-atalho-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 18px;
+  background: rgba(255, 255, 255, .2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3);
+}
+.pga-atalho > span:last-child { min-width: 0; }
+.pga-atalho:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 18px 28px -14px var(--tom);
+}
+.pga-atalho:active {
+  transform: translateY(0) scale(.98);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, .18);
+}
+
+/* ─── Erro e carregamento ─────────────────────────────────────────── */
+
+.pga-erro {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  border-radius: var(--sv-raio-xl);
+  text-align: center;
+}
+.pga-erro h2 { margin-top: 10px; font-size: 22px; }
+.pga-erro p { max-width: 42ch; color: var(--sv-tinta-2); }
+.pga-erro .sv-btn { margin-top: 12px; padding: 12px 22px; font-size: 14.5px; }
+
+.pga-esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.pga-esq-hero { height: 300px; border-radius: var(--sv-raio-xl); }
+.pga-esq-card { height: 176px; border-radius: var(--sv-raio-m); }
+.pga-esq-painel { height: 470px; }
+.pga-esq-painel--curto { height: 224px; }
+
+/* ─── Animações da página ─────────────────────────────────────────── */
+
+@keyframes pga-chamado {
+  from { box-shadow: 0 0 0 0 rgba(217, 52, 62, .55); }
+  to   { box-shadow: 0 0 0 10px rgba(217, 52, 62, 0); }
+}
+@keyframes pga-ponto {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 52, 62, .5); }
+  70%  { box-shadow: 0 0 0 7px rgba(217, 52, 62, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 52, 62, 0); }
+}
+@keyframes pga-onda {
+  0%   { opacity: .9; transform: scale(1); }
+  100% { opacity: 0;  transform: scale(1.45); }
+}
+/* O selo balança de tempos em tempos, como um aviso */
+@keyframes pga-selo {
+  0%, 70%, 100% { transform: rotate(0) scale(1); }
+  74% { transform: rotate(-12deg) scale(1.1); }
+  78% { transform: rotate(10deg) scale(1.1); }
+  82% { transform: rotate(-7deg) scale(1.05); }
+  86% { transform: rotate(4deg); }
+}
+@keyframes pga-entra { from { opacity: 0; transform: translateY(6px); } }
+@keyframes pga-encher { from { width: 0; } }
+
+/* ─── Tamanhos menores ────────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .pga {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 10px 16px 16px;
+  }
+  .pga-main { padding-inline: 0; padding-block: 4px 32px; }
+}
+
+@container pga (max-width: 1060px) {
+  .pga-stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .pga-stats > * { grid-column: span 2; }
+  .pga-stats > :nth-child(n + 4) { grid-column: span 3; }
+}
+
+@container pga (max-width: 880px) {
+  .pga-conteudo { grid-template-columns: minmax(0, 1fr); }
+  .pga-lateral {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@container pga (max-width: 680px) {
+  .pga-topo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "titulo sino" "filtros filtros";
+  }
+  .pga-titulo { grid-area: titulo; font-size: 26px; }
+  .pga-controles { display: contents; }
+  .pga-sino { grid-area: sino; }
+  .pga-filtros { grid-area: filtros; }
+  .pga-filtros .sv-select { flex: 1 1 150px; }
+
+  .pga-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    padding: 26px 20px 20px;
+  }
+  .pga-saudacao { font-size: 30px; }
+  .pga-pend { order: -1; margin: 4px auto 0; }
+  .pga-pend-caixa { width: 168px; }
+  .pga-pend-num { font-size: 56px; }
+
+  .pga-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .pga-stats > *,
+  .pga-stats > :nth-child(n + 4) { grid-column: auto; }
+  .pga-stats > :first-child { grid-column: 1 / -1; }
+  .pga-stat-valor { font-size: 34px; }
+
+  .pga-lateral { grid-template-columns: minmax(0, 1fr); }
+  .pga-painel { padding: 20px 14px; }
+  .pga-painel-topo > h3,
+  .pga-grafico-topo { padding-inline: 6px; }
+  .pga-painel-topo .sv-abas { width: 100%; }
+  .pga-painel-topo .sv-aba { padding-inline: 6px; }
+
+  .pga-item { gap: 12px; padding: 11px 6px; }
+  .pga-item-btn { width: 40px; height: 40px; padding: 0; }
+  .pga-item-btn-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
