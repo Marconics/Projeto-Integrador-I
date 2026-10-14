@@ -24,6 +24,21 @@
   padding-inline: 0 8px;
 }
 
+/* TESTE: sidebar grande, colada na borda e ocupando todo o lado esquerdo
+   (só nesta tela e só no desktop). Para voltar à sidebar flutuante, apague este bloco. */
+@media (min-width: 961px) {
+  .pga {
+    padding: 0 16px 16px 0;
+  }
+  .pga > .sbg {
+    top: 0;
+    height: 100vh;
+    border-radius: 0;
+    border-width: 0 1px 0 0;
+  }
+  .pga-main { padding-top: 26px; }
+}
+
 /* ─── Topo ─────────────────────────────────────────────────────────── */
 
 .pga-topo {
