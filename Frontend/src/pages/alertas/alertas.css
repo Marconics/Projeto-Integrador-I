@@ -6,18 +6,18 @@
 
 .modulo-breadcrumb {
   font-size: 14px;
-  color: #64748b;
+  color: var(--sv-tinta-2);
   margin: 0;
 }
 
 .modulo-breadcrumb a {
-  color: #64748b;
+  color: var(--sv-tinta-2);
 }
 
 .modulo-titulo {
   font-size: 26px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--sv-tinta);
   margin-top: 4px;
 }
 
@@ -32,10 +32,10 @@
   align-items: center;
   gap: 6px;
   padding: 9px 16px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e0;
+  border-radius: var(--sv-raio-s);
+  border: 1px solid var(--sv-linha);
   background: #ffffff;
-  color: #1e293b;
+  color: var(--sv-tinta);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -43,7 +43,7 @@
 }
 
 .botao-secundario:hover {
-  background: #f8fafc;
+  background: var(--sv-fundo-suave);
 }
 
 .botao-primario {
@@ -52,9 +52,9 @@
   justify-content: center;
   gap: 6px;
   padding: 9px 16px;
-  border-radius: 8px;
+  border-radius: var(--sv-raio-s);
   border: none;
-  background: #1e3a5f;
+  background: var(--sv-azul);
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
@@ -77,8 +77,8 @@
 
 .resumo-alerta-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--sv-linha);
+  border-radius: var(--sv-raio-m);
   padding: 16px 18px;
   cursor: pointer;
   text-align: left;
@@ -86,23 +86,23 @@
 }
 
 .resumo-alerta-card:hover {
-  border-color: #94a3b8;
+  border-color: var(--sv-tinta-3);
 }
 
 .resumo-alerta-card.selecionado {
-  border-color: #1e3a5f;
+  border-color: var(--sv-azul);
   box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.15);
 }
 
 .resumo-alerta-valor {
   font-size: 26px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--sv-tinta);
 }
 
 .resumo-alerta-label {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sv-tinta-2);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -121,11 +121,11 @@
 .barra-filtros select,
 .barra-filtros input {
   padding: 9px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--sv-raio-s);
+  border: 1px solid var(--sv-linha);
   font-size: 14px;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--sv-fundo-suave);
+  color: var(--sv-tinta);
 }
 
 .barra-filtros input {
@@ -136,7 +136,7 @@
 .contador-resultados {
   margin-left: auto;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--sv-tinta-3);
 }
 
 /* ── Linhas das listas ────────────────────────────────────────────────────── */
@@ -146,23 +146,23 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  border-radius: 8px;
+  border-radius: var(--sv-raio-s);
   margin-bottom: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--sv-fundo-suave);
+  border: 1px solid var(--sv-linha);
 }
 
 .linha-icone {
   width: 42px;
   height: 42px;
-  border-radius: 10px;
+  border-radius: var(--sv-raio-s);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--sv-azul-suave);
+  color: var(--sv-azul-forte);
 }
 
 .linha-info {
@@ -172,14 +172,14 @@
 
 .linha-titulo {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--sv-tinta);
   font-size: 15px;
   margin: 0;
 }
 
 .linha-subtitulo {
   font-size: 13px;
-  color: #64748b;
+  color: var(--sv-tinta-2);
   margin: 2px 0 0;
   display: flex;
   gap: 12px;
@@ -195,7 +195,7 @@
 .lista-vazia {
   text-align: center;
   padding: 48px 0;
-  color: #94a3b8;
+  color: var(--sv-tinta-3);
 }
 
 .lista-vazia svg {
@@ -208,28 +208,28 @@
 .badge {
   display: inline-block;
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: var(--sv-raio-xs);
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.badge.em_verificacao { background: #fef3c7; color: #92400e; }
-.badge.ativo          { background: #fee2e2; color: #991b1b; }
-.badge.encerrado      { background: #d1fae5; color: #065f46; }
-.badge.cancelado      { background: #e2e8f0; color: #475569; }
+.badge.em_verificacao { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
+.badge.ativo          { background: var(--sv-sirene-suave); color: var(--sv-sirene-forte); }
+.badge.encerrado      { background: var(--sv-ok-suave); color: var(--sv-ok-forte); }
+.badge.cancelado      { background: var(--sv-linha); color: var(--sv-tinta-2); }
 
-.badge.grave { background: #fee2e2; color: #991b1b; }
-.badge.medio { background: #ffedd5; color: #9a3412; }
-.badge.leve  { background: #fef9c3; color: #854d0e; }
+.badge.grave { background: var(--sv-sirene-suave); color: var(--sv-sirene-forte); }
+.badge.medio { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
+.badge.leve  { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
 
-.badge.baixo   { background: #dcfce7; color: #166534; }
-.badge.alto    { background: #ffedd5; color: #9a3412; }
-.badge.critico { background: #fee2e2; color: #991b1b; }
+.badge.baixo   { background: var(--sv-ok-suave); color: var(--sv-ok-forte); }
+.badge.alto    { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
+.badge.critico { background: var(--sv-sirene-suave); color: var(--sv-sirene-forte); }
 
-.badge.inscrito-ativo   { background: #d1fae5; color: #065f46; }
-.badge.inscrito-inativo { background: #e2e8f0; color: #475569; }
+.badge.inscrito-ativo   { background: var(--sv-ok-suave); color: var(--sv-ok-forte); }
+.badge.inscrito-inativo { background: var(--sv-linha); color: var(--sv-tinta-2); }
 
 /* nível de risco "medio" usa as mesmas cores da gravidade "medio" */
 
@@ -238,26 +238,26 @@
 .confirmacoes {
   min-width: 110px;
   font-size: 12px;
-  color: #475569;
+  color: var(--sv-tinta-2);
   flex-shrink: 0;
 }
 
 .confirmacoes-barra {
   height: 6px;
-  border-radius: 9999px;
-  background: #e2e8f0;
+  border-radius: var(--sv-raio-xs);
+  background: var(--sv-linha);
   overflow: hidden;
   margin-top: 4px;
 }
 
 .confirmacoes-barra div {
   height: 100%;
-  border-radius: 9999px;
-  background: #f59e0b;
+  border-radius: var(--sv-raio-xs);
+  background: var(--sv-atencao);
 }
 
 .confirmacoes-barra div.completo {
-  background: #dc2626;
+  background: var(--sv-sirene);
 }
 
 /* ── Detalhes do alerta ───────────────────────────────────────────────────── */
@@ -270,13 +270,13 @@
 
 .info-grade .form-group p {
   font-size: 14px;
-  color: #0f172a;
+  color: var(--sv-tinta);
 }
 
 .secao-titulo {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--sv-tinta);
   margin: 24px 0 12px;
 }
 
@@ -289,36 +289,36 @@
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--sv-linha);
+  border-radius: var(--sv-raio-s);
   margin-bottom: 8px;
-  background: #f8fafc;
+  background: var(--sv-fundo-suave);
 }
 
 .relato-foto {
   width: 56px;
   height: 56px;
-  border-radius: 8px;
+  border-radius: var(--sv-raio-s);
   object-fit: cover;
   cursor: pointer;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sv-linha);
   flex-shrink: 0;
-  background: #e2e8f0;
+  background: var(--sv-linha);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: var(--sv-tinta-3);
   font-size: 11px;
 }
 
 .relato-foto.selecionada {
-  outline: 3px solid #1e3a5f;
+  outline: 3px solid var(--sv-azul);
 }
 
 .foto-principal {
   max-width: 100%;
   max-height: 100%;
-  border-radius: 8px;
+  border-radius: var(--sv-raio-s);
 }
 
 .notificacoes-resumo {
@@ -329,35 +329,35 @@
 }
 
 .notificacao-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--sv-linha);
+  border-radius: var(--sv-raio-s);
   padding: 10px 12px;
-  background: #f8fafc;
+  background: var(--sv-fundo-suave);
 }
 
 .notificacao-card strong {
   display: block;
   font-size: 20px;
-  color: #0f172a;
+  color: var(--sv-tinta);
 }
 
 .notificacao-card span {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sv-tinta-2);
 }
 
 .aviso {
   font-size: 13px;
   padding: 10px 12px;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #1e40af;
+  border-radius: var(--sv-raio-s);
+  background: var(--sv-azul-suave);
+  color: var(--sv-azul-forte);
   margin-bottom: 12px;
 }
 
 .aviso.alerta {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--sv-atencao-suave);
+  color: var(--sv-atencao-forte);
 }
 
 .painel-decisao {
@@ -367,8 +367,8 @@
 }
 
 .painel-decisao textarea {
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--sv-raio-s);
+  border: 1px solid var(--sv-linha);
   padding: 10px;
   font-size: 14px;
   resize: vertical;
@@ -376,12 +376,12 @@
 }
 
 .mensagem-erro {
-  color: #ef4444;
+  color: var(--sv-sirene);
   font-size: 14px;
 }
 
 .mensagem-sucesso {
-  color: #10b981;
+  color: var(--sv-ok);
   font-size: 14px;
 }
 
@@ -398,9 +398,9 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border-radius: 20px;
-  background: #e0f2fe;
-  color: #0c4a6e;
+  border-radius: var(--sv-raio-xs);
+  background: var(--sv-azul-suave);
+  color: var(--sv-azul-forte);
   font-size: 13px;
   font-weight: 500;
 }
@@ -408,7 +408,7 @@
 .chip button {
   border: none;
   background: none;
-  color: #0c4a6e;
+  color: var(--sv-azul-forte);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -431,23 +431,23 @@
   align-items: center;
   gap: 8px;
   padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-radius: var(--sv-raio-s);
+  border: 1px solid var(--sv-linha);
+  background: var(--sv-fundo-suave);
   margin-bottom: 8px;
   cursor: pointer;
   text-align: left;
   font-size: 14px;
-  color: #0f172a;
+  color: var(--sv-tinta);
 }
 
 .cidade-item.selecionada {
-  border-color: #1e3a5f;
-  background: #eff6ff;
+  border-color: var(--sv-azul);
+  background: var(--sv-azul-suave);
 }
 
 .cidade-item small {
-  color: #64748b;
+  color: var(--sv-tinta-2);
   font-size: 12px;
 }
 
@@ -462,23 +462,23 @@
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--sv-tinta-2);
   padding: 8px 10px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--sv-linha);
 }
 
 .tabela td {
   padding: 10px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #0f172a;
+  border-bottom: 1px solid var(--sv-fundo-suave);
+  color: var(--sv-tinta);
   vertical-align: middle;
 }
 
 .tabela input,
 .tabela select {
   padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--sv-raio-xs);
+  border: 1px solid var(--sv-linha);
   font-size: 13px;
   width: 100%;
   background: #ffffff;
@@ -491,18 +491,18 @@
 }
 
 .botao-icone {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sv-linha);
   background: #ffffff;
-  border-radius: 6px;
+  border-radius: var(--sv-raio-xs);
   padding: 6px 8px;
   cursor: pointer;
-  color: #475569;
+  color: var(--sv-tinta-2);
   display: inline-flex;
   align-items: center;
 }
 
 .botao-icone.perigo {
-  color: #dc2626;
+  color: var(--sv-sirene);
 }
 
 .formulario-linha {
@@ -519,16 +519,16 @@
   gap: 4px;
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: var(--sv-tinta-2);
 }
 
 .formulario-linha input,
 .formulario-linha select {
   padding: 9px 10px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--sv-raio-s);
+  border: 1px solid var(--sv-linha);
   font-size: 14px;
-  background: #f8fafc;
+  background: var(--sv-fundo-suave);
 }
 
 @media (max-width: 1100px) {
@@ -545,27 +545,27 @@
 
 /* ── Solicitações de ajuda: status e urgência ─────────────────────────────── */
 
-.badge.aberto       { background: #dbeafe; color: #1e40af; }
-.badge.em_andamento { background: #fef3c7; color: #92400e; }
-.badge.concluido    { background: #d1fae5; color: #065f46; }
+.badge.aberto       { background: var(--sv-azul-suave); color: var(--sv-azul-forte); }
+.badge.em_andamento { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
+.badge.concluido    { background: var(--sv-ok-suave); color: var(--sv-ok-forte); }
 /* "cancelado" já definido acima */
 
-.badge.urgencia-baixa   { background: #f0fdf4; color: #166534; }
-.badge.urgencia-media   { background: #fefce8; color: #854d0e; }
-.badge.urgencia-alta    { background: #fff7ed; color: #9a3412; }
-.badge.urgencia-critica { background: #fef2f2; color: #7f1d1d; }
+.badge.urgencia-baixa   { background: var(--sv-ok-suave); color: var(--sv-ok-forte); }
+.badge.urgencia-media   { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
+.badge.urgencia-alta    { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
+.badge.urgencia-critica { background: var(--sv-sirene-suave); color: var(--sv-sirene-forte); }
 
 .alternar-visao {
   display: inline-flex;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--sv-linha);
+  border-radius: var(--sv-raio-s);
   overflow: hidden;
 }
 
 .alternar-visao button {
   border: none;
   background: #ffffff;
-  color: #475569;
+  color: var(--sv-tinta-2);
   padding: 8px 14px;
   font-size: 13px;
   font-weight: 600;
@@ -573,13 +573,13 @@
 }
 
 .alternar-visao button.selecionado {
-  background: #0f172a;
+  background: var(--sv-tinta);
   color: #ffffff;
 }
 
 .grupo-abrigo {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--sv-linha);
+  border-radius: var(--sv-raio-m);
   padding: 16px;
   margin-bottom: 16px;
 }
@@ -595,11 +595,223 @@
 
 .grupo-abrigo-cabecalho h4 {
   font-size: 16px;
-  color: #0f172a;
+  color: var(--sv-tinta);
   margin: 0;
 }
 
 .grupo-abrigo-cabecalho small {
-  color: #64748b;
+  color: var(--sv-tinta-2);
   font-size: 13px;
+}
+
+
+/* ─── Novo visual (tema sosvale-glass) ────────────────────────────────────────
+   Botões, linhas de lista, etiquetas, avisos e tabelas destas telas agora usam
+   as peças sv- do tema (styles/sosvale-glass.css). Aqui ficam só as peças
+   próprias dos módulos de alertas, inscritos, regiões e solicitações de ajuda.
+────────────────────────────────────────────────────────────────────────────── */
+
+/* Cards de resumo (clicáveis: filtram a lista) */
+.resumo-alerta-card {
+    position: relative;
+    background: var(--sv-fundo-card);
+    border-color: var(--sv-borda-card);
+    border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l);
+    box-shadow: var(--sv-sombra-media);
+    font-family: var(--sv-fonte-texto);
+    transition: transform 0.35s var(--sv-suave), box-shadow 0.35s var(--sv-suave), border-color 0.2s;
+}
+
+.resumo-alerta-card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 26px;
+    height: 26px;
+    border-top: 3px solid var(--sv-sirene);
+    border-left: 3px solid var(--sv-sirene);
+    border-top-left-radius: var(--sv-raio-corte);
+    pointer-events: none;
+    transition: width 0.35s var(--sv-suave), height 0.35s var(--sv-suave);
+}
+
+.resumo-alerta-card:hover {
+    border-color: var(--sv-borda-card);
+    transform: translateY(-2px);
+    box-shadow: var(--sv-sombra-alta);
+}
+
+.resumo-alerta-card:hover::before {
+    width: 44px;
+    height: 44px;
+}
+
+.resumo-alerta-card.selecionado {
+    border-color: var(--sv-azul);
+    box-shadow: 0 0 0 2px rgba(36, 87, 214, 0.22), var(--sv-sombra-media);
+}
+
+.resumo-alerta-valor {
+    font-family: var(--sv-fonte-display);
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--sv-azul-forte);
+}
+
+/* Campos de filtro e formulários em linha */
+.barra-filtros select,
+.barra-filtros input,
+.formulario-linha input,
+.formulario-linha select,
+.painel-decisao textarea,
+.sv-tabela select {
+    border-color: var(--sv-borda-campo);
+    background: #ffffff;
+    color: var(--sv-tinta);
+    font-family: var(--sv-fonte-texto);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.barra-filtros select:focus,
+.barra-filtros input:focus,
+.formulario-linha input:focus,
+.formulario-linha select:focus,
+.painel-decisao textarea:focus,
+.sv-tabela select:focus {
+    outline: none;
+    border-color: var(--sv-azul);
+    box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.2);
+}
+
+.barra-filtros select,
+.barra-filtros input {
+    max-width: 100%;
+}
+
+.sv-tabela select {
+    padding: 6px 8px;
+    border: 1px solid var(--sv-borda-campo);
+    border-radius: var(--sv-raio-xs);
+    font-size: 13px;
+}
+
+.contador-resultados {
+    color: var(--sv-tinta-2);
+}
+
+.confirmacoes-barra {
+    background: rgba(196, 214, 242, 0.7);
+}
+
+.info-grade {
+    gap: 14px 24px;
+}
+
+/* Blocos brancos dentro dos painéis */
+.relato-item,
+.notificacao-card,
+.cidade-item {
+    background: #ffffff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.notificacao-card strong {
+    font-family: var(--sv-fonte-display);
+    font-weight: 500;
+    color: var(--sv-azul-forte);
+}
+
+.cidade-item {
+    font-family: var(--sv-fonte-texto);
+    color: var(--sv-tinta);
+    text-align: left;
+}
+
+.cidade-item:hover {
+    border-color: var(--sv-azul);
+}
+
+.cidade-item.selecionada {
+    box-shadow: inset 4px 0 0 var(--sv-sirene);
+}
+
+.grupo-abrigo {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: var(--sv-borda-card);
+}
+
+.grupo-abrigo-cabecalho h4 {
+    font-family: var(--sv-fonte-display);
+    font-weight: 500;
+    color: var(--sv-azul-forte);
+}
+
+/* Alternar entre lista e agrupado por abrigo */
+.alternar-visao {
+    border-color: var(--sv-borda-campo);
+}
+
+.alternar-visao button {
+    font-family: var(--sv-fonte-texto);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.alternar-visao button.selecionado {
+    background: var(--sv-azul);
+}
+
+@media (max-width: 640px) {
+    .resumo-alertas,
+    .notificacoes-resumo,
+    .formulario-linha {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .barra-filtros select,
+    .barra-filtros input {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .contador-resultados {
+        margin-left: 0;
+    }
+}
+
+/* Formulário em linha (novo bairro): as colunas encolhem sem empurrar o botão para fora */
+.formulario-linha {
+    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto;
+}
+
+.formulario-linha input,
+.formulario-linha select {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 1100px) {
+    .formulario-linha {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+/* Dados da cidade: nome, grupo e os dois botões na mesma linha; no celular os campos ocupam a linha toda */
+.formulario-linha.formulario-linha--cidade {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto auto;
+}
+
+.formulario-linha.formulario-linha--uma {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 640px) {
+    .formulario-linha.formulario-linha--cidade {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .formulario-linha.formulario-linha--cidade > label {
+        grid-column: 1 / -1;
+    }
 }

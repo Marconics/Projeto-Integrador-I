@@ -1,14 +1,9 @@
 // --------- Imports -----------
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMap,
-  FaClipboardList
-} from 'react-icons/fa';
-import { FaGear } from 'react-icons/fa6';
-import { GoAlertFill } from 'react-icons/go';
-import '../../pg_adm/style.css';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuChevronRight, LuClipboardList } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 function ListaSolicitacoesAbrigo() {
 
@@ -44,18 +39,19 @@ function ListaSolicitacoesAbrigo() {
 
   // Badge colorido por status — igual ao DetalhesSolicitacao
   const badgeStatus = {
-    pendente: { label: 'Pendente', bg: '#fef3c7', cor: '#92400e' },
-    aprovado: { label: 'Aprovado', bg: '#d1fae5', cor: '#065f46' },
-    recusado: { label: 'Recusado', bg: '#fee2e2', cor: '#991b1b' },
+    pendente: { label: 'Pendente', bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+    aprovado: { label: 'Aprovado', bg: 'var(--sv-ok-suave)', cor: 'var(--sv-ok-forte)' },
+    recusado: { label: 'Recusado', bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)' },
   }
 
   // ─── TELA DE LOADING ─────────────────────────────────────────
   if (carregando) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="solicitacoes-abrigo" />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando solicitações...</p>
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="solicitacoes-abrigo" />
+        <main className="sv-main">
+          <p className="sv-vazio">Carregando solicitações...</p>
         </main>
       </div>
     )
@@ -63,53 +59,47 @@ function ListaSolicitacoesAbrigo() {
 
   // ─── TELA PRINCIPAL ──────────────────────────────────────────
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
 
       {/* Sidebar */}
-      <SidebarAdm ativo="solicitacoes-abrigo" />
+      <SidebarGlass ativo="solicitacoes-abrigo" />
 
-      <main className="main">
+      <main className="sv-main">
 
         {/* Header */}
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Home &gt; <span>Solicitações de Abrigo</span>
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               Solicitações de Abrigo
             </h1>
-            <p className="subtitle">Gerencie os pedidos de cadastro de novos abrigos</p>
+            <p className="sv-subtitulo">Gerencie os pedidos de cadastro de novos abrigos</p>
           </div>
         </header>
 
         {/* Painel da lista */}
-        <div className="panel" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="sv-vidro sv-painel">
 
           {/* Filtros de status */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            {['todas', 'pendente', 'aprovado', 'recusado'].map(f => (
-              <button
-                key={f}
-                onClick={() => setFiltroStatus(f)}
-                style={{
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  background: filtroStatus === f ? '#0f172a' : '#f1f5f9',
-                  color: filtroStatus === f ? '#fff' : '#64748b',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
+          <div className="sv-filtros">
+            <div className="sv-chips" role="group" aria-label="Filtrar por status">
+              {['todas', 'pendente', 'aprovado', 'recusado'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFiltroStatus(f)}
+                  className={`sv-chip${filtroStatus === f ? ' sv-chip--ativo' : ''}`}
+                  aria-pressed={filtroStatus === f}
+                >
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
 
             {/* Contador */}
-            <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#94a3b8', alignSelf: 'center' }}>
+            <span className="sv-contagem">
               {solicitacoesFiltradas.length} resultado{solicitacoesFiltradas.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -118,81 +108,56 @@ function ListaSolicitacoesAbrigo() {
           {solicitacoesFiltradas.length === 0 ? (
 
             // Lista vazia
-            <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8' }}>
-              <FaClipboardList style={{ fontSize: '40px', marginBottom: '12px' }} />
-              <p style={{ fontSize: '15px' }}>Nenhuma solicitação encontrada.</p>
+            <div className="sv-vazio">
+              <LuClipboardList />
+              <p>Nenhuma solicitação encontrada.</p>
             </div>
 
           ) : (
 
             // Lista com itens
-            solicitacoesFiltradas.map(s => {
-              const badge = badgeStatus[s.status] ?? { label: s.status, bg: '#f1f5f9', cor: '#64748b' }
+            <div className="sv-lista">
+              {solicitacoesFiltradas.map(s => {
+                const badge = badgeStatus[s.status] ?? { label: s.status, bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)' }
 
-              return (
-                <div
-                  key={s.id_solicitacao}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    marginBottom: '10px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    gap: '16px'
-                  }}
-                >
-                  {/* Ícone */}
-                  <div style={{
-                    width: '42px', height: '42px',
-                    borderRadius: '10px',
-                    background: '#e0f2fe',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#0369a1', fontSize: '18px', flexShrink: 0
-                  }}>
-                    <FaClipboardList />
+                return (
+                  <div key={s.id_solicitacao} className="sv-linha">
+                    {/* Ícone */}
+                    <span className="sv-poco sv-poco--p sv-poco--aceso sv-poco--azul">
+                      <LuClipboardList />
+                    </span>
+
+                    {/* Informações */}
+                    <div className="sv-linha-info">
+                      <p className="sv-linha-titulo">
+                        {s.nome}
+                      </p>
+                      <p className="sv-linha-meta">
+                        {s.cidade} — {s.responsavel} — {s.tipoAbrigo}
+                      </p>
+                    </div>
+
+                    {/* Badge de status */}
+                    <span className="sv-tag sv-tag--lisa" style={{ background: badge.bg, color: badge.cor }}>
+                      {badge.label}
+                    </span>
+
+                    {/* Botão */}
+                    <button
+                      onClick={() => navigate(`/visualizar-solicitação-abrigo/${s.id_solicitacao}`)}
+                      className="sv-btn sv-btn--vidro"
+                    >
+                      Ver detalhes <LuChevronRight className="sv-seta" />
+                    </button>
+
                   </div>
-
-                  {/* Informações */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: '600', color: '#0f172a', fontSize: '15px', margin: 0 }}>
-                      {s.nome}
-                    </p>
-                    <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0' }}>
-                      {s.cidade} — {s.responsavel} — {s.tipoAbrigo}
-                    </p>
-                  </div>
-
-                  {/* Badge de status */}
-                  <span style={{
-                    background: badge.bg,
-                    color: badge.cor,
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    flexShrink: 0
-                  }}>
-                    {badge.label}
-                  </span>
-
-                  {/* Botão */}
-                  <button
-                    onClick={() => navigate(`/visualizar-solicitação-abrigo/${s.id_solicitacao}`)}
-                    className="btn-action cancelar"
-                    style={{ width: 'auto', padding: '8px 16px', fontSize: '13px', flexShrink: 0 }}
-                  >
-                    Ver detalhes
-                  </button>
-
-                </div>
-              )
-            })
+                )
+              })}
+            </div>
           )}
         </div>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

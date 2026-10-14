@@ -1,10 +1,10 @@
 // Linha de retorno abaixo de um campo (busca de CEP, localização no mapa...)
 // feedback = { tipo: 'sucesso' | 'aviso' | 'erro' | 'buscando', mensagem } ou null
 const cores = {
-  sucesso:  '#16a34a',
-  aviso:    '#b45309',
-  erro:     '#ef4444',
-  buscando: '#64748b',
+  sucesso:  'var(--sv-ok)',
+  aviso:    'var(--sv-atencao-forte)',
+  erro:     'var(--sv-sirene)',
+  buscando: 'var(--sv-tinta-2)',
 }
 
 function MensagemFeedback({ feedback }) {

@@ -1,11 +1,10 @@
 // --------- Imports -----------
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHandHoldingHeart, FaBuilding, FaClock, FaHeart, FaUser, FaPlus, FaPhoneAlt } from 'react-icons/fa';
-import { FaLocationDot } from 'react-icons/fa6';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuBuilding2, LuClock, LuHandHeart, LuHeart, LuMapPin, LuPhone, LuPlus, LuUser } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { API_URL, formatarTempo } from '../../../services/api';
-import '../../pg_adm/style.css';
 import '../../alertas/alertas.css';
 
 // ─── Rótulos (mesmos valores dos enums do banco) ──────────────────────────────
@@ -108,33 +107,33 @@ function ListarSolicitacoesAjuda() {
 
   // ─── LINHA DE UMA SOLICITAÇÃO ───────────────────────────────
   const linha = (s, mostrarAbrigo = true) => (
-    <div className="linha-lista" key={s.id_solicitacao}>
-      <div className="linha-icone"><FaHandHoldingHeart /></div>
+    <div className="sv-linha" key={s.id_solicitacao}>
+      <div className="sv-poco sv-poco--p"><LuHandHeart /></div>
 
-      <div className="linha-info">
-        <p className="linha-titulo">{s.titulo}</p>
-        <p className="linha-subtitulo">
+      <div className="sv-linha-info">
+        <p className="sv-linha-titulo">{s.titulo}</p>
+        <p className="sv-linha-meta">
           <span>{CATEGORIAS[s.categoria] ?? s.categoria}</span>
           {mostrarAbrigo && (
             <span>
-              <FaBuilding />{' '}
+              <LuBuilding2 />{' '}
               <a href={`/detalhes-abrigos/${s.abrigoId}`}>{s.abrigo?.nome}</a>
               {s.abrigo?.cidade && ` — ${s.abrigo.cidade}`}
             </span>
           )}
-          <span title="Voluntários interessados"><FaHeart /> {s._count?.interesses ?? 0}</span>
-          {s.voluntario && <span title="Voluntário responsável"><FaUser /> {s.voluntario.nome}</span>}
-          <span><FaClock /> {formatarTempo(s.createdAt)}</span>
+          <span title="Voluntários interessados"><LuHeart /> {s._count?.interesses ?? 0}</span>
+          {s.voluntario && <span title="Voluntário responsável"><LuUser /> {s.voluntario.nome}</span>}
+          <span><LuClock /> {formatarTempo(s.createdAt)}</span>
         </p>
       </div>
 
-      <span className={`badge urgencia-${s.urgencia}`}>{URGENCIAS[s.urgencia] ?? s.urgencia}</span>
-      <span className={`badge ${s.status}`}>{STATUS[s.status] ?? s.status}</span>
+      <span className={`sv-tag sv-tag--lisa sv-status urgencia-${s.urgencia}`}>{URGENCIAS[s.urgencia] ?? s.urgencia}</span>
+      <span className={`sv-tag sv-tag--lisa sv-status ${s.status}`}>{STATUS[s.status] ?? s.status}</span>
 
       <button
         onClick={() => navigate(`/visualizar-solicitacao-ajuda/${s.id_solicitacao}`)}
-        className="btn-action cancelar"
-        style={{ width: 'auto', padding: '8px 16px', fontSize: '13px', flexShrink: 0 }}
+        className="sv-btn sv-btn--vidro "
+        
       >
         Ver detalhes
       </button>
@@ -143,20 +142,21 @@ function ListarSolicitacoesAjuda() {
 
   // ─── TELA ────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="ajuda" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="solicitacoes-ajuda" />
 
-      <main className="main">
+      <main className="sv-main">
 
-        <header className="top">
-          <div>
-            <p className="modulo-breadcrumb"><a href="/pg_adm">Home</a> &gt; <span>Solicitações de ajuda</span></p>
-            <h1 className="modulo-titulo">Solicitações de ajuda</h1>
-            <p className="subtitle">Pedidos de doações, medicamentos, voluntários e reparos de todos os abrigos</p>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha"><a href="/pg_adm">Home</a> &gt; <span>Solicitações de ajuda</span></p>
+            <h1 className="sv-titulo">Solicitações de ajuda</h1>
+            <p className="sv-subtitulo">Pedidos de doações, medicamentos, voluntários e reparos de todos os abrigos</p>
           </div>
 
           {/* Nova solicitação: a solicitação sempre pertence a um abrigo */}
-          <div className="modulo-acoes-topo">
+          <div className="sv-topo-acoes">
             <div className="barra-filtros" style={{ margin: 0 }}>
               <select value={abrigoNovaSolicitacao} onChange={e => setAbrigoNovaSolicitacao(e.target.value)}>
                 <option value="">Escolha o abrigo...</option>
@@ -164,11 +164,11 @@ function ListarSolicitacoesAjuda() {
               </select>
             </div>
             <button
-              className="botao-primario"
+              className="sv-btn sv-btn--primario"
               disabled={!abrigoNovaSolicitacao}
               onClick={() => navigate(`/abrigos/${abrigoNovaSolicitacao}/cadastrar-solicitacao-ajuda`)}
             >
-              <FaPlus /> Nova solicitação
+              <LuPlus /> Nova solicitação
             </button>
           </div>
         </header>
@@ -182,12 +182,12 @@ function ListarSolicitacoesAjuda() {
               onClick={() => setFiltroStatus(filtroStatus === status ? '' : status)}
             >
               <div className="resumo-alerta-valor">{contagem(status)}</div>
-              <div className="resumo-alerta-label"><span className={`badge ${status}`}>{label}</span></div>
+              <div className="resumo-alerta-label"><span className={`sv-tag sv-tag--lisa sv-status ${status}`}>{label}</span></div>
             </button>
           ))}
         </section>
 
-        <div className="panel">
+        <div className="sv-vidro sv-painel">
 
           <div className="barra-filtros">
             <input
@@ -226,13 +226,13 @@ function ListarSolicitacoesAjuda() {
             </span>
           </div>
 
-          {erro && <p className="mensagem-erro" style={{ marginBottom: '12px' }}>{erro}</p>}
+          {erro && <p className="sv-aviso sv-aviso--erro" style={{ marginBottom: '12px' }}>{erro}</p>}
 
           {carregando ? (
-            <p style={{ color: '#64748b' }}>Carregando solicitações...</p>
+            <p style={{ color: 'var(--sv-tinta-2)' }}>Carregando solicitações...</p>
           ) : filtradas.length === 0 ? (
-            <div className="lista-vazia">
-              <FaHandHoldingHeart />
+            <div className="sv-vazio">
+              <LuHandHeart />
               <p>Nenhuma solicitação encontrada.</p>
             </div>
           ) : visao === 'lista' ? (
@@ -242,16 +242,16 @@ function ListarSolicitacoesAjuda() {
               <div className="grupo-abrigo" key={grupo.abrigoId}>
                 <div className="grupo-abrigo-cabecalho">
                   <div>
-                    <h4><FaBuilding /> {grupo.abrigo?.nome}</h4>
+                    <h4><LuBuilding2 /> {grupo.abrigo?.nome}</h4>
                     <small>
-                      <FaLocationDot /> {[grupo.abrigo?.bairro, grupo.abrigo?.cidade].filter(Boolean).join(', ')}
-                      {grupo.abrigo?.telefone && <> · <FaPhoneAlt /> {grupo.abrigo.telefone}</>}
+                      <LuMapPin /> {[grupo.abrigo?.bairro, grupo.abrigo?.cidade].filter(Boolean).join(', ')}
+                      {grupo.abrigo?.telefone && <> · <LuPhone /> {grupo.abrigo.telefone}</>}
                       {' · '}{grupo.solicitacoes.filter(s => s.status === 'aberto').length} em aberto
                     </small>
                   </div>
-                  <div className="modulo-acoes-topo">
-                    <a className="botao-secundario" href={`/abrigos/${grupo.abrigoId}/solicitacoes-ajuda`}>Solicitações do abrigo</a>
-                    <a className="botao-secundario" href={`/detalhes-abrigos/${grupo.abrigoId}`}>Ver abrigo</a>
+                  <div className="sv-topo-acoes">
+                    <a className="sv-btn sv-btn--vidro" href={`/abrigos/${grupo.abrigoId}/solicitacoes-ajuda`}>Solicitações do abrigo</a>
+                    <a className="sv-btn sv-btn--vidro" href={`/detalhes-abrigos/${grupo.abrigoId}`}>Ver abrigo</a>
                   </div>
                 </div>
                 {grupo.solicitacoes.map(s => linha(s, false))}
@@ -260,7 +260,7 @@ function ListarSolicitacoesAjuda() {
           )}
         </div>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

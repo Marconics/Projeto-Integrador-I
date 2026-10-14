@@ -1,11 +1,7 @@
 import { useState } from "react";
-import { FaHome, FaBoxOpen, FaUser, FaDonate, FaMapPin,
-         FaIdCard, FaPhoneAlt, FaCalendar, FaVenusMars, FaUpload, FaMap } from 'react-icons/fa';
-import { GoAlertFill } from "react-icons/go";
-import { FaGear } from "react-icons/fa6";
-import "../../pg_adm/style.css"; // ← importa o CSS global do projeto
-import "./vitima.css"; 
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuCalendar, LuIdCard, LuPhone, LuUpload, LuUser, LuUserRound } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 
 const CadastroVitima = () => {
@@ -64,61 +60,62 @@ const CadastroVitima = () => {
   }
 
   return (
-  <div className="dashboard">
-    <SidebarAdm ativo="vitimas" />
-    <main className="main">
+  <div className="sv-app sv-pagina">
+    <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+    <SidebarGlass ativo="vitimas" />
+    <main className="sv-main">
 
       {/* Header padrão do projeto */}
       
-        <header className="top">
-          <div>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
 
             {/* Breadcrumb mostrando o nome do abrigo que veio da API */}
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+            <p className="sv-trilha">
               Vítimas &gt;
             </p>
 
             {/* Título muda dependendo do modo */}
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
 
 
             {/* Muda dependendo do modo */}
             {'Hub de Vitimas'}
             </h1>
-            <p className="subtitle"> Cadastre uma nova vitíma</p>
+            <p className="sv-subtitulo"> Cadastre uma nova vitíma</p>
           </div>
         </header>
 
       {/* Formulário com duas colunas */}
-      <form onSubmit={handleSubmit} className="cadastro-form-container">
+      <form onSubmit={handleSubmit} className="sv-vidro sv-painel sv-form-duas">
 
         {/* Coluna esquerda: campos de texto */}
-        <div className="form-column-left">
+        <div className="sv-form-coluna">
 
-          <div className="form-group">
-            <label><FaUser /> Nome Completo</label>
+          <div className="sv-campo">
+            <label><LuUser /> Nome Completo</label>
             <input type="text" name="nome" placeholder="Ex: João da Silva" required />
           </div>
 
-          <div className="form-group">
-            <label><FaIdCard /> CPF</label>
+          <div className="sv-campo">
+            <label><LuIdCard /> CPF</label>
             <input type="text" name="cpf" placeholder="000.000.000-00" required />
           </div>
 
-          <div className="form-group">
-            <label><FaPhoneAlt /> Telefone</label>
+          <div className="sv-campo">
+            <label><LuPhone /> Telefone</label>
             <input type="text" name="telefone" placeholder="(12) 99999-9999" />
           </div>
 
-          <div className="form-group">
-            <label><FaCalendar /> Data de Nascimento</label>
+          <div className="sv-campo">
+            <label><LuCalendar /> Data de Nascimento</label>
             <input type="date" name="dataNascimento" />
           </div>
 
-          <div className="form-group">
-            <label><FaVenusMars /> Gênero</label>
+          <div className="sv-campo">
+            <label><LuUserRound /> Gênero</label>
             <select
-             className="select-genero"
+             className="sv-entrada"
              id="genero"
              name="genero">
               <option value="">Selecione o gênero</option>
@@ -131,42 +128,42 @@ const CadastroVitima = () => {
         </div>
 
         {/* Coluna direita: foto + botão */}
-        <div className="form-column-right">
+        <div className="sv-form-coluna">
 
-          <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+          <h3 className="sv-secao-titulo">
             Foto de Perfil
           </h3>
 
           {/* Preview da foto */}
-          <div className="upload-container">
+          <div className="sv-upload">
             {fotoVitima ? (
-              <div className="image-preview">
+              <div className="sv-upload-previa">
                 {/*
                   fotoVitima aqui é base64 puro (sem o prefixo data:image)
                   então precisamos montar a src completa na mão
                 */}
                 <img src={`data:image/jpeg;base64,${fotoVitima}`} alt="Preview" />
-                <button type="button" onClick={() => setfotoVitima(null)} className="btn-remove-image">
+                <button type="button" onClick={() => setfotoVitima(null)} className="sv-btn sv-btn--perigo-vidro sv-btn--p">
                   Remover Foto
                 </button>
               </div>
             ) : (
-              <label className="upload-dropzone">
+              <label className="sv-upload-area">
                 <input type="file" accept="image/*" onChange={handleImagem} style={{ display: 'none' }} />
-                <FaUpload className="upload-icon" />
+                <LuUpload className="sv-upload-icone" />
                 <p>Foto de perfil da vítima</p>
-                <span className="btn-upload-trigger">Selecionar arquivo</span>
+                <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo</span>
               </label>
             )}
           </div>
 
           {/* Botão submit */}
-          <div className="form-actions">
-            <button type="submit" className="btn-action salvar">
+          <div className="sv-form-acoes">
+            <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">
               Cadastrar Vítima
             </button>
             {mensagem && (
-              <p style={{ color: '#10b981', fontSize: '14px', textAlign: 'center' }}>
+              <p style={{ color: 'var(--sv-ok)', fontSize: '14px', textAlign: 'center' }}>
                 {mensagem}
               </p>
             )}
@@ -175,7 +172,7 @@ const CadastroVitima = () => {
         </div>
       </form>
 
-      <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+      <footer className="sv-rodape">
         <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
         <p>Versão 1.0.0</p>
       </footer>

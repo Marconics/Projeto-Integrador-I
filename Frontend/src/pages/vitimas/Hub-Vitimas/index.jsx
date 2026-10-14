@@ -3,11 +3,11 @@
 // Abrigos — estilos em styles/listagem.css).
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSearch, FaPlus, FaTimes, FaHome, FaWheelchair } from "react-icons/fa";
+import { LuAccessibility, LuHouse, LuPlus, LuSearch, LuX } from 'react-icons/lu';
 
-import "../../pg_adm/style.css";
 import "../../../styles/listagem.css";
-import SidebarAdm from '../../../components/SidebarAdm';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { API_URL } from '../../../services/api';
 import { normalizar, plural } from '../../../utils/listagem';
 
@@ -143,9 +143,10 @@ const ListarVitimas = () => {
   // ─── TELA DE CARREGANDO / ERRO ───────────────────────────────
   if (carregando || erro) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="vitimas" />
-        <main className="main pagina-listagem">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="vitimas" />
+        <main className="sv-main pagina-listagem">
           <p className={erro ? 'lg-estado lg-estado--erro' : 'lg-estado'}>
             {erro ? `Não foi possível carregar as vítimas: ${erro}` : 'Carregando vítimas...'}
           </p>
@@ -155,23 +156,24 @@ const ListarVitimas = () => {
   }
 
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="vitimas" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="vitimas" />
 
-      <main className="main pagina-listagem">
+      <main className="sv-main pagina-listagem">
 
         {/* ── CABEÇALHO ── */}
         <header className="lg-topo-linha">
           <div>
-            <p className="lg-breadcrumb">Vítimas &gt;</p>
-            <h1 className="lg-titulo">Hub de Vítimas</h1>
-            <p className="lg-subtitulo">
+            <p className="sv-trilha">Vítimas &gt;</p>
+            <h1 className="sv-titulo">Hub de Vítimas</h1>
+            <p className="sv-subtitulo">
               {plural(vitimas.length, 'vítima cadastrada', 'vítimas cadastradas')} · {emAbrigos} em abrigos · {vitimas.length - emAbrigos} sem abrigo
             </p>
           </div>
           <div className="lg-topo-acoes">
             <button className="lg-botao-primario" onClick={() => navigate('/cadastro-vitima')}>
-              <FaPlus /> Nova vítima
+              <LuPlus /> Nova vítima
             </button>
           </div>
         </header>
@@ -180,7 +182,7 @@ const ListarVitimas = () => {
         <section className="lg-filtros">
           <div className="lg-filtros-linha">
             <div className="lg-busca">
-              <FaSearch className="lg-busca-icone" />
+              <LuSearch className="lg-busca-icone" />
               <input
                 placeholder="Buscar por nome, CPF ou telefone..."
                 value={filtros.busca}
@@ -235,7 +237,7 @@ const ListarVitimas = () => {
                 className={`lg-chip${filtros.comDeficiencia ? ' lg-chip--ativo' : ''}`}
                 onClick={() => mudarFiltro('comDeficiencia', !filtros.comDeficiencia)}
               >
-                <FaWheelchair /> Com deficiência
+                <LuAccessibility /> Com deficiência
               </button>
             </div>
           </div>
@@ -247,7 +249,7 @@ const ListarVitimas = () => {
           </span>
           {filtrosAtivos && (
             <button className="lg-limpar" onClick={() => setFiltros(FILTROS_INICIAIS)}>
-              <FaTimes /> Limpar filtros
+              <LuX /> Limpar filtros
             </button>
           )}
         </div>
@@ -317,7 +319,7 @@ const ListarVitimas = () => {
                       title={vitima.abrigoId ? 'Abrir o abrigo' : 'Vítima sem abrigo'}
                       onClick={() => navigate(`/detalhes-abrigos/${vitima.abrigoId}`)}
                     >
-                      <FaHome /> Abrigo
+                      <LuHouse /> Abrigo
                     </button>
                     <button className="lg-botao-card" onClick={() => navigate(`/detalhes-vitimas/${vitima.id}`)}>
                       Ver detalhes
@@ -329,7 +331,7 @@ const ListarVitimas = () => {
           </section>
         )}
 
-        <footer className="lg-rodape">
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

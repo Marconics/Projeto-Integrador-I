@@ -1,17 +1,9 @@
 // --------- Imports -----------
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMap,
-  FaMapMarkerAlt, FaPhoneAlt, FaDog, FaUserNurse,
-  FaWheelchair, FaUtensils, FaBuilding, FaPeopleArrows,
-  FaMedkit, FaMapMarkedAlt, FaEnvelope, FaIdCard, FaLocationArrow
-} from 'react-icons/fa';
-import { FaGear, FaClipboardList } from "react-icons/fa6";
-import { GoAlertFill } from "react-icons/go";
-import "../../pg_adm/style.css";
-import './DetalhesSolicitacao.css';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuDog, LuHeartPulse, LuIdCard, LuMail, LuMapPin, LuMapPinned, LuNavigation, LuPhone, LuUser, LuUtensils } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 function DetalhesSolicitacao() {
 
@@ -204,19 +196,20 @@ function DetalhesSolicitacao() {
 
   // Badge colorido do status — igual ao padrão visual do projeto
   const badgeStatus = {
-    pendente:  { label: 'Pendente',  cor: '#f59e0b' },
-    aprovado:  { label: 'Aprovado',  cor: '#22c55e' },
-    recusado:  { label: 'Recusado',  cor: '#ef4444' },
-  }[status] ?? { label: status, cor: '#94a3b8' }
+    pendente:  { label: 'Pendente',  cor: 'var(--sv-atencao)' },
+    aprovado:  { label: 'Aprovado',  cor: 'var(--sv-ok)' },
+    recusado:  { label: 'Recusado',  cor: 'var(--sv-sirene)' },
+  }[status] ?? { label: status, cor: 'var(--sv-tinta-3)' }
 
 
   // ─── TELA DE LOADING ────────────────────────────────────────
   if (carregando) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="solicitacoes-abrigo" />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando dados da solicitação...</p>
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="solicitacoes-abrigo" />
+        <main className="sv-main">
+          <p className="sv-vazio">Carregando dados da solicitação...</p>
         </main>
       </div>
     )
@@ -225,19 +218,20 @@ function DetalhesSolicitacao() {
 
   // ─── TELA PRINCIPAL ─────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="solicitacoes-abrigo" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="solicitacoes-abrigo" />
 
-      <main className="main">
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+      <main className="sv-main">
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Solicitações &gt; <span>{nomeSolicitacao}</span>
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               Detalhes da Solicitação
             </h1>
-            <p className="subtitle">Analise e tome uma decisão sobre este pedido</p>
+            <p className="sv-subtitulo">Analise e tome uma decisão sobre este pedido</p>
           </div>
 
           {/* Badge de status no canto direito do header */}
@@ -246,7 +240,7 @@ function DetalhesSolicitacao() {
               background: badgeStatus.cor,
               color: '#fff',
               padding: '6px 16px',
-              borderRadius: '20px',
+              borderRadius: 'var(--sv-raio-xs)',
               fontWeight: '600',
               fontSize: '14px'
             }}>
@@ -257,110 +251,110 @@ function DetalhesSolicitacao() {
 
         {/* Tudo aqui é só leitura — diferente do DetalhesAbrigo, não tem modo edição
             O admin não edita a solicitação, apenas aprova ou recusa */}
-        <div className="cadastro-form-container">
+        <div className="sv-vidro sv-painel sv-form-duas">
 
           {/* ── COLUNA ESQUERDA ── */}
-          <div className="form-column-left">
+          <div className="sv-form-coluna">
 
             {/* Dados do Abrigo Proposto */}
-            <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <h3 className="sv-secao-titulo">
               Dados do Abrigo Proposto
             </h3>
 
-            <div className="form-group">
-              <label><FaBuilding /> Nome do Abrigo</label>
+            <div className="sv-campo">
+              <label><LuBuilding2 /> Nome do Abrigo</label>
               <p>{nomeSolicitacao}</p>
             </div>
 
             {/* CEP separado — igual ao padrão do DetalhesAbrigo */}
-            <div className="form-group">
-              <label><FaMapMarkedAlt /> CEP</label>
+            <div className="sv-campo">
+              <label><LuMapPinned /> CEP</label>
               <p>{cep || '—'}</p>
             </div>
 
             {/* Estado separado */}
-            <div className="form-group">
-              <label><FaMapMarkedAlt /> Estado</label>
+            <div className="sv-campo">
+              <label><LuMapPinned /> Estado</label>
               <p>{estado || '—'}</p>
             </div>
 
             {/* Cidade separada */}
-            <div className="form-group">
-              <label><FaMapMarkedAlt /> Cidade</label>
+            <div className="sv-campo">
+              <label><LuMapPinned /> Cidade</label>
               <p>{cidade || '—'}</p>
             </div>
 
             {/* Bairro separado */}
-            <div className="form-group">
-              <label><FaMapMarkedAlt /> Bairro</label>
+            <div className="sv-campo">
+              <label><LuMapPinned /> Bairro</label>
               <p>{bairro || '—'}</p>
             </div>
 
             {/* Endereço + coordenadas juntos na mesma seção */}
-            <div className="form-group">
-              <label><FaMapMarkerAlt /> Endereço</label>
+            <div className="sv-campo">
+              <label><LuMapPin /> Endereço</label>
               <p>{endereco || '—'}</p>
 
               {/*
                 Exibe as coordenadas se o solicitante as gerou durante o cadastro.
                 Aqui é só informativo para o admin — ajuda a validar se o local é real.
-                A mesma cor azul (#0ea5e9) usada no DetalhesAbrigo para "existente".
+                A mesma cor azul (var(--sv-azul)) usada no DetalhesAbrigo para "existente".
               */}
               {latitude && longitude ? (
                 <p style={{
                   fontSize: '12px',
                   marginTop: '4px',
-                  color: '#0ea5e9',
+                  color: 'var(--sv-azul)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px'
                 }}>
-                  <FaLocationArrow />
+                  <LuNavigation />
                   Localização mapeada: ({Number(latitude).toFixed(5)}, {Number(longitude).toFixed(5)})
                 </p>
               ) : (
-                <p style={{ fontSize: '12px', marginTop: '4px', color: '#94a3b8' }}>
+                <p style={{ fontSize: '12px', marginTop: '4px', color: 'var(--sv-tinta-3)' }}>
                   Sem localização mapeada
                 </p>
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaPhoneAlt /> Telefone</label>
+            <div className="sv-campo">
+              <label><LuPhone /> Telefone</label>
               <p>{telefone || '—'}</p>
             </div>
 
-            <div className="form-group">
-              <label><FaUser /> Responsável</label>
+            <div className="sv-campo">
+              <label><LuUser /> Responsável</label>
               <p>{responsavel}</p>
             </div>
 
-            <div className="form-group">
-              <label><FaBuilding /> Tipo de Abrigo</label>
+            <div className="sv-campo">
+              <label><LuBuilding2 /> Tipo de Abrigo</label>
               <p>{tipoAbrigo}</p>
             </div>
 
-            <div className="form-group">
-              <label><FaPeopleArrows /> Capacidade Total</label>
+            <div className="sv-campo">
+              <label><LuArrowLeftRight /> Capacidade Total</label>
               <p>{capacidadeTotal} pessoas</p>
             </div>
 
             {/* Infraestrutura — só leitura, checkboxes desabilitados */}
-            <div className="infraestrutura-section">
-              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <div className="sv-form-secao">
+              <h3 className="sv-secao-titulo">
                 Infraestrutura
               </h3>
 
               {[
-                { name: 'possuiAtendimentoMedico', label: 'Atendimento Médico',  icon: <FaMedkit />    },
-                { name: 'possuiEnfermagem',        label: 'Enfermagem',          icon: <FaUserNurse /> },
-                { name: 'possuiPets',              label: 'Pets Bem-Vindos',     icon: <FaDog />       },
-                { name: 'possuiAcessibilidade',    label: 'Acessibilidade',      icon: <FaWheelchair />},
-                { name: 'possuiCozinha',           label: 'Cozinha Comunitária', icon: <FaUtensils />  },
+                { name: 'possuiAtendimentoMedico', label: 'Atendimento Médico',  icon: <LuBriefcaseMedical />    },
+                { name: 'possuiEnfermagem',        label: 'Enfermagem',          icon: <LuHeartPulse /> },
+                { name: 'possuiPets',              label: 'Pets Bem-Vindos',     icon: <LuDog />       },
+                { name: 'possuiAcessibilidade',    label: 'Acessibilidade',      icon: <LuAccessibility />},
+                { name: 'possuiCozinha',           label: 'Cozinha Comunitária', icon: <LuUtensils />  },
               ].map(item => (
-                <label key={item.name} className="checkbox-card" style={{ pointerEvents: 'none' }}>
+                <label key={item.name} className="sv-opcao" style={{ pointerEvents: 'none' }}>
                   <input type="checkbox" checked={infraestrutura[item.name]} readOnly />
-                  <div className="checkbox-content">
+                  <div className="sv-opcao-caixa">
                     {item.icon}<span>{item.label}</span>
                   </div>
                 </label>
@@ -368,48 +362,48 @@ function DetalhesSolicitacao() {
             </div>
 
             {/* Dados do Solicitante — seção exclusiva desta tela */}
-            <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', margin: '24px 0 12px' }}>
+            <h3 className="sv-secao-titulo" style={{ marginTop: '24px' }}>
               Dados do Solicitante
             </h3>
 
-            <div className="form-group">
-              <label><FaIdCard /> Nome</label>
+            <div className="sv-campo">
+              <label><LuIdCard /> Nome</label>
               <p>{solicitanteNome}</p>
             </div>
 
-            <div className="form-group">
-              <label><FaEnvelope /> E-mail</label>
+            <div className="sv-campo">
+              <label><LuMail /> E-mail</label>
               <p>{solicitanteEmail}</p>
             </div>
 
-            <div className="form-group">
-              <label><FaPhoneAlt /> Telefone</label>
+            <div className="sv-campo">
+              <label><LuPhone /> Telefone</label>
               <p>{solicitanteTelefone || '—'}</p>
             </div>
 
             {/* Motivo da recusa — aparece só se já foi recusado */}
             {status === 'recusado' && dadosSolicitacao.motivoRecusa && (
-              <div className="form-group" style={{ marginTop: '16px' }}>
-                <label style={{ color: '#ef4444' }}>Motivo da Recusa</label>
-                <p style={{ color: '#ef4444' }}>{dadosSolicitacao.motivoRecusa}</p>
+              <div className="sv-campo" style={{ marginTop: '16px' }}>
+                <label style={{ color: 'var(--sv-sirene)' }}>Motivo da Recusa</label>
+                <p style={{ color: 'var(--sv-sirene)' }}>{dadosSolicitacao.motivoRecusa}</p>
               </div>
             )}
 
           </div>
 
           {/* ── COLUNA DIREITA ── */}
-          <div className="form-column-right">
+          <div className="sv-form-coluna">
 
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <h3 className="sv-secao-titulo">
               Imagem do Abrigo
             </h3>
 
             {/* Foto — só visualização, sem upload */}
-            <div className="upload-container">
+            <div className="sv-upload">
               {fotoUrl ? (
-                <img src={fotoUrl} alt={nomeSolicitacao} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '8px' }} />
+                <img src={fotoUrl} alt={nomeSolicitacao} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 'var(--sv-raio-s)' }} />
               ) : (
-                <p style={{ color: '#94a3b8', fontSize: '14px' }}>Sem foto cadastrada</p>
+                <p style={{ color: 'var(--sv-tinta-3)', fontSize: '14px' }}>Sem foto cadastrada</p>
               )}
             </div>
 
@@ -418,21 +412,21 @@ function DetalhesSolicitacao() {
                 Quando o admin clica em Aprovar ou Recusar, abre o painel correspondente.
                 Isso evita ações acidentais — o admin precisa confirmar antes. */}
             {status === 'pendente' && (
-              <div className="form-actions" style={{ marginTop: '24px' }}>
+              <div className="sv-form-acoes" style={{ marginTop: '24px' }}>
 
                 {/* Nenhum painel aberto: mostra os dois botões */}
                 {painelDecisao === null && (
                   <>
                     <button
                       type="button"
-                      className="btn-action salvar"
+                      className="sv-btn sv-btn--primario sv-btn--bloco"
                       onClick={() => setPainelDecisao('aprovar')}
                     >
                       Aprovar Solicitação
                     </button>
                     <button
                       type="button"
-                      className="btn-action excluir"
+                      className="sv-btn sv-btn--perigo-vidro sv-btn--bloco"
                       onClick={() => setPainelDecisao('recusar')}
                     >
                       Recusar Solicitação
@@ -443,19 +437,19 @@ function DetalhesSolicitacao() {
                 {/* Painel de aprovação aberto */}
                 {painelDecisao === 'aprovar' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <p style={{ fontSize: '14px', color: '#1e293b' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--sv-tinta)' }}>
                       Ao aprovar, um abrigo será criado automaticamente com estes dados.
                       {latitude && longitude && (
-                        <span style={{ display: 'block', marginTop: '6px', color: '#0ea5e9', fontSize: '12px' }}>
-                          <FaLocationArrow style={{ marginRight: '4px' }} />
+                        <span style={{ display: 'block', marginTop: '6px', color: 'var(--sv-azul)', fontSize: '12px' }}>
+                          <LuNavigation style={{ marginRight: '4px' }} />
                           O abrigo já terá localização no mapa.
                         </span>
                       )}
                     </p>
-                    <button type="button" className="btn-action salvar" onClick={handleAprovar}>
+                    <button type="button" className="sv-btn sv-btn--primario sv-btn--bloco" onClick={handleAprovar}>
                       Confirmar Aprovação
                     </button>
-                    <button type="button" className="btn-action cancelar" onClick={() => setPainelDecisao(null)}>
+                    <button type="button" className="sv-btn sv-btn--vidro sv-btn--bloco" onClick={() => setPainelDecisao(null)}>
                       Voltar
                     </button>
                   </div>
@@ -464,7 +458,7 @@ function DetalhesSolicitacao() {
                 {/* Painel de recusa aberto — exige motivo antes de confirmar */}
                 {painelDecisao === 'recusar' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
                       Motivo da recusa (obrigatório)
                     </label>
                     <textarea
@@ -473,14 +467,14 @@ function DetalhesSolicitacao() {
                       placeholder="Descreva o motivo..."
                       rows={4}
                       style={{
-                        borderRadius: '8px', border: '1px solid #e2e8f0',
+                        borderRadius: 'var(--sv-raio-s)', border: '1px solid var(--sv-linha)',
                         padding: '10px', fontSize: '14px', resize: 'vertical'
                       }}
                     />
-                    <button type="button" className="btn-action excluir" onClick={handleRecusar}>
+                    <button type="button" className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" onClick={handleRecusar}>
                       Confirmar Recusa
                     </button>
-                    <button type="button" className="btn-action cancelar" onClick={() => setPainelDecisao(null)}>
+                    <button type="button" className="sv-btn sv-btn--vidro sv-btn--bloco" onClick={() => setPainelDecisao(null)}>
                       Voltar
                     </button>
                   </div>
@@ -491,8 +485,8 @@ function DetalhesSolicitacao() {
 
             {/* Se já foi analisada, mostra só o botão de excluir */}
             {status !== 'pendente' && (
-              <div className="form-actions" style={{ marginTop: '24px' }}>
-                <button type="button" className="btn-action excluir" onClick={handleExcluir}>
+              <div className="sv-form-acoes" style={{ marginTop: '24px' }}>
+                <button type="button" className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" onClick={handleExcluir}>
                   Excluir Solicitação
                 </button>
               </div>
@@ -501,7 +495,7 @@ function DetalhesSolicitacao() {
           </div>
         </div>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

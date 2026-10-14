@@ -59,6 +59,19 @@
   --sv-fundo-card: linear-gradient(120deg, #EEF4FF 0%, #DCE8FD 55%, #CADCF8 100%);
   --sv-borda-card: rgba(36, 87, 214, .12);
 
+  /* ── Apoio: fundos suaves e cores de estado (usadas nas páginas internas) ── */
+  --sv-fundo-suave: #F2F6FD;      /* campos, cabeçalho de tabela, trilhos */
+  --sv-azul-suave: #E6EEFD;
+  --sv-sirene-forte: #A8242B;     /* texto sobre fundo vermelho claro */
+  --sv-ok: #1B8A5A;               /* concluído, com vagas, aprovado */
+  --sv-ok-forte: #116644;
+  --sv-ok-suave: #E3F5EC;
+  --sv-atencao: #B86E00;          /* quase lotado, em andamento */
+  --sv-atencao-forte: #8A5200;
+  --sv-atencao-suave: #FFF3D6;
+  --sv-anil-suave: #ECEBFD;
+  --sv-borda-campo: rgba(71, 90, 118, .26);
+
   /* ── Movimento ── */
   --sv-suave: cubic-bezier(.22, 1, .36, 1);
   --sv-mola: cubic-bezier(.34, 1.56, .64, 1);
@@ -373,6 +386,777 @@
 }
 .sv-tag--azul   { color: var(--sv-azul); background: rgba(36, 87, 214, .10); }
 .sv-tag--sirene { color: var(--sv-sirene); background: var(--sv-sirene-suave); }
+.sv-tag--ok      { color: var(--sv-ok-forte); background: var(--sv-ok-suave); }
+.sv-tag--atencao { color: var(--sv-atencao-forte); background: var(--sv-atencao-suave); }
+.sv-tag--anil    { color: var(--sv-anil); background: var(--sv-anil-suave); }
+.sv-tag--neutro  { color: var(--sv-tinta-2); background: var(--sv-fundo-suave); }
+/* Sem a bolinha (quando a etiqueta já tem ícone) */
+.sv-tag--lisa::before { content: none; }
+
+/* Etiqueta colorida pelo valor que vem da API:
+   <span class={`sv-tag sv-status ${alerta.status}`}>  */
+.sv-status { color: var(--sv-tinta-2); background: var(--sv-fundo-suave); }
+.sv-status.aberto { color: var(--sv-azul); background: rgba(36, 87, 214, .10); }
+.sv-status:is(.em_verificacao, .em_andamento, .medio, .leve, .alto, .urgencia-media, .urgencia-alta) { color: var(--sv-atencao-forte); background: var(--sv-atencao-suave); }
+.sv-status:is(.encerrado, .concluido, .baixo, .urgencia-baixa, .inscrito-ativo) { color: var(--sv-ok-forte); background: var(--sv-ok-suave); }
+/* "ativo" aqui é alerta ativo: vermelho, como tudo que é urgente */
+.sv-status:is(.ativo, .grave, .critico, .urgencia-critica) { color: var(--sv-sirene-forte); background: var(--sv-sirene-suave); }
+.sv-status:is(.cancelado, .inscrito-inativo) { color: var(--sv-tinta-2); background: var(--sv-fundo-suave); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PEÇAS DAS PÁGINAS INTERNAS
+   Esqueleto de página, cabeçalho, cards, formulários, tabelas, listas,
+   modais, avisos e paginação. Usadas por todas as telas do sistema.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Esqueleto: sidebar + conteúdo ───────────────────────────────────
+   <div class="sv-app sv-pagina">
+     <div class="sv-fundo"><span/><span/><span/></div>
+     <SidebarGlass ativo="..." />
+     <main class="sv-main"> ... </main>
+   </div>                                                              */
+
+.sv-pagina {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: 26px;
+  padding: 16px;
+}
+.sv-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-block: 10px 40px;
+  padding-inline: 0 8px;
+}
+@media (max-width: 960px) {
+  .sv-pagina {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 10px 16px 16px;
+  }
+  .sv-main { padding-inline: 0; padding-block: 4px 32px; }
+}
+
+/* ─── Cabeçalho da página ─────────────────────────────────────────── */
+
+.sv-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 20px;
+}
+.sv-topo-texto { display: grid; gap: 6px; min-width: 0; }
+/* Caminho ("Home > Abrigos") acima do título */
+.sv-trilha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--sv-tinta-3);
+}
+.sv-trilha a { color: var(--sv-tinta-2); cursor: pointer; }
+.sv-trilha a:hover { color: var(--sv-azul); text-decoration: underline; }
+.sv-titulo {
+  position: relative;
+  padding-left: 16px;
+  font-family: var(--sv-fonte-display);
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--sv-azul-forte);
+  overflow-wrap: anywhere;
+}
+/* Traço vermelho da identidade antes do título */
+.sv-titulo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 5px;
+  border-radius: 1px;
+  background: var(--sv-sirene);
+}
+.sv-subtitulo { font-size: 14.5px; color: var(--sv-tinta-2); }
+.sv-topo-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+@media (max-width: 600px) {
+  .sv-titulo { font-size: 25px; }
+}
+
+/* ─── Cards e painéis ─────────────────────────────────────────────── */
+
+/* Card: degradê azul, canto vermelho no topo e dois cantos retos */
+.sv-card {
+  position: relative;
+  min-width: 0;
+  padding: 18px;
+  color: var(--sv-tinta);
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l);
+  box-shadow: var(--sv-sombra-media);
+}
+.sv-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 26px;
+  height: 26px;
+  border-top: 3px solid var(--sv-sirene);
+  border-left: 3px solid var(--sv-sirene);
+  border-top-left-radius: var(--sv-raio-corte);
+  pointer-events: none;
+  transition: width .35s var(--sv-suave), height .35s var(--sv-suave);
+}
+.sv-card--clicavel { cursor: pointer; transition: transform .35s var(--sv-suave), box-shadow .35s var(--sv-suave); }
+.sv-card--clicavel:hover { transform: translateY(-2px); box-shadow: var(--sv-sombra-alta); }
+.sv-card--clicavel:hover::before { width: 44px; height: 44px; }
+
+/* Painel: bloco grande de conteúdo (use junto com sv-vidro) */
+.sv-painel {
+  position: relative;
+  min-width: 0;
+  padding: 22px 24px 24px;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l);
+}
+@media (max-width: 600px) {
+  .sv-painel { padding: 18px 16px 20px; }
+}
+
+/* Título de seção com o sublinhado vermelho curto */
+.sv-secao-titulo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  font-family: var(--sv-fonte-display);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--sv-azul-forte);
+}
+.sv-secao-titulo::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 28px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--sv-sirene);
+}
+.sv-secao-titulo svg { flex: none; color: var(--sv-azul); }
+
+/* ─── Botões: variações ───────────────────────────────────────────── */
+
+/* Ação destrutiva (excluir, recusar, cancelar alerta) */
+.sv-btn--perigo {
+  color: #fff;
+  background: linear-gradient(180deg, #DE4A52, var(--sv-sirene));
+  border-color: rgba(255, 255, 255, .25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 12px 22px -12px rgba(208, 50, 58, .8);
+}
+.sv-btn--perigo:hover { transform: translateY(-1px); background: var(--sv-sirene-forte); }
+/* Destrutiva discreta: contorno vermelho, preenche no hover */
+.sv-btn--perigo-vidro {
+  color: var(--sv-sirene);
+  background: var(--sv-sirene-suave);
+  border-color: rgba(208, 50, 58, .25);
+}
+.sv-btn--perigo-vidro:hover { color: #fff; background: var(--sv-sirene); transform: translateY(-1px); }
+.sv-btn--p { padding: 6px 11px; font-size: 12.5px; }
+.sv-btn--bloco { width: 100%; }
+/* Só o ícone, pequeno (ações nas linhas de tabela) */
+.sv-btn--quadrado { width: 34px; height: 34px; padding: 0; font-size: 15px; }
+.sv-btn:disabled,
+.sv-btn[aria-disabled="true"] {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.sv-btn:disabled::after { content: none; }
+
+/* ─── Formulários ─────────────────────────────────────────────────────
+   <div class="sv-campo">
+     <label for="nome">Nome</label>
+     <input id="nome" />
+     <p class="sv-campo-ajuda">texto de apoio</p>
+   </div>                                                              */
+
+.sv-form { display: grid; gap: 18px; }
+.sv-form-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 16px;
+}
+.sv-campo { display: grid; align-content: start; gap: 6px; min-width: 0; }
+.sv-campo--largo { grid-column: 1 / -1; }
+.sv-campo > label,
+.sv-rotulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sv-tinta-2);
+}
+.sv-campo :is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"]), select, textarea),
+.sv-entrada {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--sv-borda-campo);
+  border-radius: var(--sv-raio-s);
+  background: #fff;
+  color: var(--sv-tinta);
+  font-family: var(--sv-fonte-texto);
+  font-size: 14px;
+  line-height: 1.4;
+  transition: border-color .2s, box-shadow .2s;
+}
+.sv-campo textarea,
+textarea.sv-entrada { min-height: 96px; resize: vertical; }
+.sv-campo :is(input, select, textarea)::placeholder,
+.sv-entrada::placeholder { color: var(--sv-tinta-3); }
+.sv-campo :is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"]), select, textarea):focus,
+.sv-entrada:focus {
+  outline: none;
+  border-color: var(--sv-azul);
+  box-shadow: 0 0 0 3px rgba(36, 87, 214, .2);
+}
+.sv-campo :is(input, select, textarea):disabled,
+.sv-entrada:disabled {
+  background: var(--sv-fundo-suave);
+  color: var(--sv-tinta-2);
+  cursor: not-allowed;
+}
+/* Campo com erro: borda e mensagem em vermelho */
+.sv-campo--erro :is(input, select, textarea) { border-color: var(--sv-sirene); }
+.sv-campo-ajuda { font-size: 12.5px; color: var(--sv-tinta-3); }
+.sv-campo-erro { font-size: 12.5px; font-weight: 500; color: var(--sv-sirene); }
+
+/* Campo com ícone à esquerda (busca, login) */
+.sv-campo-icone { position: relative; display: block; min-width: 0; }
+.sv-campo-icone > svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--sv-tinta-3);
+  pointer-events: none;
+}
+.sv-campo-icone > :is(input, select) { padding-left: 38px !important; }
+/* Botão dentro do campo, à direita (mostrar senha) */
+.sv-campo-icone > button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--sv-raio-xs);
+  background: transparent;
+  color: var(--sv-tinta-3);
+  font-size: 16px;
+  cursor: pointer;
+}
+.sv-campo-icone > button:hover { color: var(--sv-azul); }
+
+/* Caixa de seleção com rótulo ao lado */
+.sv-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--sv-tinta);
+  cursor: pointer;
+}
+.sv-check input { width: 17px; height: 17px; accent-color: var(--sv-azul); cursor: pointer; }
+
+.sv-campo > label,
+.sv-rotulo { display: flex; align-items: center; gap: 6px; }
+.sv-campo > label svg,
+.sv-rotulo svg { flex: none; font-size: 15px; color: var(--sv-azul); }
+/* Valor só de leitura dentro de um campo (telas de detalhes) */
+.sv-campo > p { font-size: 15px; color: var(--sv-tinta); overflow-wrap: anywhere; }
+.sv-entrada--erro,
+.sv-campo .sv-entrada--erro { border-color: var(--sv-sirene) !important; color: var(--sv-sirene); }
+.sv-entrada--erro:focus { box-shadow: 0 0 0 3px rgba(208, 50, 58, .18) !important; }
+
+/* Select que muda de cor conforme o estado escolhido (ativo, manutenção...) */
+.sv-estado { font-weight: 600; cursor: pointer; }
+.sv-campo .sv-estado.ativo      { background: var(--sv-ok-suave);      color: var(--sv-ok-forte);      border-color: rgba(27, 138, 90, .3); }
+.sv-campo .sv-estado.manutencao { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); border-color: rgba(184, 110, 0, .3); }
+.sv-campo .sv-estado.desativado { background: var(--sv-sirene-suave);  color: var(--sv-sirene-forte);  border-color: rgba(208, 50, 58, .3); }
+
+/* Formulário em duas colunas (dados à esquerda, foto e ações à direita) */
+.sv-form-duas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 36px;
+  align-items: start;
+}
+.sv-form-coluna { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sv-form-secao { display: grid; gap: 10px; }
+.sv-form-secao > h3 { font-size: 16px; font-weight: 500; color: var(--sv-azul-forte); }
+/* Botões no fim do formulário, um embaixo do outro */
+.sv-form-acoes { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.sv-form-acoes-par { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1140px) and (min-width: 961px), (max-width: 850px) {
+  .sv-form-duas { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Opção em formato de card (checkbox escondido; o card acende quando marcado) */
+.sv-opcao { display: block; cursor: pointer; }
+.sv-opcao input[type="checkbox"] { position: absolute; opacity: 0; pointer-events: none; }
+.sv-opcao-caixa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--sv-borda-campo);
+  border-radius: var(--sv-raio-s);
+  background: #fff;
+  font-size: 14px;
+  color: var(--sv-tinta-2);
+  transition: background-color .2s, border-color .2s, color .2s;
+}
+.sv-opcao-icone { flex: none; font-size: 18px; color: var(--sv-tinta-3); }
+.sv-opcao:hover .sv-opcao-caixa { border-color: var(--sv-azul); }
+.sv-opcao input:checked + .sv-opcao-caixa {
+  background: var(--sv-azul-suave);
+  border-color: var(--sv-azul);
+  color: var(--sv-azul-forte);
+  font-weight: 600;
+}
+.sv-opcao input:checked + .sv-opcao-caixa .sv-opcao-icone { color: var(--sv-azul); }
+.sv-opcao input:focus-visible + .sv-opcao-caixa { outline: 2px solid var(--sv-azul); outline-offset: 3px; }
+.sv-opcao input:disabled + .sv-opcao-caixa { cursor: default; }
+
+/* Envio de foto */
+.sv-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  max-height: 320px;
+  overflow: hidden;
+  padding: 18px;
+  text-align: center;
+  border: 2px dashed rgba(36, 87, 214, .3);
+  border-radius: var(--sv-raio-m);
+  background: var(--sv-fundo-suave);
+}
+.sv-upload-area { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
+.sv-upload-area p { font-size: 14px; color: var(--sv-tinta-2); }
+.sv-upload-icone { font-size: 36px; color: var(--sv-tinta-3); }
+.sv-upload-previa { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; }
+.sv-upload-previa img { max-width: 100%; max-height: 240px; border-radius: var(--sv-raio-s); object-fit: contain; }
+
+/* Rodapé da página (direitos e versão) */
+.sv-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--sv-linha);
+  font-size: 12px;
+  color: var(--sv-tinta-3);
+}
+
+/* Rodapé de formulário e de painel: botões alinhados à direita */
+.sv-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.sv-acoes--inicio { justify-content: flex-start; }
+/* Botões dividindo a largura por igual (rodapé de modal) */
+.sv-acoes--iguais > * { flex: 1 1 140px; }
+/* Itens clicáveis do caminho no topo */
+.sv-trilha .sv-link { font-weight: 500; color: var(--sv-tinta-2); text-decoration: underline; }
+.sv-trilha .sv-link:hover { color: var(--sv-azul); }
+
+/* ─── Tabelas ─────────────────────────────────────────────────────────
+   A caixa rola para os lados no celular; a página não.
+   <div class="sv-tabela-caixa"><table class="sv-tabela">...</table></div> */
+
+.sv-tabela-caixa {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-m);
+  background: #fff;
+}
+.sv-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--sv-tinta);
+}
+.sv-tabela th {
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sv-tinta-2);
+  background: var(--sv-fundo-suave);
+  border-bottom: 1px solid var(--sv-linha);
+}
+.sv-tabela td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--sv-linha);
+}
+.sv-tabela tbody tr:last-child td { border-bottom: 0; }
+.sv-tabela tbody tr:hover td { background: rgba(36, 87, 214, .04); }
+.sv-tabela-acoes { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ─── Filtros: chips de escolha e contagem de resultados ──────────── */
+
+.sv-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 18px;
+}
+.sv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--sv-borda-campo);
+  border-radius: var(--sv-raio-xs);
+  background: #fff;
+  color: var(--sv-tinta-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .2s, border-color .2s, color .2s;
+}
+.sv-chip:hover { border-color: var(--sv-azul); color: var(--sv-azul); }
+.sv-chip--ativo,
+.sv-chip--ativo:hover {
+  color: #fff;
+  background: var(--sv-azul);
+  border-color: var(--sv-azul);
+  box-shadow: 0 6px 14px -8px rgba(36, 87, 214, .8);
+}
+.sv-contagem { font-size: 13px; color: var(--sv-tinta-2); }
+
+/* ─── Listas de linhas ────────────────────────────────────────────── */
+
+.sv-lista { display: grid; gap: 10px; }
+.sv-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+  min-width: 0;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--sv-linha);
+  border-radius: var(--sv-raio-m);
+  transition: border-color .2s, box-shadow .2s;
+}
+.sv-linha:hover { border-color: rgba(36, 87, 214, .3); box-shadow: var(--sv-sombra-baixa); }
+.sv-linha-info { flex: 1 1 220px; min-width: 0; display: grid; gap: 3px; }
+.sv-linha-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-weight: 600;
+  color: var(--sv-tinta);
+  overflow-wrap: anywhere;
+}
+.sv-linha-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--sv-tinta-2);
+}
+.sv-linha-meta > span { display: inline-flex; align-items: center; gap: 5px; }
+.sv-linha-meta svg { flex: none; color: var(--sv-tinta-3); }
+
+/* Dados em pares rótulo/valor (telas de detalhes) */
+.sv-dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 16px 20px;
+}
+.sv-dado { display: grid; align-content: start; gap: 3px; min-width: 0; }
+.sv-dado-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--sv-tinta-3);
+}
+.sv-dado-valor { font-size: 15px; color: var(--sv-tinta); overflow-wrap: anywhere; }
+
+/* Pares em linha: rótulo à esquerda, valor à direita (cartão de informações) */
+.sv-pares { display: grid; gap: 10px; }
+.sv-par {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+}
+.sv-par > span { color: var(--sv-tinta-3); font-weight: 600; }
+.sv-par > strong { color: var(--sv-tinta); font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+
+/* Conteúdo ao lado de uma coluna estreita (detalhes + ações) */
+.sv-duas-colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 1180px) and (min-width: 961px), (max-width: 890px) {
+  .sv-duas-colunas { grid-template-columns: minmax(0, 1fr); }
+}
+/* Blocos empilhados com o mesmo espaço entre eles */
+.sv-pilha { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+/* Grade de cards que se ajusta à largura */
+.sv-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 16px;
+}
+.sv-etiquetas { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sv-painel > .sv-etiquetas:first-child { margin-bottom: 18px; }
+.sv-tag--g { padding: 4px 12px; font-size: 13px; }
+
+/* Textos de apoio dentro de cards e painéis */
+.sv-texto-longo { font-size: 14.5px; line-height: 1.7; color: var(--sv-tinta-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.sv-destaque { font-size: 15px; font-weight: 600; color: var(--sv-tinta); overflow-wrap: anywhere; }
+.sv-apoio { font-size: 13.5px; color: var(--sv-tinta-2); overflow-wrap: anywhere; }
+.sv-apoio--icone { display: flex; align-items: center; gap: 6px; }
+.sv-apoio--icone svg { flex: none; color: var(--sv-azul); }
+.sv-painel > :is(.sv-destaque, .sv-apoio) + .sv-apoio { margin-top: 6px; }
+
+/* Nota em destaque dentro de um painel (observação, quem atendeu) */
+.sv-nota {
+  display: grid;
+  gap: 3px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--sv-tinta-3);
+  border-radius: var(--sv-raio-s);
+  background: rgba(255, 255, 255, .7);
+  font-size: 14px;
+  color: var(--sv-tinta-2);
+}
+.sv-nota-rotulo { font-size: 12px; font-weight: 700; letter-spacing: .03em; color: var(--sv-tinta-3); }
+.sv-nota--ok { border-left-color: var(--sv-ok); background: var(--sv-ok-suave); color: var(--sv-ok-forte); }
+.sv-nota--ok .sv-nota-rotulo { color: var(--sv-ok-forte); }
+
+/* Barra de progresso (ocupação, confirmações) */
+.sv-barra {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--sv-raio-pilula);
+  background: rgba(196, 214, 242, .7);
+  box-shadow: inset 1px 1px 3px rgba(34, 66, 128, .18);
+}
+.sv-barra > * { display: block; height: 100%; border-radius: inherit; background: var(--sv-azul); }
+
+/* ─── Estados: vazio, carregando ──────────────────────────────────── */
+
+.sv-vazio {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--sv-tinta-2);
+}
+.sv-vazio > svg { margin-bottom: 6px; font-size: 34px; color: var(--sv-tinta-3); }
+.sv-vazio strong { font-weight: 600; color: var(--sv-tinta); }
+
+/* ─── Avisos: erro, sucesso, atenção, informação ──────────────────── */
+
+.sv-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(36, 87, 214, .2);
+  border-left-width: 4px;
+  border-radius: var(--sv-raio-s);
+  background: var(--sv-azul-suave);
+  color: var(--sv-azul-forte);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.sv-aviso > svg { flex: none; margin-top: 2px; font-size: 17px; }
+.sv-aviso--erro    { color: var(--sv-sirene-forte);  background: var(--sv-sirene-suave);  border-color: rgba(208, 50, 58, .3);  border-left-color: var(--sv-sirene); }
+.sv-aviso--sucesso { color: var(--sv-ok-forte);      background: var(--sv-ok-suave);      border-color: rgba(27, 138, 90, .28); border-left-color: var(--sv-ok); }
+.sv-aviso--atencao { color: var(--sv-atencao-forte); background: var(--sv-atencao-suave); border-color: rgba(184, 110, 0, .28); border-left-color: var(--sv-atencao); }
+
+/* ─── Modal ───────────────────────────────────────────────────────────
+   <div class="sv-modal-fundo"><div class="sv-modal" role="dialog">...</div></div> */
+
+.sv-modal-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 25, 70, .45);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.sv-modal {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 24px;
+  color: var(--sv-tinta);
+  background: #fff;
+  border: 1px solid var(--sv-borda-card);
+  border-top: 4px solid var(--sv-sirene);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l);
+  box-shadow: 0 30px 60px -20px rgba(7, 34, 70, .55);
+}
+.sv-modal-titulo {
+  margin-bottom: 8px;
+  font-family: var(--sv-fonte-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--sv-azul-forte);
+}
+.sv-modal .sv-acoes { margin-top: 20px; }
+
+/* ─── Paginação ───────────────────────────────────────────────────── */
+
+.sv-paginacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.sv-paginacao :is(button, a) {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-s);
+  background: #fff;
+  color: var(--sv-tinta-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sv-paginacao :is(button, a):hover { color: var(--sv-azul); border-color: var(--sv-azul); }
+.sv-paginacao [aria-current="page"] { color: #fff; background: var(--sv-azul); border-color: var(--sv-azul); }
+.sv-paginacao :disabled { opacity: .5; cursor: not-allowed; }
+
+/* ─── Páginas públicas e de login (sem sidebar) ───────────────────────
+   <div class="sv-app sv-publica">
+     <div class="sv-fundo"><span/><span/><span/></div>
+     <div class="sv-card sv-publica-card"> logo, título, formulário </div>
+   </div>                                                              */
+
+.sv-publica {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 20px;
+  padding: 32px 16px;
+}
+.sv-publica-card {
+  width: min(460px, 100%);
+  padding: 32px 30px 28px;
+  background: #fff;
+}
+.sv-publica-card--largo { width: min(640px, 100%); }
+.sv-publica-topo {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+.sv-publica-logo { display: block; width: 132px; height: auto; margin-bottom: 6px; }
+.sv-publica-titulo {
+  font-family: var(--sv-fonte-display);
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--sv-azul-forte);
+}
+.sv-publica-rodape {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--sv-tinta-2);
+}
+/* Link de texto; também serve em <button> (navegação feita por código) */
+.sv-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--sv-azul);
+  cursor: pointer;
+}
+.sv-link:hover { text-decoration: underline; }
+/* Ícone decorativo no fim do campo */
+.sv-campo-icone > svg.sv-campo-icone-fim { left: auto; right: 12px; }
+
+/* Seleção de módulo (tela inicial): um card por tipo de acesso */
+.sv-modulos { display: grid; gap: 14px; width: min(620px, 100%); }
+.sv-modulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 16px;
+  padding: 18px 20px;
+}
+.sv-modulo-texto { flex: 1 1 200px; min-width: 0; }
+.sv-modulo-texto h2 { font-size: 18px; color: var(--sv-azul-forte); }
+.sv-modulo-texto p { font-size: 14px; color: var(--sv-tinta-2); }
+@media (max-width: 480px) {
+  .sv-publica-card { padding: 26px 20px 22px; }
+}
 
 /* ─── Esqueleto de carregamento ───────────────────────────────────── */
 
@@ -490,4 +1274,137 @@
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* ─── Variações de card e de formulário usadas nas telas internas ─── */
+
+/* Card branco (dentro de um painel que já tem o degradê) */
+.sv-card--branco { background: #fff; }
+/* Card destacado: o usuário marcou interesse / é o item dele */
+.sv-card--marcado { border-color: var(--sv-azul); box-shadow: 0 0 0 2px rgba(36, 87, 214, .18), var(--sv-sombra-media); }
+.sv-card-topo { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.sv-card-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: auto;
+}
+/* Texto cortado em três linhas */
+.sv-tres-linhas {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Chip que remove um filtro ao clicar */
+.sv-chip--removivel { color: var(--sv-azul-forte); background: var(--sv-azul-suave); border-color: rgba(36, 87, 214, .25); }
+/* Formulário de uma coluna só, sem ocupar a tela toda */
+.sv-form-estreito { width: min(720px, 100%); }
+
+/* Botão "voltar" discreto acima do título */
+.sv-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 13.5px;
+  color: var(--sv-tinta-2);
+  cursor: pointer;
+}
+.sv-voltar:hover { color: var(--sv-azul); }
+.sv-voltar svg { transition: transform .3s var(--sv-mola); }
+.sv-voltar:hover svg { transform: translateX(-3px); }
+
+/* Link com peso de título (nome clicável numa tabela) */
+.sv-link--forte { display: inline-flex; align-items: center; gap: 6px; color: var(--sv-tinta); text-align: left; }
+.sv-link--forte svg { flex: none; font-size: 12px; color: var(--sv-tinta-3); }
+.sv-link--forte:hover { color: var(--sv-azul); }
+.sv-centro { text-align: center !important; }
+
+/* ─── Gaveta lateral (escolher um item de uma lista) ──────────────────
+   <div class="sv-gaveta-fundo" /> + <div class="sv-gaveta" role="dialog">  */
+.sv-gaveta-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(10, 25, 70, .4);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+.sv-gaveta {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100%);
+  background: #fff;
+  border-left: 4px solid var(--sv-sirene);
+  box-shadow: -18px 0 40px -18px rgba(7, 34, 70, .5);
+}
+.sv-gaveta-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--sv-linha);
+}
+.sv-gaveta-busca { padding: 14px 22px; border-bottom: 1px solid var(--sv-linha); }
+.sv-gaveta-corpo { flex: 1; overflow-y: auto; }
+.sv-gaveta-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--sv-linha);
+  transition: background-color .15s;
+}
+.sv-gaveta-item:hover { background: var(--sv-fundo-suave); }
+
+/* Ajustes de espaçamento entre peças */
+.sv-secao-titulo:not(:first-child) { margin-top: 24px; }
+.sv-tabela-acoes { flex-wrap: nowrap; }
+.sv-tabela-caixa + .sv-secao-titulo,
+.sv-aviso + .sv-secao-titulo { margin-top: 24px; }
+/* Botão dentro de grade apertada não corta o texto */
+.sv-btn { min-width: max-content; }
+.sv-btn--bloco,
+.sv-btn--quadrado,
+.sv-btn--icone { min-width: 0; }
+
+/* Título de seção com botões ao lado */
+.sv-secao-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+}
+.sv-secao-linha .sv-secao-titulo { margin: 0; }
+.sv-secao-linha:not(:first-child) { margin-top: 10px; }
+/* Linha de lista que leva a outra tela ao clicar */
+.sv-linha--clicavel { cursor: pointer; }
+.sv-btn--inicio { justify-self: start; align-self: flex-start; }
+
+/* Aviso com texto corrido (negrito e links no meio da frase): sem flex, para a frase não quebrar em colunas */
+.sv-aviso { display: block; }
+.sv-aviso > svg { display: inline-block; vertical-align: -3px; margin: 0 6px 0 0; }
+
+/* No celular a barra do menu fica com a altura dela e o conteúdo ocupa o resto
+   (sem isso, em páginas curtas a barra esticava para preencher a tela) */
+@media (max-width: 960px) {
+  .sv-pagina,
+  .sv-app.pga { grid-template-rows: auto minmax(0, 1fr); }
 }

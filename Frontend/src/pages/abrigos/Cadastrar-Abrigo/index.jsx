@@ -1,19 +1,10 @@
 import { useState } from "react";
-import { 
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMapPin, 
-  FaUpload, FaMapMarkerAlt, FaPhoneAlt, FaDog, FaUserNurse,
-  FaWheelchair, FaUtensils, FaBuilding, FaPeopleArrows,
-  FaMedkit, FaMapMarkedAlt,
-  FaLocationArrow, FaMap
-} from 'react-icons/fa';
-import { GoAlertFill } from "react-icons/go";
-import { FaGear } from "react-icons/fa6";
+import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuDog, LuHeartPulse, LuMapPin, LuMapPinned, LuNavigation, LuPhone, LuUpload, LuUser, LuUtensils } from 'react-icons/lu';
 import SeletorLocalidade from "../../../components/SeletorLocalidade";
 import MensagemFeedback from "../../../components/MensagemFeedback";
 import { preencherPorCep, geocodificar } from "../../../services/localizacao";
-import "../../pg_adm/style.css";
-import "./CadastroAbrigo.css";
-import SidebarAdm from '../../../components/SidebarAdm';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 const CadastrarAbrigo = () => {
   const [mensagem, setMensagem] = useState('');
@@ -85,7 +76,7 @@ const CadastrarAbrigo = () => {
     const exata = ['endereco', 'rua'].includes(resultado.precisao)
     setFeedbackGeo({
       tipo: exata ? 'sucesso' : 'aviso',
-      mensagem: `📍 Localização encontrada ${resultado.descricao} (${resultado.latitude.toFixed(5)}, ${resultado.longitude.toFixed(5)})`
+      mensagem: `Localização encontrada ${resultado.descricao} (${resultado.latitude.toFixed(5)}, ${resultado.longitude.toFixed(5)})`
         + (exata ? '' : ' — o marcador ficará próximo, não no ponto exato.'),
     })
   }
@@ -190,52 +181,53 @@ const CadastrarAbrigo = () => {
   }
 
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
 
-      <SidebarAdm ativo="abrigos" />
+      <SidebarGlass ativo="abrigos" />
 
-      <main className="main">
+      <main className="sv-main">
 
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Abrigos &gt; <span>Novo Abrigo</span>
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               Cadastro de Abrigo
             </h1>
-            <p className="subtitle"> Cadastre um novo abrigo</p>
+            <p className="sv-subtitulo"> Cadastre um novo abrigo</p>
           </div>
           <div className="top-icons">
             <img src="/src/assets/logo.png" width="80px" alt="Logo" />
           </div>
         </header>
 
-        <form onSubmit={handleSubmit} className="cadastro-form-container">
+        <form onSubmit={handleSubmit} className="sv-vidro sv-painel sv-form-duas">
 
-          <div className="form-column-left">
+          <div className="sv-form-coluna">
 
-            <div className="form-group">
+            <div className="sv-campo">
               <label htmlFor="status">Status</label>
               <select
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className={`select-status ${status}`}>
+                className={`sv-entrada sv-estado ${status}`}>
                 <option value="ativo">Ativado</option>
                 <option value="manutencao">Manutenção</option>
                 <option value="desativado">Desativado</option>
               </select>
             </div>
 
-            <div className="form-group">
-              <label><FaBuilding /> Nome do Abrigo</label>
+            <div className="sv-campo">
+              <label><LuBuilding2 /> Nome do Abrigo</label>
               <input type="text" name="nome" placeholder="Ex: Escola Municipal Centro" required />
             </div>
 
             {/* CEP primeiro: ao completar, preenche estado, cidade, bairro e rua */}
-            <div className="form-group">
-              <label><FaMapMarkedAlt /> CEP</label>
+            <div className="sv-campo">
+              <label><LuMapPinned /> CEP</label>
               <input
                 type="text"
                 name="cep"
@@ -257,8 +249,8 @@ const CadastrarAbrigo = () => {
             />
 
             {/* Endereço: ao sair do campo, a localização é buscada de novo com o número */}
-            <div className="form-group">
-              <label><FaMapMarkerAlt /> Endereço</label>
+            <div className="sv-campo">
+              <label><LuMapPin /> Endereço</label>
               <input
                 type="text"
                 name="endereco"
@@ -271,27 +263,26 @@ const CadastrarAbrigo = () => {
               <MensagemFeedback feedback={feedbackGeo} />
               <button
                 type="button"
-                className="btn-upload-trigger"
-                style={{ alignSelf: 'flex-start', marginTop: '4px', border: 'none', cursor: 'pointer' }}
+                className="sv-btn sv-btn--vidro sv-btn--p sv-btn--inicio"
                 onClick={() => buscarLocalizacao()}
               >
-                <FaLocationArrow /> Localizar no mapa
+                <LuNavigation /> Localizar no mapa
               </button>
             </div>
 
-            <div className="form-group">
-              <label><FaPhoneAlt /> Telefone</label>
+            <div className="sv-campo">
+              <label><LuPhone /> Telefone</label>
               <input type="text" name="telefone" placeholder="(12) 99999-9999" required />
             </div>
 
-            <div className="form-group">
-              <label><FaUser /> Responsável</label>
+            <div className="sv-campo">
+              <label><LuUser /> Responsável</label>
               <input type="text" name="responsavel" placeholder="Nome do responsável" required />
             </div>
 
-            <div className="form-group">
-              <label><FaBuilding /> Tipo de Abrigo</label>
-              <select className="select-tipo-abrigo" name="tipoAbrigo" required>
+            <div className="sv-campo">
+              <label><LuBuilding2 /> Tipo de Abrigo</label>
+              <select className="sv-entrada" name="tipoAbrigo" required>
                 <option value="" disabled>Selecione o tipo</option>
                 <option value="Escola">Escola</option>
                 <option value="Ginásio">Ginásio</option>
@@ -304,8 +295,8 @@ const CadastrarAbrigo = () => {
               </select>
             </div>
 
-            <div className="form-group">
-              <label><FaPeopleArrows /> Capacidade Total</label>
+            <div className="sv-campo">
+              <label><LuArrowLeftRight /> Capacidade Total</label>
               <input
                 type="number"
                 name="capacidadeTotal"
@@ -319,12 +310,12 @@ const CadastrarAbrigo = () => {
               />
             </div>
 
-            <div className="form-group">
-              <label><FaPeopleArrows /> Capacidade Ocupada</label>
+            <div className="sv-campo">
+              <label><LuArrowLeftRight /> Capacidade Ocupada</label>
               <input
                 type="number"
                 name="capacidadeOcupada"
-                className={`input-capacidade ${erroCapacidade ? 'input-erro' : ''}`}
+                className={`sv-entrada ${erroCapacidade ? 'sv-entrada--erro' : ''}`}
                 placeholder="Ex: 0"
                 onChange={(e) => {
                   const ocupada = parseInt(e.target.value) || 0
@@ -335,49 +326,49 @@ const CadastrarAbrigo = () => {
             </div>
 
             {erroCapacidade && (
-              <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '4px' }}>
+              <p style={{ color: 'var(--sv-sirene)', fontSize: '13px', marginTop: '4px' }}>
                 {erroCapacidade}
               </p>
             )}
 
             {/* Checkboxes de infraestrutura */}
-            <div className="infraestrutura-section">
-              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <div className="sv-form-secao">
+              <h3 className="sv-secao-titulo">
                 Infraestrutura
               </h3>
 
-              <label className="checkbox-card">
+              <label className="sv-opcao">
                 <input type="checkbox" name="possuiAtendimentoMedico" />
-                <div className="checkbox-content">
-                  <FaMedkit className="icon" /><span>Atendimento Médico</span>
+                <div className="sv-opcao-caixa">
+                  <LuBriefcaseMedical className="sv-opcao-icone" /><span>Atendimento Médico</span>
                 </div>
               </label>
 
-              <label className="checkbox-card">
+              <label className="sv-opcao">
                 <input type="checkbox" name="possuiEnfermagem" />
-                <div className="checkbox-content">
-                  <FaUserNurse className="icon" /><span>Enfermagem</span>
+                <div className="sv-opcao-caixa">
+                  <LuHeartPulse className="sv-opcao-icone" /><span>Enfermagem</span>
                 </div>
               </label>
 
-              <label className="checkbox-card">
+              <label className="sv-opcao">
                 <input type="checkbox" name="possuiPets" />
-                <div className="checkbox-content">
-                  <FaDog className="icon" /><span>Pets Bem-Vindos</span>
+                <div className="sv-opcao-caixa">
+                  <LuDog className="sv-opcao-icone" /><span>Pets Bem-Vindos</span>
                 </div>
               </label>
 
-              <label className="checkbox-card">
+              <label className="sv-opcao">
                 <input type="checkbox" name="possuiAcessibilidade" />
-                <div className="checkbox-content">
-                  <FaWheelchair className="icon" /><span>Acessibilidade</span>
+                <div className="sv-opcao-caixa">
+                  <LuAccessibility className="sv-opcao-icone" /><span>Acessibilidade</span>
                 </div>
               </label>
 
-              <label className="checkbox-card">
+              <label className="sv-opcao">
                 <input type="checkbox" name="possuiCozinha" />
-                <div className="checkbox-content">
-                  <FaUtensils className="icon" /><span>Cozinha Comunitária</span>
+                <div className="sv-opcao-caixa">
+                  <LuUtensils className="sv-opcao-icone" /><span>Cozinha Comunitária</span>
                 </div>
               </label>
 
@@ -385,36 +376,36 @@ const CadastrarAbrigo = () => {
           </div>
 
           {/* Coluna direita: foto + botão */}
-          <div className="form-column-right">
+          <div className="sv-form-coluna">
 
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <h3 className="sv-secao-titulo">
               Imagem do Abrigo
             </h3>
 
-            <div className="upload-container">
+            <div className="sv-upload">
               {fotoAbrigo ? (
-                <div className="image-preview">
+                <div className="sv-upload-previa">
                   <img src={`data:image/jpeg;base64,${fotoAbrigo}`} alt="Preview" />
-                  <button type="button" onClick={() => setFotoAbrigo(null)} className="btn-remove-image">
+                  <button type="button" onClick={() => setFotoAbrigo(null)} className="sv-btn sv-btn--perigo-vidro sv-btn--p">
                     Remover Foto
                   </button>
                 </div>
               ) : (
-                <label className="upload-dropzone">
+                <label className="sv-upload-area">
                   <input type="file" accept="image/*" onChange={handleImagem} style={{ display: 'none' }} />
-                  <FaUpload className="upload-icon" />
+                  <LuUpload className="sv-upload-icone" />
                   <p>Foto principal do abrigo</p>
-                  <span className="btn-upload-trigger">Selecionar arquivo do computador</span>
+                  <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
                 </label>
               )}
             </div>
 
-            <div className="form-actions">
-              <button type="submit" className="btn-action salvar">
+            <div className="sv-form-acoes">
+              <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">
                 Cadastrar Abrigo
               </button>
               {mensagem && (
-                <p style={{ color: erroEnvio ? '#ef4444' : '#10b981', fontSize: '14px', textAlign: 'center' }}>
+                <p style={{ color: erroEnvio ? 'var(--sv-sirene)' : 'var(--sv-ok)', fontSize: '14px', textAlign: 'center' }}>
                   {mensagem}
                 </p>
               )}
@@ -423,7 +414,7 @@ const CadastrarAbrigo = () => {
           </div>
         </form>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

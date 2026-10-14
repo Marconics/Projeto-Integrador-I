@@ -1,15 +1,11 @@
 // --------- Imports -----------
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  FaMapMarkerAlt, FaClock, FaUsers, FaCheckCircle, FaUserShield, FaPhoneAlt
-} from 'react-icons/fa';
-import { GoAlertFill } from 'react-icons/go';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuCircleCheck, LuClock, LuMapPin, LuPhone, LuShieldCheck, LuTriangleAlert, LuUsers } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { apiAdmin, formatarDataHora, formatarTempo } from '../../../services/api';
 import { STATUS_ALERTA, STATUS_NOTIFICACAO } from '../constantes';
-import '../../pg_adm/style.css';
-import '../../Solicitacoes-Abrigo/Detalhes-solicitacao/DetalhesSolicitacao.css';
 import '../alertas.css';
 
 const SITUACAO_GRUPO = {
@@ -109,10 +105,11 @@ function DetalhesAlerta() {
   // ─── TELA DE LOADING / ERRO ─────────────────────────────────
   if (carregando || !alerta) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="alertas" />
-        <main className="main">
-          <p style={{ padding: '40px', color: erro ? '#ef4444' : '#64748b' }}>
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="alertas" />
+        <main className="sv-main">
+          <p style={{ padding: '40px', color: erro ? 'var(--sv-sirene)' : 'var(--sv-tinta-2)' }}>
             {erro || 'Carregando alerta...'}
           </p>
         </main>
@@ -134,75 +131,76 @@ function DetalhesAlerta() {
 
   // ─── TELA PRINCIPAL ─────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="alertas" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="alertas" />
 
-      <main className="main">
-        <header className="top">
-          <div>
-            <p className="modulo-breadcrumb"><a href="/alertas">Alertas</a> &gt; <span>#{alerta.id_alerta}</span></p>
-            <h1 className="modulo-titulo">Alerta #{alerta.id_alerta} — {alerta.tipoLabel}</h1>
-            <p className="subtitle">{alerta.bairro} — {alerta.cidade}/{alerta.estado}</p>
+      <main className="sv-main">
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha"><a href="/alertas">Alertas</a> &gt; <span>#{alerta.id_alerta}</span></p>
+            <h1 className="sv-titulo">Alerta #{alerta.id_alerta} — {alerta.tipoLabel}</h1>
+            <p className="sv-subtitulo">{alerta.bairro} — {alerta.cidade}/{alerta.estado}</p>
           </div>
-          <span className={`badge ${alerta.status}`} style={{ fontSize: '14px', padding: '6px 16px' }}>
+          <span className={`sv-tag sv-tag--lisa sv-status ${alerta.status}`} style={{ fontSize: '14px', padding: '6px 16px' }}>
             {STATUS_ALERTA[alerta.status]}
           </span>
         </header>
 
-        <div className="cadastro-form-container">
+        <div className="sv-vidro sv-painel sv-form-duas">
 
           {/* ── COLUNA ESQUERDA ── */}
-          <div className="form-column-left">
+          <div className="sv-form-coluna">
 
-            <h3 className="secao-titulo">Dados da ocorrência</h3>
+            <h3 className="sv-secao-titulo">Dados da ocorrência</h3>
 
             <div className="info-grade">
-              <div className="form-group">
-                <label><GoAlertFill /> Tipo</label>
+              <div className="sv-campo">
+                <label><LuTriangleAlert /> Tipo</label>
                 <p>{alerta.tipoLabel}</p>
               </div>
-              <div className="form-group">
-                <label><GoAlertFill /> Gravidade</label>
-                <p><span className={`badge ${alerta.gravidade}`}>{alerta.gravidadeLabel}</span></p>
+              <div className="sv-campo">
+                <label><LuTriangleAlert /> Gravidade</label>
+                <p><span className={`sv-tag sv-tag--lisa sv-status ${alerta.gravidade}`}>{alerta.gravidadeLabel}</span></p>
               </div>
-              <div className="form-group">
-                <label><FaMapMarkerAlt /> Local</label>
+              <div className="sv-campo">
+                <label><LuMapPin /> Local</label>
                 <p>{alerta.bairro} — {alerta.cidade}/{alerta.estado}</p>
               </div>
-              <div className="form-group">
-                <label><FaUsers /> Relatos</label>
+              <div className="sv-campo">
+                <label><LuUsers /> Relatos</label>
                 <p>
                   {alerta.totalRelatos} de {alerta.confirmacoesNecessarias} necessários
                   {alerta.status === 'em_verificacao' && faltam > 0 && ` (faltam ${faltam})`}
                 </p>
               </div>
-              <div className="form-group">
-                <label><FaClock /> Primeiro relato</label>
+              <div className="sv-campo">
+                <label><LuClock /> Primeiro relato</label>
                 <p>{formatarDataHora(alerta.createdAt)}</p>
               </div>
-              <div className="form-group">
-                <label><FaCheckCircle /> Disparado em</label>
+              <div className="sv-campo">
+                <label><LuCircleCheck /> Disparado em</label>
                 <p>
                   {alerta.disparadoEm ? formatarDataHora(alerta.disparadoEm) : 'Ainda não disparado'}
                   {alerta.disparadoPorAdmin && ' (confirmado pela equipe)'}
                 </p>
               </div>
               {alerta.analisadoPor && (
-                <div className="form-group">
-                  <label><FaUserShield /> Última ação da equipe</label>
+                <div className="sv-campo">
+                  <label><LuShieldCheck /> Última ação da equipe</label>
                   <p>{alerta.analisadoPor.nome}{alerta.finalizadoEm && ` — ${formatarDataHora(alerta.finalizadoEm)}`}</p>
                 </div>
               )}
               {alerta.motivoCancelamento && (
-                <div className="form-group">
-                  <label style={{ color: '#ef4444' }}>Motivo do cancelamento</label>
-                  <p style={{ color: '#ef4444' }}>{alerta.motivoCancelamento}</p>
+                <div className="sv-campo">
+                  <label style={{ color: 'var(--sv-sirene)' }}>Motivo do cancelamento</label>
+                  <p style={{ color: 'var(--sv-sirene)' }}>{alerta.motivoCancelamento}</p>
                 </div>
               )}
             </div>
 
             {/* Relatos dos moradores */}
-            <h3 className="secao-titulo">Relatos dos moradores ({alerta.relatos.length})</h3>
+            <h3 className="sv-secao-titulo">Relatos dos moradores ({alerta.relatos.length})</h3>
 
             {alerta.relatos.map(relato => (
               <div className="relato-item" key={relato.id_relato}>
@@ -217,27 +215,27 @@ function DetalhesAlerta() {
                   <div className="relato-foto">sem foto</div>
                 )}
 
-                <div className="linha-info">
-                  <p className="linha-titulo" style={{ fontSize: '14px' }}>
+                <div className="sv-linha-info">
+                  <p className="sv-linha-titulo" style={{ fontSize: '14px' }}>
                     {relato.inscrito
                       ? <a href={`/inscritos/${relato.inscrito.id_inscrito}`}>{relato.inscrito.nome}</a>
                       : 'Inscrito excluído'}
                   </p>
-                  <p className="linha-subtitulo">
-                    {relato.inscrito?.telefone && <span><FaPhoneAlt /> {relato.inscrito.telefone}</span>}
-                    <span><FaClock /> {formatarTempo(relato.createdAt)}</span>
+                  <p className="sv-linha-meta">
+                    {relato.inscrito?.telefone && <span><LuPhone /> {relato.inscrito.telefone}</span>}
+                    <span><LuClock /> {formatarTempo(relato.createdAt)}</span>
                   </p>
                 </div>
 
-                <span className={`badge ${relato.gravidade}`}>{relato.gravidadeLabel}</span>
+                <span className={`sv-tag sv-tag--lisa sv-status ${relato.gravidade}`}>{relato.gravidadeLabel}</span>
               </div>
             ))}
 
             {/* Situação do envio pelo WhatsApp */}
-            <h3 className="secao-titulo">Notificações pelo WhatsApp</h3>
+            <h3 className="sv-secao-titulo">Notificações pelo WhatsApp</h3>
 
             {!alerta.disparadoEm ? (
-              <p className="aviso">
+              <p className="sv-aviso">
                 Nenhuma notificação enviada ainda. O alerta será enviado quando tiver {alerta.confirmacoesNecessarias} relatos ou se a equipe confirmar.
               </p>
             ) : (
@@ -248,20 +246,20 @@ function DetalhesAlerta() {
                   <div className="notificacao-card"><strong>{inscritosFalha}</strong><span>{STATUS_NOTIFICACAO.falha.toLowerCase()}</span></div>
                 </div>
 
-                <p className="aviso">
+                <p className="sv-aviso">
                   Grupo da cidade: {grupo
                     ? SITUACAO_GRUPO[grupo.status] ?? grupo.status
                     : 'nenhum grupo vinculado à cidade — vincule em Regiões para avisar o grupo.'}
                 </p>
 
                 {correcoes > 0 && (
-                  <p className="aviso alerta">
+                  <p className="sv-aviso sv-aviso--atencao">
                     Correção de cancelamento: {correcoesEnviadas} de {correcoes} enviadas.
                   </p>
                 )}
 
                 {falhas.length > 0 && (
-                  <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--sv-tinta-2)', marginBottom: '12px' }}>
                     {falhas.map(f => (
                       <p key={f.id_notificacao}>✗ {f.destino.split('@')[0]} — {f.erro} ({f.tentativas} tentativas)</p>
                     ))}
@@ -270,7 +268,7 @@ function DetalhesAlerta() {
 
                 {alerta.status === 'ativo' && totalFalhas > 0 && (
                   <button
-                    className="botao-secundario"
+                    className="sv-btn sv-btn--vidro"
                     disabled={enviando}
                     onClick={() => executar(`/alertas/reenviar-falhas/${id}`)}
                   >
@@ -282,36 +280,36 @@ function DetalhesAlerta() {
           </div>
 
           {/* ── COLUNA DIREITA ── */}
-          <div className="form-column-right">
+          <div className="sv-form-coluna">
 
-            <h3 className="secao-titulo">Foto do relato</h3>
+            <h3 className="sv-secao-titulo">Foto do relato</h3>
 
-            <div className="upload-container">
+            <div className="sv-upload">
               {fotoSelecionada ? (
                 <a href={fotoSelecionada} target="_blank" rel="noreferrer">
                   <img src={fotoSelecionada} alt="Foto da ocorrência" className="foto-principal" />
                 </a>
               ) : (
-                <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhuma foto disponível</p>
+                <p style={{ color: 'var(--sv-tinta-3)', fontSize: '14px' }}>Nenhuma foto disponível</p>
               )}
             </div>
 
-            {mensagem && <p className="mensagem-sucesso" style={{ marginBottom: '12px' }}>{mensagem}</p>}
-            {erro && <p className="mensagem-erro" style={{ marginBottom: '12px' }}>{erro}</p>}
+            {mensagem && <p className="sv-aviso sv-aviso--sucesso" style={{ marginBottom: '12px' }}>{mensagem}</p>}
+            {erro && <p className="sv-aviso sv-aviso--erro" style={{ marginBottom: '12px' }}>{erro}</p>}
 
             {/* ── PAINEL DE DECISÃO ── */}
-            <div className="form-actions">
+            <div className="sv-form-acoes">
 
               {alerta.status === 'em_verificacao' && painelDecisao === null && (
                 <>
-                  <p className="aviso alerta">
+                  <p className="sv-aviso sv-aviso--atencao">
                     Aguardando confirmação: {alerta.totalRelatos}/{alerta.confirmacoesNecessarias} relatos.
                     Se a equipe já confirmou a ocorrência, é possível disparar agora.
                   </p>
-                  <button className="btn-action salvar" onClick={() => setPainelDecisao('confirmar')}>
+                  <button className="sv-btn sv-btn--primario sv-btn--bloco" onClick={() => setPainelDecisao('confirmar')}>
                     Confirmar e disparar agora
                   </button>
-                  <button className="btn-action excluir" onClick={() => setPainelDecisao('cancelar')}>
+                  <button className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" onClick={() => setPainelDecisao('cancelar')}>
                     Cancelar alerta
                   </button>
                 </>
@@ -319,10 +317,10 @@ function DetalhesAlerta() {
 
               {alerta.status === 'ativo' && painelDecisao === null && (
                 <>
-                  <button className="btn-action salvar" onClick={() => setPainelDecisao('encerrar')}>
+                  <button className="sv-btn sv-btn--primario sv-btn--bloco" onClick={() => setPainelDecisao('encerrar')}>
                     Encerrar ocorrência (resolvida)
                   </button>
-                  <button className="btn-action excluir" onClick={() => setPainelDecisao('cancelar')}>
+                  <button className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" onClick={() => setPainelDecisao('cancelar')}>
                     Cancelar alerta (enviar correção)
                   </button>
                 </>
@@ -330,37 +328,37 @@ function DetalhesAlerta() {
 
               {painelDecisao === 'confirmar' && (
                 <div className="painel-decisao">
-                  <p style={{ fontSize: '14px', color: '#1e293b' }}>
+                  <p style={{ fontSize: '14px', color: 'var(--sv-tinta)' }}>
                     O alerta será enviado agora para todos os inscritos que moram ou acompanham
                     o bairro {alerta.bairro}, e para o grupo de {alerta.cidade} (se houver).
                   </p>
-                  <button className="btn-action salvar" disabled={enviando} onClick={() => executar(`/alertas/confirmar/${id}`)}>
+                  <button className="sv-btn sv-btn--primario sv-btn--bloco" disabled={enviando} onClick={() => executar(`/alertas/confirmar/${id}`)}>
                     {enviando ? 'Disparando...' : 'Confirmar disparo'}
                   </button>
-                  <button className="btn-action cancelar" onClick={() => setPainelDecisao(null)}>Voltar</button>
+                  <button className="sv-btn sv-btn--vidro sv-btn--bloco" onClick={() => setPainelDecisao(null)}>Voltar</button>
                 </div>
               )}
 
               {painelDecisao === 'encerrar' && (
                 <div className="painel-decisao">
-                  <p style={{ fontSize: '14px', color: '#1e293b' }}>
+                  <p style={{ fontSize: '14px', color: 'var(--sv-tinta)' }}>
                     Use quando a ocorrência foi resolvida. Novos relatos do mesmo tipo neste bairro
                     abrirão um novo alerta. Notificações que ainda não saíram serão canceladas.
                   </p>
-                  <button className="btn-action salvar" disabled={enviando} onClick={() => executar(`/alertas/encerrar/${id}`)}>
+                  <button className="sv-btn sv-btn--primario sv-btn--bloco" disabled={enviando} onClick={() => executar(`/alertas/encerrar/${id}`)}>
                     {enviando ? 'Encerrando...' : 'Confirmar encerramento'}
                   </button>
-                  <button className="btn-action cancelar" onClick={() => setPainelDecisao(null)}>Voltar</button>
+                  <button className="sv-btn sv-btn--vidro sv-btn--bloco" onClick={() => setPainelDecisao(null)}>Voltar</button>
                 </div>
               )}
 
               {painelDecisao === 'cancelar' && (
                 <div className="painel-decisao">
-                  <label style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+                  <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
                     Motivo do cancelamento (obrigatório)
                   </label>
                   {alerta.status === 'ativo' && (
-                    <p className="aviso alerta">
+                    <p className="sv-aviso sv-aviso--atencao">
                       Este alerta já foi disparado. Quem recebeu vai receber uma mensagem de correção com este motivo.
                     </p>
                   )}
@@ -371,15 +369,15 @@ function DetalhesAlerta() {
                     rows={4}
                     maxLength={300}
                   />
-                  <button className="btn-action excluir" disabled={enviando} onClick={handleCancelar}>
+                  <button className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" disabled={enviando} onClick={handleCancelar}>
                     {enviando ? 'Cancelando...' : 'Confirmar cancelamento'}
                   </button>
-                  <button className="btn-action cancelar" onClick={() => setPainelDecisao(null)}>Voltar</button>
+                  <button className="sv-btn sv-btn--vidro sv-btn--bloco" onClick={() => setPainelDecisao(null)}>Voltar</button>
                 </div>
               )}
 
               {painelDecisao === null && (
-                <button className="btn-action cancelar" onClick={handleExcluir}>
+                <button className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" onClick={handleExcluir}>
                   Excluir alerta
                 </button>
               )}
@@ -387,7 +385,7 @@ function DetalhesAlerta() {
           </div>
         </div>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

@@ -1,28 +1,23 @@
 // ─── Imports ──────────────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMap,
-  FaHandHoldingHeart, FaPhoneAlt, FaBuilding
-} from 'react-icons/fa';
-import { FaGear } from 'react-icons/fa6';
-import { GoAlertFill } from 'react-icons/go';
-import '../../pg_adm/style.css';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuBan, LuBuilding2, LuCircleCheck, LuClock, LuPhone, LuTrash2 } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 // ─── Badges e labels ──────────────────────────────────────────────────────────
 const badgeStatus = {
-  aberto:       { label: 'Aberto',       bg: '#dbeafe', cor: '#1e40af' },
-  em_andamento: { label: 'Em andamento', bg: '#fef3c7', cor: '#92400e' },
-  concluido:    { label: 'Concluído',    bg: '#d1fae5', cor: '#065f46' },
-  cancelado:    { label: 'Cancelado',    bg: '#fee2e2', cor: '#991b1b' },
+  aberto:       { label: 'Aberto',       bg: 'var(--sv-azul-suave)', cor: 'var(--sv-azul-forte)' },
+  em_andamento: { label: 'Em andamento', bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+  concluido:    { label: 'Concluído',    bg: 'var(--sv-ok-suave)', cor: 'var(--sv-ok-forte)' },
+  cancelado:    { label: 'Cancelado',    bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)' },
 }
 
 const badgeUrgencia = {
-  baixa:   { label: 'Baixa',   bg: '#f0fdf4', cor: '#166534' },
-  media:   { label: 'Média',   bg: '#fefce8', cor: '#854d0e' },
-  alta:    { label: 'Alta',    bg: '#fff7ed', cor: '#9a3412' },
-  critica: { label: 'Crítica', bg: '#fef2f2', cor: '#7f1d1d' },
+  baixa:   { label: 'Baixa',   bg: 'var(--sv-ok-suave)', cor: 'var(--sv-ok-forte)' },
+  media:   { label: 'Média',   bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+  alta:    { label: 'Alta',    bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+  critica: { label: 'Crítica', bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)' },
 }
 
 const categoriaLabel = {
@@ -35,7 +30,7 @@ const categoriaLabel = {
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const Sidebar = () => (
-  <SidebarAdm ativo="ajuda" />
+  <SidebarGlass ativo="solicitacoes-ajuda" />
 )
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -133,10 +128,11 @@ function DetalhesSolicitacaoAjuda() {
   // ─── Loading / erro ───────────────────────────────────────────────────────────
   if (carregando) {
     return (
-      <div className="dashboard">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <Sidebar />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando solicitação...</p>
+        <main className="sv-main">
+          <p className="sv-vazio">Carregando solicitação...</p>
         </main>
       </div>
     )
@@ -144,95 +140,91 @@ function DetalhesSolicitacaoAjuda() {
 
   if (!dados) {
     return (
-      <div className="dashboard">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <Sidebar />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#ef4444' }}>{erro ?? 'Solicitação não encontrada.'}</p>
+        <main className="sv-main">
+          <p className="sv-aviso sv-aviso--erro" role="alert">{erro ?? 'Solicitação não encontrada.'}</p>
         </main>
       </div>
     )
   }
 
-  const badge    = badgeStatus[dados.status]    ?? { label: dados.status,    bg: '#f1f5f9', cor: '#64748b' }
-  const urgBadge = badgeUrgencia[dados.urgencia] ?? { label: dados.urgencia, bg: '#f1f5f9', cor: '#64748b' }
+  const badge    = badgeStatus[dados.status]    ?? { label: dados.status,    bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)' }
+  const urgBadge = badgeUrgencia[dados.urgencia] ?? { label: dados.urgencia, bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)' }
   const podeMudar = dados.status === 'aberto' || dados.status === 'em_andamento'
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
       <Sidebar />
 
-      <main className="main">
+      <main className="sv-main">
 
         {/* Header */}
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Abrigos &gt;{' '}
-              <span
-                style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                onClick={() => navigate(`/detalhes-abrigos/${dados.abrigoId}`)}
-              >
+              <button type="button" className="sv-link" onClick={() => navigate(`/detalhes-abrigos/${dados.abrigoId}`)}>
                 {dados.abrigo?.nome ?? 'Abrigo'}
-              </span>
+              </button>
               {' '}&gt;{' '}
-              <span
-                style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                onClick={() => navigate(`/abrigos/${dados.abrigoId}/solicitacoes-ajuda`)}
-              >
+              <button type="button" className="sv-link" onClick={() => navigate(`/abrigos/${dados.abrigoId}/solicitacoes-ajuda`)}>
                 Solicitações
-              </span>
+              </button>
               {' '}&gt; Detalhes
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               {dados.titulo}
             </h1>
           </div>
         </header>
 
         {/* Grid principal */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', alignItems: 'start' }}>
+        <div className="sv-duas-colunas">
 
           {/* Coluna esquerda — conteúdo */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="sv-pilha">
 
             {/* Card principal */}
-            <div className="panel" style={{ background: '#fff', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <div className="sv-vidro sv-painel">
 
               {/* Badges */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                <span style={{ background: badge.bg, color: badge.cor, padding: '5px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+              <div className="sv-etiquetas">
+                <span className="sv-tag sv-tag--lisa sv-tag--g" style={{ background: badge.bg, color: badge.cor }}>
                   {badge.label}
                 </span>
-                <span style={{ background: urgBadge.bg, color: urgBadge.cor, padding: '5px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+                <span className="sv-tag sv-tag--lisa sv-tag--g" style={{ background: urgBadge.bg, color: urgBadge.cor }}>
                   Urgência: {urgBadge.label}
                 </span>
-                <span style={{ background: '#f1f5f9', color: '#475569', padding: '5px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+                <span className="sv-tag sv-tag--lisa sv-tag--g sv-tag--neutro">
                   {categoriaLabel[dados.categoria] ?? dados.categoria}
                 </span>
               </div>
 
               {/* Descrição */}
-              <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '8px' }}>Descrição</h3>
-              <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
+              <h3 className="sv-secao-titulo">Descrição</h3>
+              <p className="sv-texto-longo">
                 {dados.descricao}
               </p>
 
               {/* Observação de fechamento, se houver */}
               {dados.observacaoFechamento && (
-                <div style={{ marginTop: '20px', padding: '14px', background: '#f8fafc', borderRadius: '8px', borderLeft: '3px solid #94a3b8' }}>
-                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8', marginBottom: '4px' }}>OBSERVAÇÃO DO FECHAMENTO</p>
-                  <p style={{ fontSize: '14px', color: '#475569' }}>{dados.observacaoFechamento}</p>
+                <div className="sv-nota">
+                  <p className="sv-nota-rotulo">OBSERVAÇÃO DO FECHAMENTO</p>
+                  <p>{dados.observacaoFechamento}</p>
                 </div>
               )}
 
               {/* Voluntário que atendeu, se houver */}
               {dados.voluntario && (
-                <div style={{ marginTop: '16px', padding: '12px 16px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#166534', marginBottom: '4px' }}>ATENDIDO POR</p>
-                  <p style={{ fontSize: '14px', color: '#166534', fontWeight: '600' }}>{dados.voluntario.nome}</p>
+                <div className="sv-nota sv-nota--ok">
+                  <p className="sv-nota-rotulo">ATENDIDO POR</p>
+                  <p><strong>{dados.voluntario.nome}</strong></p>
                   {dados.voluntario.email && (
-                    <p style={{ fontSize: '13px', color: '#4ade80' }}>{dados.voluntario.email}</p>
+                    <p>{dados.voluntario.email}</p>
                   )}
                 </div>
               )}
@@ -240,21 +232,21 @@ function DetalhesSolicitacaoAjuda() {
 
             {/* Card do abrigo — contato */}
             {dados.abrigo && (
-              <div className="panel" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FaBuilding style={{ color: '#64748b' }} /> Abrigo vinculado
+              <div className="sv-vidro sv-painel">
+                <h3 className="sv-secao-titulo">
+                  <LuBuilding2 /> Abrigo vinculado
                 </h3>
-                <p style={{ fontWeight: '600', color: '#0f172a', fontSize: '15px', margin: '0 0 4px' }}>{dados.abrigo.nome}</p>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 8px' }}>
+                <p className="sv-destaque">{dados.abrigo.nome}</p>
+                <p className="sv-apoio">
                   {dados.abrigo.endereco}{dados.abrigo.bairro ? `, ${dados.abrigo.bairro}` : ''} — {dados.abrigo.cidade}/{dados.abrigo.estado}
                 </p>
                 {dados.abrigo.telefone && (
-                  <p style={{ fontSize: '13px', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <FaPhoneAlt /> {dados.abrigo.telefone}
+                  <p className="sv-apoio sv-apoio--icone">
+                    <LuPhone /> {dados.abrigo.telefone}
                   </p>
                 )}
                 {dados.abrigo.responsavel && (
-                  <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                  <p className="sv-apoio">
                     Responsável: <strong>{dados.abrigo.responsavel}</strong>
                   </p>
                 )}
@@ -263,171 +255,137 @@ function DetalhesSolicitacaoAjuda() {
           </div>
 
           {/* Coluna direita — ações e meta */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="sv-pilha">
 
             {/* Card de ações */}
-            <div className="panel" style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>Ações</h3>
+            <div className="sv-vidro sv-painel">
+              <h3 className="sv-secao-titulo">Ações</h3>
 
-              {podeMudar && (
-                <>
-                  {/* Botão Em andamento — só aparece se ainda estiver aberto */}
-                  {dados.status === 'aberto' && (
+              <div className="sv-form-acoes">
+                {podeMudar && (
+                  <>
+                    {/* Botão Em andamento — só aparece se ainda estiver aberto */}
+                    {dados.status === 'aberto' && (
+                      <button
+                        className="sv-btn sv-btn--vidro sv-btn--bloco"
+                        onClick={() => handleAtualizarStatus('em_andamento')}
+                        disabled={salvando}
+                      >
+                        <LuClock /> Marcar como Em andamento
+                      </button>
+                    )}
+
+                    {/* Botão Concluir */}
                     <button
-                      onClick={() => handleAtualizarStatus('em_andamento')}
-                      disabled={salvando}
-                      style={{
-                        width: '100%', marginBottom: '10px',
-                        padding: '10px', borderRadius: '8px', border: 'none',
-                        background: '#fef3c7', color: '#92400e',
-                        fontWeight: '700', fontSize: '14px', cursor: 'pointer'
-                      }}
+                      className="sv-btn sv-btn--primario sv-btn--bloco"
+                      onClick={() => setModal('concluir')}
                     >
-                      Marcar como Em andamento
+                      <LuCircleCheck /> Concluir solicitação
                     </button>
-                  )}
 
-                  {/* Botão Concluir */}
-                  <button
-                    onClick={() => setModal('concluir')}
-                    style={{
-                      width: '100%', marginBottom: '10px',
-                      padding: '10px', borderRadius: '8px', border: 'none',
-                      background: '#d1fae5', color: '#065f46',
-                      fontWeight: '700', fontSize: '14px', cursor: 'pointer'
-                    }}
-                  >
-                    Concluir solicitação
-                  </button>
+                    {/* Botão Cancelar */}
+                    <button
+                      className="sv-btn sv-btn--perigo-vidro sv-btn--bloco"
+                      onClick={() => setModal('cancelar')}
+                    >
+                      <LuBan /> Cancelar solicitação
+                    </button>
+                  </>
+                )}
 
-                  {/* Botão Cancelar */}
-                  <button
-                    onClick={() => setModal('cancelar')}
-                    style={{
-                      width: '100%', marginBottom: '10px',
-                      padding: '10px', borderRadius: '8px', border: 'none',
-                      background: '#fee2e2', color: '#991b1b',
-                      fontWeight: '700', fontSize: '14px', cursor: 'pointer'
-                    }}
-                  >
-                    Cancelar solicitação
-                  </button>
-                </>
-              )}
+                {/* Botão Apagar — sempre visível */}
+                <button
+                  className="sv-btn sv-btn--perigo-vidro sv-btn--bloco"
+                  onClick={handleExcluir}
+                >
+                  <LuTrash2 /> Apagar registro
+                </button>
+              </div>
 
-              {/* Botão Apagar — sempre visível */}
-              <button
-                onClick={handleExcluir}
-                style={{
-                  width: '100%',
-                  padding: '10px', borderRadius: '8px',
-                  border: '1px solid #fca5a5',
-                  background: 'transparent', color: '#ef4444',
-                  fontWeight: '600', fontSize: '13px', cursor: 'pointer'
-                }}
-              >
-                Apagar registro
-              </button>
-
-              {erro && <p style={{ fontSize: '13px', color: '#ef4444', marginTop: '10px' }}>{erro}</p>}
+              {erro && <p className="sv-aviso sv-aviso--erro" role="alert" style={{ marginTop: '12px' }}>{erro}</p>}
             </div>
 
             {/* Card de metadados */}
-            <div className="panel" style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>Informações</h3>
+            <div className="sv-vidro sv-painel">
+              <h3 className="sv-secao-titulo">Informações</h3>
 
-              {[
-                ['Criado por',   dados.criadoPor?.nome ?? '—'],
-                ['Criado em',    dados.createdAt ? new Date(dados.createdAt).toLocaleString('pt-BR') : '—'],
-                ['Atualizado',   dados.updatedAt ? new Date(dados.updatedAt).toLocaleString('pt-BR') : '—'],
-                ['Interesses',   `${dados.interesses?.length ?? 0} voluntário(s)`],
-              ].map(([chave, valor]) => (
-                <div key={chave} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
-                  <span style={{ color: '#94a3b8', fontWeight: '600' }}>{chave}</span>
-                  <span style={{ color: '#0f172a', fontWeight: '500', textAlign: 'right', maxWidth: '180px' }}>{valor}</span>
-                </div>
-              ))}
+              <div className="sv-pares">
+                {[
+                  ['Criado por',   dados.criadoPor?.nome ?? '—'],
+                  ['Criado em',    dados.createdAt ? new Date(dados.createdAt).toLocaleString('pt-BR') : '—'],
+                  ['Atualizado',   dados.updatedAt ? new Date(dados.updatedAt).toLocaleString('pt-BR') : '—'],
+                  ['Interesses',   `${dados.interesses?.length ?? 0} voluntário(s)`],
+                ].map(([chave, valor]) => (
+                  <div key={chave} className="sv-par">
+                    <span>{chave}</span>
+                    <strong>{valor}</strong>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* ─── Modal de confirmação ─────────────────────────────────────────────── */}
         {modal && (
-          <div style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(15,23,42,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              background: '#fff', borderRadius: '14px',
-              padding: '28px', width: '100%', maxWidth: '460px',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.18)'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>
+          <div className="sv-modal-fundo">
+            <div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="modal-ajuda-titulo">
+              <h3 id="modal-ajuda-titulo" className="sv-modal-titulo">
                 {modal === 'concluir' ? 'Concluir solicitação' : 'Cancelar solicitação'}
               </h3>
-              <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>
+              <p className="sv-apoio" style={{ marginBottom: '18px' }}>
                 {modal === 'concluir'
                   ? 'Registre como foi atendida e, se quiser, informe o voluntário que ajudou.'
                   : 'Informe o motivo do cancelamento (opcional).'}
               </p>
 
-              {/* Select de voluntário — só no modal de concluir */}
-              {modal === 'concluir' && (
-                <div style={{ marginBottom: '14px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '6px' }}>
-                    Voluntário que atendeu (opcional)
-                  </label>
-                  <select
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', color: '#0f172a' }}
-                    value={voluntarioId}
-                    onChange={e => setVoluntarioId(e.target.value)}
-                  >
-                    <option value="">Nenhum / não identificado</option>
-                    <option value="anonimo">Anônimo</option>
-                    {voluntarios.map(v => (
-                      <option key={v.id_voluntario} value={v.id_voluntario}>{v.nome}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div className="sv-form">
+                {/* Select de voluntário — só no modal de concluir */}
+                {modal === 'concluir' && (
+                  <div className="sv-campo">
+                    <label htmlFor="modal-ajuda-voluntario">
+                      Voluntário que atendeu (opcional)
+                    </label>
+                    <select
+                      id="modal-ajuda-voluntario"
+                      value={voluntarioId}
+                      onChange={e => setVoluntarioId(e.target.value)}
+                    >
+                      <option value="">Nenhum / não identificado</option>
+                      <option value="anonimo">Anônimo</option>
+                      {voluntarios.map(v => (
+                        <option key={v.id_voluntario} value={v.id_voluntario}>{v.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-              {/* Observação */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569', display: 'block', marginBottom: '6px' }}>
-                  Observação (opcional)
-                </label>
-                <textarea
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
-                  value={observacao}
-                  onChange={e => setObservacao(e.target.value)}
-                  placeholder="Ex: Recebemos 40 cobertores doados pela empresa X..."
-                />
+                {/* Observação */}
+                <div className="sv-campo">
+                  <label htmlFor="modal-ajuda-observacao">
+                    Observação (opcional)
+                  </label>
+                  <textarea
+                    id="modal-ajuda-observacao"
+                    value={observacao}
+                    onChange={e => setObservacao(e.target.value)}
+                    placeholder="Ex: Recebemos 40 cobertores doados pela empresa X..."
+                  />
+                </div>
               </div>
 
               {/* Botões do modal */}
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="sv-acoes sv-acoes--iguais">
                 <button
+                  className={`sv-btn ${modal === 'concluir' ? 'sv-btn--primario' : 'sv-btn--perigo'}`}
                   onClick={() => handleAtualizarStatus(modal === 'concluir' ? 'concluido' : 'cancelado')}
                   disabled={salvando}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-                    background: modal === 'concluir' ? '#0f172a' : '#ef4444',
-                    color: '#fff', fontWeight: '700', fontSize: '14px',
-                    cursor: salvando ? 'not-allowed' : 'pointer',
-                    opacity: salvando ? 0.7 : 1
-                  }}
                 >
                   {salvando ? 'Salvando...' : modal === 'concluir' ? 'Confirmar conclusão' : 'Confirmar cancelamento'}
                 </button>
                 <button
+                  className="sv-btn sv-btn--vidro"
                   onClick={() => { setModal(null); setObservacao(''); setVoluntarioId('') }}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: '8px',
-                    border: '1px solid #e2e8f0', background: '#f8fafc',
-                    color: '#334155', fontWeight: '600', fontSize: '14px', cursor: 'pointer'
-                  }}
                 >
                   Voltar
                 </button>
@@ -436,7 +394,7 @@ function DetalhesSolicitacaoAjuda() {
           </div>
         )}
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

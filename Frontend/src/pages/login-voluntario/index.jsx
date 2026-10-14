@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import { LuLock, LuLogIn, LuMail } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
+import logoSosVale from '../../assets/logo-sosvale.png';
+import '../../styles/sosvale-glass.css';
 
 const LoginVoluntario = () => {
     const navigate = useNavigate();
@@ -48,59 +50,61 @@ const LoginVoluntario = () => {
     }
 
     return (
-        <div className="container-page">
-            <div className="card-cadastro">
-                <div className="header-card">
-                    <div className="icon-user-header">
-                        <img src="src/assets/logo.png" width="120" />
-                    </div>
-                    <h1>Login Voluntário</h1>
-                    <p className="subtitle">Acesse sua conta para continuar</p>
+        <div className="sv-app sv-publica">
+            <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+
+            <div className="sv-card sv-publica-card">
+                <div className="sv-publica-topo">
+                    <img className="sv-publica-logo" src={logoSosVale} alt="S.O.S Vale" />
+                    <h1 className="sv-publica-titulo">Login Voluntário</h1>
+                    <p className="sv-subtitulo">Acesse sua conta para continuar</p>
                 </div>
 
-                <form onSubmit={fazerLogin}>
-                    <div className="input-group">
-                        <label>E-mail</label>
-                        <div className="box1">
-                            <FaEnvelope className="icon" />
+                <form onSubmit={fazerLogin} className="sv-form">
+                    <div className="sv-campo">
+                        <label htmlFor="vol-email">E-mail</label>
+                        <span className="sv-campo-icone">
+                            <LuMail />
                             <input
+                                id="vol-email"
                                 type="email"
                                 placeholder="seu@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                             />
-                        </div>
+                        </span>
                     </div>
 
-                    <div className="input-group">
-                        <label>Senha</label>
-                        <div className="box1">
-                            <FaLock className="icon" />
+                    <div className="sv-campo">
+                        <label htmlFor="vol-senha">Senha</label>
+                        <span className="sv-campo-icone">
+                            <LuLock />
                             <input
+                                id="vol-senha"
                                 type="password"
                                 placeholder="Sua senha"
                                 value={senha}
                                 onChange={(e) => setSenha(e.target.value)}
                                 required
                             />
-                        </div>
+                        </span>
                     </div>
 
                     {/* Exibe mensagem de erro se o login falhar */}
-                    {erro && <p className="mensagem-erro">{erro}</p>}
+                    {erro && <p className="sv-aviso sv-aviso--erro" role="alert">{erro}</p>}
 
-                    <div className="button-cad1">
-                        <button type="submit">Entrar</button>
-                    </div>
+                    <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">
+                        <LuLogIn /> Entrar
+                    </button>
                 </form>
 
                 {/* Link para quem ainda não tem conta */}
-                <p className="link-secundario">
+                <p className="sv-publica-rodape">
                     Ainda não tem conta?{" "}
-                    <span onClick={() => navigate('/cadastro-voluntario')}>
+                    <button type="button" className="sv-link" onClick={() => navigate('/cadastro-voluntario')}>
                         Cadastre-se
-                    </span>
+                    </button>
                 </p>
             </div>
         </div>

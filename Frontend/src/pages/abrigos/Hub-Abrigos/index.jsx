@@ -3,13 +3,11 @@
 // de Abrigos do voluntário — estilos em styles/listagem.css).
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSearch, FaPlus, FaPhoneAlt, FaHandHoldingHeart, FaTimes, FaUsers, FaUser, FaClipboardList } from "react-icons/fa";
-import { FaLocationDot } from "react-icons/fa6";
-import { GoAlertFill } from "react-icons/go";
+import { LuClipboardList, LuHandHeart, LuMapPin, LuPhone, LuPlus, LuSearch, LuTriangleAlert, LuUser, LuUsers, LuX } from 'react-icons/lu';
 
-import "../../pg_adm/style.css";
 import "../../../styles/listagem.css";
-import SidebarAdm from '../../../components/SidebarAdm';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { API_URL } from '../../../services/api';
 import {
   ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural
@@ -123,9 +121,10 @@ const ListarAbrigos = () => {
   // ─── TELA DE CARREGANDO / ERRO ───────────────────────────────
   if (carregando || erro) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="abrigos" />
-        <main className="main pagina-listagem">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="abrigos" />
+        <main className="sv-main pagina-listagem">
           <p className={erro ? 'lg-estado lg-estado--erro' : 'lg-estado'}>
             {erro ? `Não foi possível carregar os abrigos: ${erro}` : 'Carregando abrigos...'}
           </p>
@@ -135,26 +134,27 @@ const ListarAbrigos = () => {
   }
 
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="abrigos" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="abrigos" />
 
-      <main className="main pagina-listagem">
+      <main className="sv-main pagina-listagem">
 
         {/* ── CABEÇALHO ── */}
         <header className="lg-topo-linha">
           <div>
-            <p className="lg-breadcrumb">Abrigos &gt;</p>
-            <h1 className="lg-titulo">Hub de Abrigos</h1>
-            <p className="lg-subtitulo">
+            <p className="sv-trilha">Abrigos &gt;</p>
+            <h1 className="sv-titulo">Hub de Abrigos</h1>
+            <p className="sv-subtitulo">
               {plural(abrigos.length, 'abrigo cadastrado', 'abrigos cadastrados')} · {plural(totalPessoas, 'pessoa acolhida', 'pessoas acolhidas')} · {plural(totalVagas, 'vaga livre', 'vagas livres')}
             </p>
           </div>
           <div className="lg-topo-acoes">
             <button className="lg-botao-secundario" onClick={() => navigate('/listar-solicitação-abrigo')}>
-              <FaClipboardList /> Solicitações de abrigo
+              <LuClipboardList /> Solicitações de abrigo
             </button>
             <button className="lg-botao-primario" onClick={() => navigate('/cadastrar-abrigos')}>
-              <FaPlus /> Novo abrigo
+              <LuPlus /> Novo abrigo
             </button>
           </div>
         </header>
@@ -163,7 +163,7 @@ const ListarAbrigos = () => {
         <section className="lg-filtros">
           <div className="lg-filtros-linha">
             <div className="lg-busca">
-              <FaSearch className="lg-busca-icone" />
+              <LuSearch className="lg-busca-icone" />
               <input
                 placeholder="Buscar nome, bairro, responsável..."
                 value={filtros.busca}
@@ -207,13 +207,13 @@ const ListarAbrigos = () => {
                 className={`lg-chip${filtros.emAlerta ? ' lg-chip--ativo' : ''}`}
                 onClick={() => mudarFiltro('emAlerta', !filtros.emAlerta)}
               >
-                <GoAlertFill /> Em alerta
+                <LuTriangleAlert /> Em alerta
               </button>
               <button
                 className={`lg-chip${filtros.comPedidos ? ' lg-chip--ativo' : ''}`}
                 onClick={() => mudarFiltro('comPedidos', !filtros.comPedidos)}
               >
-                <FaHandHoldingHeart /> Com pedidos de ajuda
+                <LuHandHeart /> Com pedidos de ajuda
               </button>
             </div>
           </div>
@@ -240,7 +240,7 @@ const ListarAbrigos = () => {
           </span>
           {filtrosAtivos && (
             <button className="lg-limpar" onClick={() => setFiltros(FILTROS_INICIAIS)}>
-              <FaTimes /> Limpar filtros
+              <LuX /> Limpar filtros
             </button>
           )}
         </div>
@@ -264,14 +264,14 @@ const ListarAbrigos = () => {
                   <div className="lg-card-topo">
                     <span className="lg-tipo">{abrigo.tipoAbrigo}</span>
                     <div className="lg-selos">
-                      {abrigo.statusAlerta && <span className="lg-selo lg-selo--vermelho"><GoAlertFill /> Em alerta</span>}
+                      {abrigo.statusAlerta && <span className="lg-selo lg-selo--vermelho"><LuTriangleAlert /> Em alerta</span>}
                       <span className={`lg-selo ${status.classe}`}>{status.label}</span>
                     </div>
                   </div>
 
                   <h3 className="lg-card-nome" title={abrigo.nome}>{abrigo.nome}</h3>
                   <p className="lg-card-local">
-                    <FaLocationDot /> {abrigo.bairro ? `${abrigo.bairro}, ` : ''}{abrigo.cidade}/{abrigo.estado}
+                    <LuMapPin /> {abrigo.bairro ? `${abrigo.bairro}, ` : ''}{abrigo.cidade}/{abrigo.estado}
                   </p>
                   <p className="lg-card-endereco" title={abrigo.endereco}>{abrigo.endereco}</p>
 
@@ -295,19 +295,19 @@ const ListarAbrigos = () => {
                         title="Ver as solicitações de ajuda deste abrigo"
                         onClick={() => navigate(`/abrigos/${abrigo.id}/solicitacoes-ajuda`)}
                       >
-                        <FaHandHoldingHeart /> {pedidos} pedido{pedidos !== 1 ? 's' : ''}
+                        <LuHandHeart /> {pedidos} pedido{pedidos !== 1 ? 's' : ''}
                       </button>
                     )}
                   </div>
 
                   <p className="lg-card-telefone">
-                    <FaUser /> {abrigo.responsavel || 'Responsável não informado'}
-                    {abrigo.telefone && <> · <FaPhoneAlt /> {abrigo.telefone}</>}
+                    <LuUser /> {abrigo.responsavel || 'Responsável não informado'}
+                    {abrigo.telefone && <> · <LuPhone /> {abrigo.telefone}</>}
                   </p>
 
                   <div className="lg-card-acoes">
                     <button className="lg-botao-secundario" onClick={() => navigate(`/abrigos/${abrigo.id}/vitimas`)}>
-                      <FaUsers /> Vítimas
+                      <LuUsers /> Vítimas
                     </button>
                     <button className="lg-botao-card" onClick={() => navigate(`/detalhes-abrigos/${abrigo.id}`)}>
                       Ver detalhes
@@ -319,7 +319,7 @@ const ListarAbrigos = () => {
           </section>
         )}
 
-        <footer className="lg-rodape">
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

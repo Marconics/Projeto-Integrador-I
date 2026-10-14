@@ -1,13 +1,10 @@
 // --------- Imports -----------
 import { useState, useEffect, useCallback } from 'react';
-import {
-  FaPlus, FaTrash, FaEdit, FaSave, FaTimes, FaWhatsapp, FaSearch, FaMapMarkedAlt, FaCheckCircle
-} from 'react-icons/fa';
-import { GoAlertFill } from 'react-icons/go';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuCircleCheck, LuMapPinned, LuMessageCircle, LuPencil, LuPlus, LuSave, LuSearch, LuTrash2, LuTriangleAlert, LuX } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { apiAdmin } from '../../../services/api';
 import { NIVEIS_RISCO } from '../../alertas/constantes';
-import '../../pg_adm/style.css';
 import '../../alertas/alertas.css';
 
 const bairroVazio = { nome: '', nivelRisco: 'baixo', populacaoEstimada: '', areaKm2: '' }
@@ -208,30 +205,31 @@ function GerenciarRegioes() {
 
   // ─── TELA ────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="regioes" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="regioes" />
 
-      <main className="main">
-        <header className="top">
-          <div>
-            <p className="modulo-breadcrumb"><a href="/pg_adm">Home</a> &gt; <span>Regiões</span></p>
-            <h1 className="modulo-titulo">Regiões</h1>
-            <p className="subtitle">Cidades, bairros, nível de risco e o grupo de WhatsApp que recebe os alertas de cada cidade</p>
+      <main className="sv-main">
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha"><a href="/pg_adm">Home</a> &gt; <span>Regiões</span></p>
+            <h1 className="sv-titulo">Regiões</h1>
+            <p className="sv-subtitulo">Cidades, bairros, nível de risco e o grupo de WhatsApp que recebe os alertas de cada cidade</p>
           </div>
-          <div className="modulo-acoes-topo">
-            <a className="botao-secundario" href="/alertas"><GoAlertFill /> Alertas</a>
-            <a className="botao-secundario" href="/mapa"><FaMapMarkedAlt /> Mapa</a>
+          <div className="sv-topo-acoes">
+            <a className="sv-btn sv-btn--vidro" href="/alertas"><LuTriangleAlert /> Alertas</a>
+            <a className="sv-btn sv-btn--vidro" href="/mapa"><LuMapPinned /> Mapa</a>
           </div>
         </header>
 
-        {mensagem && <p className="mensagem-sucesso">{mensagem}</p>}
-        {erro && <p className="mensagem-erro">{erro}</p>}
+        {mensagem && <p className="sv-aviso sv-aviso--sucesso">{mensagem}</p>}
+        {erro && <p className="sv-aviso sv-aviso--erro">{erro}</p>}
 
         <section className="regioes-grade">
 
           {/* ── CIDADES ── */}
-          <div className="panel">
-            <h3 className="secao-titulo">Cidades</h3>
+          <div className="sv-vidro sv-painel">
+            <h3 className="sv-secao-titulo">Cidades</h3>
 
             <div className="barra-filtros">
               <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ width: '100%' }}>
@@ -243,7 +241,7 @@ function GerenciarRegioes() {
             </div>
 
             {cidadesFiltradas.length === 0 && (
-              <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '16px' }}>Nenhuma cidade cadastrada.</p>
+              <p style={{ fontSize: '14px', color: 'var(--sv-tinta-3)', marginBottom: '16px' }}>Nenhuma cidade cadastrada.</p>
             )}
 
             {cidadesFiltradas.map(c => (
@@ -256,14 +254,14 @@ function GerenciarRegioes() {
                   {c.nome}/{c.estado}<br />
                   <small>{c.totalBairros} bairro{c.totalBairros !== 1 ? 's' : ''} · {c.totalAbrigos} abrigo{c.totalAbrigos !== 1 ? 's' : ''}</small>
                 </span>
-                {c.grupoWhatsappId && <FaWhatsapp title="Grupo de alertas vinculado" style={{ color: '#16a34a' }} />}
+                {c.grupoWhatsappId && <LuMessageCircle title="Grupo de alertas vinculado" style={{ color: 'var(--sv-ok)' }} />}
               </button>
             ))}
 
-            <h3 className="secao-titulo">Nova cidade</h3>
+            <h3 className="sv-secao-titulo">Nova cidade</h3>
             <form onSubmit={handleCadastrarCidade} className="painel-decisao">
               <select
-                className="select-cidade"
+                className="sv-entrada"
                 value={novaCidade.estadoId}
                 onChange={e => setNovaCidade({ ...novaCidade, estadoId: e.target.value })}
                 required
@@ -272,45 +270,45 @@ function GerenciarRegioes() {
                 {estados.map(e => <option key={e.id_estado} value={e.id_estado}>{e.nome} ({e.sigla})</option>)}
               </select>
               <input
-                className="select-cidade"
+                className="sv-entrada"
                 placeholder="Nome da cidade"
                 value={novaCidade.nome}
                 onChange={e => setNovaCidade({ ...novaCidade, nome: e.target.value })}
                 required
               />
-              <button type="submit" className="botao-primario"><FaPlus /> Cadastrar cidade</button>
+              <button type="submit" className="sv-btn sv-btn--primario"><LuPlus /> Cadastrar cidade</button>
             </form>
           </div>
 
           {/* ── CIDADE SELECIONADA: dados, grupo e bairros ── */}
-          <div className="panel">
+          <div className="sv-vidro sv-painel">
             {!cidadeSelecionada ? (
-              <p style={{ color: '#94a3b8' }}>Cadastre ou selecione uma cidade.</p>
+              <p style={{ color: 'var(--sv-tinta-3)' }}>Cadastre ou selecione uma cidade.</p>
             ) : (
               <>
-                <h3 className="secao-titulo">{cidadeSelecionada.nome}/{cidadeSelecionada.estado}</h3>
+                <h3 className="sv-secao-titulo">{cidadeSelecionada.nome}/{cidadeSelecionada.estado}</h3>
 
-                <div className="formulario-linha" style={{ gridTemplateColumns: '1fr 2fr auto auto' }}>
+                <div className="formulario-linha formulario-linha--cidade">
                   <label>
                     Nome
                     <input value={nomeCidade} onChange={e => setNomeCidade(e.target.value)} />
                   </label>
                   <label>
-                    <span><FaWhatsapp /> Grupo de alertas (ID do grupo)</span>
+                    <span><LuMessageCircle /> Grupo de alertas (ID do grupo)</span>
                     <input
                       value={grupoCidade}
                       onChange={e => setGrupoCidade(e.target.value)}
                       placeholder="Ex: 120363012345678901@g.us"
                     />
                   </label>
-                  <button type="button" className="botao-primario" onClick={handleSalvarCidade}><FaSave /> Salvar</button>
-                  <button type="button" className="botao-icone perigo" title="Excluir cidade" onClick={handleExcluirCidade}><FaTrash /></button>
+                  <button type="button" className="sv-btn sv-btn--primario" onClick={handleSalvarCidade}><LuSave /> Salvar</button>
+                  <button type="button" className="sv-btn sv-btn--perigo-vidro sv-btn--quadrado" title="Excluir cidade" onClick={handleExcluirCidade}><LuTrash2 /></button>
                 </div>
 
                 {/* Link de convite: o bot envia para quem quiser entrar no grupo (menu Alertas) */}
-                <div className="formulario-linha" style={{ gridTemplateColumns: '1fr' }}>
+                <div className="formulario-linha formulario-linha--uma">
                   <label>
-                    <span><FaWhatsapp /> Link de convite do grupo (enviado pelo bot a quem quiser entrar)</span>
+                    <span><LuMessageCircle /> Link de convite do grupo (enviado pelo bot a quem quiser entrar)</span>
                     <input
                       value={linkGrupoCidade}
                       onChange={e => setLinkGrupoCidade(e.target.value)}
@@ -319,14 +317,14 @@ function GerenciarRegioes() {
                   </label>
                 </div>
 
-                <p className="aviso">
+                <p className="sv-aviso">
                   {cidadeSelecionada.grupoWhatsappId
-                    ? <><FaCheckCircle /> Os alertas confirmados desta cidade também são publicados no grupo vinculado.</>
+                    ? <><LuCircleCheck /> Os alertas confirmados desta cidade também são publicados no grupo vinculado.</>
                     : <>Para vincular um grupo: adicione o número do bot ao grupo e, como administrador do grupo, envie
                       <strong> !alertas vincular {cidadeSelecionada.nome}</strong>. Ou envie <strong>!alertas id</strong> e cole o ID aqui.</>}
                 </p>
 
-                <h3 className="secao-titulo">Bairros ({bairros.length})</h3>
+                <h3 className="sv-secao-titulo">Bairros ({bairros.length})</h3>
 
                 {/* Busca por CEP para preencher o nome do bairro */}
                 <div className="barra-filtros">
@@ -336,11 +334,11 @@ function GerenciarRegioes() {
                     onChange={e => setCep(e.target.value)}
                     style={{ maxWidth: '260px' }}
                   />
-                  <button type="button" className="botao-secundario" onClick={handleBuscarCep} disabled={cep.replace(/\D/g, '').length !== 8}>
-                    <FaSearch /> Buscar CEP
+                  <button type="button" className="sv-btn sv-btn--vidro" onClick={handleBuscarCep} disabled={cep.replace(/\D/g, '').length !== 8}>
+                    <LuSearch /> Buscar CEP
                   </button>
                   {resultadoCep && (
-                    <span style={{ fontSize: '13px', color: '#64748b' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--sv-tinta-2)' }}>
                       {resultadoCep.logradouro ? `${resultadoCep.logradouro}, ` : ''}{resultadoCep.bairro ?? 'sem bairro'} — {resultadoCep.cidade}/{resultadoCep.uf}
                     </span>
                   )}
@@ -365,11 +363,12 @@ function GerenciarRegioes() {
                     Área (km²)
                     <input type="number" min="0" step="0.01" value={novoBairro.areaKm2} onChange={e => setNovoBairro({ ...novoBairro, areaKm2: e.target.value })} placeholder="Opcional" />
                   </label>
-                  <button type="submit" className="botao-primario"><FaPlus /> Adicionar</button>
+                  <button type="submit" className="sv-btn sv-btn--primario"><LuPlus /> Adicionar</button>
                 </form>
 
                 <div style={{ overflowX: 'auto' }}>
-                  <table className="tabela">
+                  <div className="sv-tabela-caixa">
+                  <table className="sv-tabela">
                     <thead>
                       <tr>
                         <th>Bairro</th>
@@ -384,7 +383,7 @@ function GerenciarRegioes() {
                     </thead>
                     <tbody>
                       {bairros.length === 0 && (
-                        <tr><td colSpan={8} style={{ color: '#94a3b8' }}>Nenhum bairro cadastrado nesta cidade.</td></tr>
+                        <tr><td colSpan={8} style={{ color: 'var(--sv-tinta-3)' }}>Nenhum bairro cadastrado nesta cidade.</td></tr>
                       )}
                       {bairros.map(b => editandoBairroId === b.id_bairro ? (
                         <tr key={b.id_bairro}>
@@ -400,42 +399,43 @@ function GerenciarRegioes() {
                           <td>{b.totalAbrigos}</td>
                           <td>{b.alertasAbertos}</td>
                           <td>
-                            <div className="tabela-acoes">
-                              <button type="button" className="botao-icone" title="Salvar" onClick={handleSalvarBairro}><FaSave /></button>
-                              <button type="button" className="botao-icone" title="Cancelar" onClick={() => setEditandoBairroId(null)}><FaTimes /></button>
+                            <div className="sv-tabela-acoes">
+                              <button type="button" className="sv-btn sv-btn--vidro sv-btn--quadrado" title="Salvar" onClick={handleSalvarBairro}><LuSave /></button>
+                              <button type="button" className="sv-btn sv-btn--vidro sv-btn--quadrado" title="Cancelar" onClick={() => setEditandoBairroId(null)}><LuX /></button>
                             </div>
                           </td>
                         </tr>
                       ) : (
                         <tr key={b.id_bairro}>
                           <td>{b.nome}</td>
-                          <td><span className={`badge ${b.nivelRisco}`}>{NIVEIS_RISCO.find(n => n.valor === b.nivelRisco)?.label}</span></td>
+                          <td><span className={`sv-tag sv-tag--lisa sv-status ${b.nivelRisco}`}>{NIVEIS_RISCO.find(n => n.valor === b.nivelRisco)?.label}</span></td>
                           <td>{b.populacaoEstimada != null ? Number(b.populacaoEstimada).toLocaleString('pt-BR') : '—'}</td>
                           <td>{b.areaKm2 != null ? `${Number(b.areaKm2).toLocaleString('pt-BR')} km²` : '—'}</td>
                           <td>{b.totalMoradores + b.totalInteressados}</td>
                           <td>{b.totalAbrigos}</td>
                           <td>
                             {b.alertasAbertos > 0
-                              ? <a href="/alertas" className="badge ativo">{b.alertasAbertos}</a>
+                              ? <a href="/alertas" className="sv-tag sv-tag--lisa sv-status ativo">{b.alertasAbertos}</a>
                               : 0}
                           </td>
                           <td>
-                            <div className="tabela-acoes">
-                              <button type="button" className="botao-icone" title="Editar" onClick={() => iniciarEdicaoBairro(b)}><FaEdit /></button>
-                              <button type="button" className="botao-icone perigo" title="Excluir" onClick={() => handleExcluirBairro(b)}><FaTrash /></button>
+                            <div className="sv-tabela-acoes">
+                              <button type="button" className="sv-btn sv-btn--vidro sv-btn--quadrado" title="Editar" onClick={() => iniciarEdicaoBairro(b)}><LuPencil /></button>
+                              <button type="button" className="sv-btn sv-btn--perigo-vidro sv-btn--quadrado" title="Excluir" onClick={() => handleExcluirBairro(b)}><LuTrash2 /></button>
                             </div>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               </>
             )}
           </div>
         </section>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

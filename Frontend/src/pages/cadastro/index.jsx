@@ -1,87 +1,86 @@
 
-import { FaUser, FaEnvelope, FaIdBadge, FaPhone} from "react-icons/fa";
+import { LuEye, LuLock, LuMail, LuUser, LuUserPlus, LuUsers } from 'react-icons/lu';
+import logoSosVale from '../../assets/logo-sosvale.png';
+import '../../styles/sosvale-glass.css';
 
 const Cadastro = () => {
   return (
-    <div className="container-page">
-      <div className="card-cadastro">
-        
-        {/* Ícone azul superior e títulos do Card */}
-        <div className="header-card">
-          <div className="icon-user-header">
-            {/* Ícone de adicionar usuário combinando com a imagem */}
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="48" height="48">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-            </svg>
-          </div>
-          <h1>Cadastrar</h1>
-          <p className="subtitle">Crie sua conta para começar</p>
+    <div className="sv-app sv-publica">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+
+      <div className="sv-card sv-publica-card">
+
+        {/* Logo e títulos do card */}
+        <div className="sv-publica-topo">
+          <img className="sv-publica-logo" src={logoSosVale} alt="S.O.S Vale" />
+          <h1 className="sv-publica-titulo">Cadastrar</h1>
+          <p className="sv-subtitulo">Crie sua conta para começar</p>
         </div>
 
-        <form>
+        <form className="sv-form">
           {/* Campo: Nome Completo */}
-          <div className="input-group">
-            <label>Nome completo</label>
-            <div className="box">
-              <FaUser className="icon" />
-              <input type="text" placeholder="Seu nome completo" />
-            </div>
+          <div className="sv-campo">
+            <label htmlFor="cad-nome">Nome completo</label>
+            <span className="sv-campo-icone">
+              <LuUser />
+              <input id="cad-nome" type="text" placeholder="Seu nome completo" />
+            </span>
           </div>
 
           {/* Campo: E-mail */}
-          <div className="input-group">
-            <label>E-mail</label>
-            <div className="box">
-              <FaEnvelope className="icon" />
-              <input type="email" placeholder="seu@email.com" />
-            </div>
+          <div className="sv-campo">
+            <label htmlFor="cad-email">E-mail</label>
+            <span className="sv-campo-icone">
+              <LuMail />
+              <input id="cad-email" type="email" placeholder="seu@email.com" />
+            </span>
           </div>
 
           {/* Campo: Senha */}
-          <div className="input-group">
-            <label>Senha</label>
-            <div className="box">
-              <FaLock className="icon" />
-              <input type="password" placeholder="Crie uma senha" />
-              <FaEye className="icon-eye" />
-            </div>
-            <small className="hint-text">
+          <div className="sv-campo">
+            <label htmlFor="cad-senha">Senha</label>
+            <span className="sv-campo-icone">
+              <LuLock />
+              <input id="cad-senha" type="password" placeholder="Crie uma senha" />
+              <LuEye className="sv-campo-icone-fim" />
+            </span>
+            <small className="sv-campo-ajuda">
               A senha deve ter pelo menos 8 caracteres, com letras e números.
             </small>
           </div>
 
           {/* Campo: Tipo de Acesso */}
-          <div className="input-group">
-            <label>Tipo de acesso</label>
-            <div className="box">
-              <FaUsers className="icon" />
-              <select defaultValue="">
+          <div className="sv-campo">
+            <label htmlFor="cad-tipo">Tipo de acesso</label>
+            <span className="sv-campo-icone">
+              <LuUsers />
+              <select id="cad-tipo" defaultValue="">
                 <option value="" disabled hidden>Selecione uma opção</option>
                 <option value="usuario">Usuário Comum</option>
                 <option value="admin">Administrador</option>
               </select>
-            </div>
+            </span>
           </div>
 
           {/* Checkbox de Termos e Políticas */}
-          <div className="checkbox-group">
+          <label className="sv-check" htmlFor="termos">
             <input type="checkbox" id="termos" />
-            <label htmlFor="termos">
-              Li e concordo com os <a href="/termos">Termos de Uso</a> e <a href="/politica">Política de Privacidade</a>.
-            </label>
-          </div>
+            <span>
+              Li e concordo com os <a className="sv-link" href="/termos">Termos de Uso</a> e <a className="sv-link" href="/politica">Política de Privacidade</a>.
+            </span>
+          </label>
 
           {/* Botão de Enviar */}
-          <div className="button-cad">
-            <button type="submit">Cadastrar</button>
-          </div>
+          <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">
+            <LuUserPlus /> Cadastrar
+          </button>
 
           {/* Link para Login fora do botão */}
-          <div className="signup-link">
-            <span>Já tem uma conta? <a href="/login">Entrar</a></span>
-          </div>
+          <p className="sv-publica-rodape">
+            Já tem uma conta? <a className="sv-link" href="/login">Entrar</a>
+          </p>
         </form>
-        
+
       </div>
     </div>
   );

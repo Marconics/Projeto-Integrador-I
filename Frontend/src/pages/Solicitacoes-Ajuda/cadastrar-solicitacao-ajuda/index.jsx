@@ -1,44 +1,14 @@
 // ─── Imports ──────────────────────────────────────────────────────────────────
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMap, FaHandHoldingHeart
-} from 'react-icons/fa';
-import { FaGear } from 'react-icons/fa6';
-import { GoAlertFill } from 'react-icons/go';
-import '../../pg_adm/style.css';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuSend } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 // ─── Sidebar reutilizável ─────────────────────────────────────────────────────
 const Sidebar = () => (
-  <SidebarAdm ativo="ajuda" />
+  <SidebarGlass ativo="solicitacoes-ajuda" />
 )
-
-// ─── Estilos inline reutilizáveis ─────────────────────────────────────────────
-const inputStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: '8px',
-  border: '1px solid #e2e8f0',
-  fontSize: '14px',
-  color: '#0f172a',
-  background: '#fff',
-  outline: 'none',
-}
-
-const labelStyle = {
-  fontSize: '13px',
-  fontWeight: '600',
-  color: '#475569',
-  marginBottom: '6px',
-  display: 'block'
-}
-
-const groupStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  marginBottom: '18px'
-}
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 function CadastrarSolicitacaoAjuda() {
@@ -103,55 +73,53 @@ function CadastrarSolicitacaoAjuda() {
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
       <Sidebar />
 
-      <main className="main">
+      <main className="sv-main">
 
         {/* Header */}
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Abrigos &gt;{' '}
-              <span
-                style={{ cursor: 'pointer', textDecoration: 'underline' }}
-                onClick={() => navigate(`/detalhes-abrigos/${id}`)}
-              >
+              <button type="button" className="sv-link" onClick={() => navigate(`/detalhes-abrigos/${id}`)}>
                 Detalhes do Abrigo
-              </span>
+              </button>
               {' '}&gt; Nova Solicitação de Ajuda
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               Nova Solicitação de Ajuda
             </h1>
-            <p className="subtitle">Crie um pedido de ajuda vinculado a este abrigo</p>
+            <p className="sv-subtitulo">Crie um pedido de ajuda vinculado a este abrigo</p>
           </div>
         </header>
 
         {/* Formulário */}
-        <form onSubmit={handleSalvar} style={{ maxWidth: '680px' }}>
-          <div className="panel" style={{ background: '#fff', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <form onSubmit={handleSalvar} className="sv-form-estreito">
+          <div className="sv-vidro sv-painel sv-form">
 
             {/* Título */}
-            <div style={groupStyle}>
-              <label style={labelStyle}>Título da solicitação *</label>
+            <div className="sv-campo">
+              <label htmlFor="ajuda-titulo">Título da solicitação *</label>
               <input
-                style={inputStyle}
+                id="ajuda-titulo"
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
                 placeholder="Ex: Precisamos de cobertores para 50 pessoas"
                 maxLength={120}
               />
-              <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', textAlign: 'right' }}>
+              <span className="sv-campo-ajuda" style={{ textAlign: 'right' }}>
                 {titulo.length}/120
               </span>
             </div>
 
             {/* Descrição */}
-            <div style={groupStyle}>
-              <label style={labelStyle}>Descrição detalhada *</label>
+            <div className="sv-campo">
+              <label htmlFor="ajuda-descricao">Descrição detalhada *</label>
               <textarea
-                style={{ ...inputStyle, resize: 'vertical', minHeight: '110px', fontFamily: 'inherit' }}
+                id="ajuda-descricao"
                 value={descricao}
                 onChange={e => setDescricao(e.target.value)}
                 placeholder="Descreva o que é necessário, quantidade, prazo ou qualquer detalhe relevante..."
@@ -159,12 +127,12 @@ function CadastrarSolicitacaoAjuda() {
             </div>
 
             {/* Linha: categoria + urgência lado a lado */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="sv-form-grade">
 
               {/* Categoria */}
-              <div style={groupStyle}>
-                <label style={labelStyle}>Categoria</label>
-                <select style={inputStyle} value={categoria} onChange={e => setCategoria(e.target.value)}>
+              <div className="sv-campo">
+                <label htmlFor="ajuda-categoria">Categoria</label>
+                <select id="ajuda-categoria" value={categoria} onChange={e => setCategoria(e.target.value)}>
                   <option value="doacao">Doação (roupas, alimentos, etc.)</option>
                   <option value="medicamento">Medicamento</option>
                   <option value="voluntariado">Voluntariado</option>
@@ -174,9 +142,9 @@ function CadastrarSolicitacaoAjuda() {
               </div>
 
               {/* Urgência */}
-              <div style={groupStyle}>
-                <label style={labelStyle}>Urgência</label>
-                <select style={inputStyle} value={urgencia} onChange={e => setUrgencia(e.target.value)}>
+              <div className="sv-campo">
+                <label htmlFor="ajuda-urgencia">Urgência</label>
+                <select id="ajuda-urgencia" value={urgencia} onChange={e => setUrgencia(e.target.value)}>
                   <option value="baixa">Baixa</option>
                   <option value="media">Média</option>
                   <option value="alta">Alta</option>
@@ -188,43 +156,25 @@ function CadastrarSolicitacaoAjuda() {
 
             {/* Erro */}
             {erro && (
-              <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '12px' }}>
+              <p className="sv-aviso sv-aviso--erro" role="alert">
                 {erro}
               </p>
             )}
 
             {/* Botões */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+            <div className="sv-acoes sv-acoes--inicio">
               <button
                 type="submit"
                 disabled={enviando}
-                style={{
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: enviando ? '#94a3b8' : '#0f172a',
-                  color: '#fff',
-                  fontWeight: '700',
-                  fontSize: '14px',
-                  cursor: enviando ? 'not-allowed' : 'pointer'
-                }}
+                className="sv-btn sv-btn--primario"
               >
-                {enviando ? 'Enviando...' : 'Criar Solicitação'}
+                <LuSend /> {enviando ? 'Enviando...' : 'Criar Solicitação'}
               </button>
 
               <button
                 type="button"
                 onClick={() => navigate(`/abrigos/${id}/solicitacoes-ajuda`)}
-                style={{
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  background: '#f8fafc',
-                  color: '#334155',
-                  fontWeight: '600',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
+                className="sv-btn sv-btn--vidro"
               >
                 Cancelar
               </button>
@@ -233,7 +183,7 @@ function CadastrarSolicitacaoAjuda() {
           </div>
         </form>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

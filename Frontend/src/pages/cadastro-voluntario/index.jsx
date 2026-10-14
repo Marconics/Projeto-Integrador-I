@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { FaEnvelope, FaLock, FaUser, FaPhone, FaIdCard } from "react-icons/fa";
+import { LuIdCard, LuLock, LuMail, LuPhone, LuUser, LuUserPlus } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
+import logoSosVale from '../../assets/logo-sosvale.png';
+import '../../styles/sosvale-glass.css';
 
 const CadastroVoluntario = () => {
     const navigate = useNavigate();
@@ -58,108 +60,113 @@ const CadastroVoluntario = () => {
     }
 
     return (
-        <div className="container-page">
-            <div className="card-cadastro">
-                <div className="header-card">
-                    <div className="icon-user-header">
-                        <img src="src/assets/logo.png" width="120" />
-                    </div>
-                    <h1>Cadastro de Voluntário</h1>
-                    <p className="subtitle">Preencha seus dados para se cadastrar</p>
+        <div className="sv-app sv-publica">
+            <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+
+            <div className="sv-card sv-publica-card sv-publica-card--largo">
+                <div className="sv-publica-topo">
+                    <img className="sv-publica-logo" src={logoSosVale} alt="S.O.S Vale" />
+                    <h1 className="sv-publica-titulo">Cadastro de Voluntário</h1>
+                    <p className="sv-subtitulo">Preencha seus dados para se cadastrar</p>
                 </div>
 
-                <form onSubmit={fazerCadastro}>
+                <form onSubmit={fazerCadastro} className="sv-form">
                     {/* Nome — obrigatório */}
-                    <div className="input-group">
-                        <label>Nome completo</label>
-                        <div className="box1">
-                            <FaUser className="icon" />
+                    <div className="sv-campo">
+                        <label htmlFor="cv-nome">Nome completo</label>
+                        <span className="sv-campo-icone">
+                            <LuUser />
                             <input
+                                id="cv-nome"
                                 type="text"
                                 placeholder="Seu nome completo"
                                 value={nome}
                                 onChange={(e) => setNome(e.target.value)}
                                 required
                             />
-                        </div>
+                        </span>
                     </div>
 
-                    {/* E-mail — obrigatório e único no banco */}
-                    <div className="input-group">
-                        <label>E-mail</label>
-                        <div className="box1">
-                            <FaEnvelope className="icon" />
-                            <input
-                                type="email"
-                                placeholder="seu@email.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
+                    <div className="sv-form-grade">
+                        {/* E-mail — obrigatório e único no banco */}
+                        <div className="sv-campo">
+                            <label htmlFor="cv-email">E-mail</label>
+                            <span className="sv-campo-icone">
+                                <LuMail />
+                                <input
+                                    id="cv-email"
+                                    type="email"
+                                    placeholder="seu@email.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </span>
                         </div>
-                    </div>
 
-                    {/* Senha — obrigatório, criptografada no backend com bcrypt */}
-                    <div className="input-group">
-                        <label>Senha</label>
-                        <div className="box1">
-                            <FaLock className="icon" />
-                            <input
-                                type="password"
-                                placeholder="Crie uma senha"
-                                value={senha}
-                                onChange={(e) => setSenha(e.target.value)}
-                                required
-                            />
+                        {/* Senha — obrigatório, criptografada no backend com bcrypt */}
+                        <div className="sv-campo">
+                            <label htmlFor="cv-senha">Senha</label>
+                            <span className="sv-campo-icone">
+                                <LuLock />
+                                <input
+                                    id="cv-senha"
+                                    type="password"
+                                    placeholder="Crie uma senha"
+                                    value={senha}
+                                    onChange={(e) => setSenha(e.target.value)}
+                                    required
+                                />
+                            </span>
                         </div>
-                    </div>
 
-                    {/* Telefone — opcional no banco (VarChar 15) */}
-                    <div className="input-group">
-                        <label>Telefone <span className="opcional">(opcional)</span></label>
-                        <div className="box1">
-                            <FaPhone className="icon" />
-                            <input
-                                type="tel"
-                                placeholder="(11) 99999-9999"
-                                value={telefone}
-                                onChange={(e) => setTelefone(e.target.value)}
-                            />
+                        {/* Telefone — opcional no banco (VarChar 15) */}
+                        <div className="sv-campo">
+                            <label htmlFor="cv-telefone">Telefone <span className="sv-campo-ajuda">(opcional)</span></label>
+                            <span className="sv-campo-icone">
+                                <LuPhone />
+                                <input
+                                    id="cv-telefone"
+                                    type="tel"
+                                    placeholder="(11) 99999-9999"
+                                    value={telefone}
+                                    onChange={(e) => setTelefone(e.target.value)}
+                                />
+                            </span>
                         </div>
-                    </div>
 
-                    {/* CPF — opcional no banco (VarChar 14) */}
-                    <div className="input-group">
-                        <label>CPF <span className="opcional">(opcional)</span></label>
-                        <div className="box1">
-                            <FaIdCard className="icon" />
-                            <input
-                                type="text"
-                                placeholder="000.000.000-00"
-                                value={cpf}
-                                onChange={(e) => setCpf(e.target.value)}
-                            />
+                        {/* CPF — opcional no banco (VarChar 14) */}
+                        <div className="sv-campo">
+                            <label htmlFor="cv-cpf">CPF <span className="sv-campo-ajuda">(opcional)</span></label>
+                            <span className="sv-campo-icone">
+                                <LuIdCard />
+                                <input
+                                    id="cv-cpf"
+                                    type="text"
+                                    placeholder="000.000.000-00"
+                                    value={cpf}
+                                    onChange={(e) => setCpf(e.target.value)}
+                                />
+                            </span>
                         </div>
-                    </div>
 
-                    {/* Data de nascimento — obrigatório no schema */}
-                    <div className="input-group">
-                        <label>Data de nascimento</label>
-                        <div className="box1">
+                        {/* Data de nascimento — obrigatório no schema */}
+                        <div className="sv-campo">
+                            <label htmlFor="cv-nascimento">Data de nascimento</label>
                             <input
+                                id="cv-nascimento"
                                 type="date"
                                 value={dataNascimento}
                                 onChange={(e) => setDataNascimento(e.target.value)}
                                 required
                             />
                         </div>
-                    </div>
 
-                    {/* Gênero — obrigatório no schema */}
-                    <div className="input-group">
-                        <label>Gênero</label>
-                        <div className="box1">
+                        {/* Gênero — obrigatório no schema */}
+                        <div className="sv-campo">
+                            <label htmlFor="cv-genero">Gênero</label>
                             <select
+                                id="cv-genero"
                                 value={genero}
                                 onChange={(e) => setGenero(e.target.value)}
                                 required
@@ -174,22 +181,20 @@ const CadastroVoluntario = () => {
                     </div>
 
                     {/* Exibe mensagem de erro se o cadastro falhar */}
-                    {erro && <p className="mensagem-erro">{erro}</p>}
+                    {erro && <p className="sv-aviso sv-aviso--erro" role="alert">{erro}</p>}
 
-                    <div className="button-cad1">
-                        {/* Desabilita o botão enquanto aguarda resposta da API */}
-                        <button type="submit" disabled={carregando}>
-                            {carregando ? "Cadastrando..." : "Cadastrar"}
-                        </button>
-                    </div>
+                    {/* Desabilita o botão enquanto aguarda resposta da API */}
+                    <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco" disabled={carregando}>
+                        <LuUserPlus /> {carregando ? "Cadastrando..." : "Cadastrar"}
+                    </button>
                 </form>
 
                 {/* Link para quem já tem conta */}
-                <p className="link-secundario">
+                <p className="sv-publica-rodape">
                     Já tem uma conta?{" "}
-                    <span onClick={() => navigate('/login-voluntario')}>
+                    <button type="button" className="sv-link" onClick={() => navigate('/login-voluntario')}>
                         Faça login
-                    </span>
+                    </button>
                 </p>
             </div>
         </div>

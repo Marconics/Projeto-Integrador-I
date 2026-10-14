@@ -1,14 +1,14 @@
 // Auxiliares das telas de listagem com filtros (styles/listagem.css):
 // Abrigos do voluntário, Abrigos do admin e Vítimas do admin.
-import { FaPaw, FaWheelchair, FaStethoscope, FaSyringe, FaUtensils } from 'react-icons/fa';
+import { LuAccessibility, LuPawPrint, LuStethoscope, LuSyringe, LuUtensils } from 'react-icons/lu';
 
 // Estrutura do abrigo: campo da API → rótulo e ícone (filtros e cards)
 export const ESTRUTURAS = [
-  { campo: 'possuiPets',              label: 'Aceita pets',        icone: <FaPaw /> },
-  { campo: 'possuiAcessibilidade',    label: 'Acessibilidade',     icone: <FaWheelchair /> },
-  { campo: 'possuiAtendimentoMedico', label: 'Atendimento médico', icone: <FaStethoscope /> },
-  { campo: 'possuiEnfermagem',        label: 'Enfermagem',         icone: <FaSyringe /> },
-  { campo: 'possuiCozinha',           label: 'Cozinha',            icone: <FaUtensils /> },
+  { campo: 'possuiPets',              label: 'Aceita pets',        icone: <LuPawPrint /> },
+  { campo: 'possuiAcessibilidade',    label: 'Acessibilidade',     icone: <LuAccessibility /> },
+  { campo: 'possuiAtendimentoMedico', label: 'Atendimento médico', icone: <LuStethoscope /> },
+  { campo: 'possuiEnfermagem',        label: 'Enfermagem',         icone: <LuSyringe /> },
+  { campo: 'possuiCozinha',           label: 'Cozinha',            icone: <LuUtensils /> },
 ]
 
 // Situação pela ocupação (chips de filtro)
@@ -25,7 +25,7 @@ export const ocupacaoDe = (abrigo) => abrigo.capacidadeTotal > 0
 
 export const vagasDe = (abrigo) => Math.max(0, abrigo.capacidadeTotal - abrigo.capacidadeOcupada)
 
-export const corOcupacao = (pct) => pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#16a34a'
+export const corOcupacao = (pct) => pct >= 100 ? 'var(--sv-sirene)' : pct >= 80 ? 'var(--sv-atencao)' : 'var(--sv-ok)'
 
 // O abrigo passa no filtro de situação escolhido?
 export const passaSituacao = (abrigo, situacao) => {

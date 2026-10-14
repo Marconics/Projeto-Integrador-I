@@ -1,22 +1,18 @@
-import '../pg_adm/style.css'
 import './style.css'
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  FaHome, FaHeart, FaHandHoldingHeart, FaRegBell,
-  FaPhoneAlt, FaIdCard, FaBirthdayCake, FaVenusMars
-} from 'react-icons/fa';
-import { FaChevronRight, FaLocationDot } from 'react-icons/fa6';
-import SidebarVoluntario from '../../components/SidebarVoluntario';
+import { LuBell, LuCake, LuChevronRight, LuHandHeart, LuHeart, LuHouse, LuIdCard, LuMapPin, LuPhone, LuUserRound } from 'react-icons/lu';
+import SidebarGlass from '../../components/SidebarGlass/SidebarGlass';
+import '../../styles/sosvale-glass.css';
 import { API_URL, formatarTempo } from '../../services/api';
 
 // ─── Labels e cores de status/categoria/urgência ────────────────
 // Mesmo padrão usado nas outras telas de Solicitação de Ajuda
 const badgeStatus = {
-  aberto:       { label: 'Aberto',       bg: '#dbeafe', cor: '#1e40af' },
-  em_andamento: { label: 'Em andamento', bg: '#fef3c7', cor: '#92400e' },
-  concluido:    { label: 'Concluído',    bg: '#d1fae5', cor: '#065f46' },
-  cancelado:    { label: 'Cancelado',    bg: '#fee2e2', cor: '#991b1b' },
+  aberto:       { label: 'Aberto',       bg: 'var(--sv-azul-suave)', cor: 'var(--sv-azul-forte)' },
+  em_andamento: { label: 'Em andamento', bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+  concluido:    { label: 'Concluído',    bg: 'var(--sv-ok-suave)', cor: 'var(--sv-ok-forte)' },
+  cancelado:    { label: 'Cancelado',    bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)' },
 }
 
 const categoriaLabel = {
@@ -29,10 +25,10 @@ const categoriaLabel = {
 
 // peso: ordena da mais urgente para a menos urgente
 const URGENCIA = {
-  critica: { label: 'Crítica', bg: '#fee2e2', cor: '#b91c1c', peso: 4 },
-  alta:    { label: 'Alta',    bg: '#ffedd5', cor: '#c2410c', peso: 3 },
-  media:   { label: 'Média',   bg: '#fef9c3', cor: '#a16207', peso: 2 },
-  baixa:   { label: 'Baixa',   bg: '#f1f5f9', cor: '#475569', peso: 1 },
+  critica: { label: 'Crítica', bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)', peso: 4 },
+  alta:    { label: 'Alta',    bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)', peso: 3 },
+  media:   { label: 'Média',   bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)', peso: 2 },
+  baixa:   { label: 'Baixa',   bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)', peso: 1 },
 }
 
 const MAXIMO_SOLICITACOES = 6
@@ -123,7 +119,7 @@ const PainelVoluntario = () => {
       label:  'Solicitações de ajuda abertas',
       value:  solicitacoes.length,
       sub:    urgentes > 0 ? `${urgentes} com urgência alta ou crítica` : 'nenhuma urgente',
-      icon:   <FaHandHoldingHeart />,
+      icon:   <LuHandHeart />,
       accent: 'red',
       acao:   () => navigate('/solicitacoes-ajuda-voluntario'),
     },
@@ -132,7 +128,7 @@ const PainelVoluntario = () => {
       label:  'Minhas contribuições',
       value:  totalSolicitacoes,
       sub:    `${concluidas} concluída${concluidas !== 1 ? 's' : ''} · ${emAndamento} em andamento`,
-      icon:   <FaHeart />,
+      icon:   <LuHeart />,
       accent: 'cyan',
     },
     {
@@ -140,7 +136,7 @@ const PainelVoluntario = () => {
       label:  'Meu abrigo',
       value:  abrigoVinculado ? abrigoVinculado.nome : 'Nenhum',
       sub:    abrigoVinculado ? `${abrigoVinculado.cidade} · trocar de abrigo` : 'clique para escolher um abrigo',
-      icon:   <FaLocationDot />,
+      icon:   <LuMapPin />,
       accent: abrigoVinculado ? 'blue' : 'teal',
       texto:  true, // valor em texto: fonte menor
       acao:   () => navigate('/voluntario/abrigos'),
@@ -150,9 +146,10 @@ const PainelVoluntario = () => {
   // ─── TELA DE CARREGANDO / ERRO ───────────────────────────────
   if (carregando || erro) {
     return (
-      <div className="dashboard">
-        <SidebarVoluntario ativo={aba} />
-        <main className="main home-vol">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass modulo="voluntario" ativo={aba} />
+        <main className="sv-main home-vol">
           <p className={erro ? 'hv-estado hv-estado--erro' : 'hv-estado'}>
             {erro ? `Não foi possível carregar o painel: ${erro}` : 'Carregando...'}
           </p>
@@ -162,13 +159,14 @@ const PainelVoluntario = () => {
   }
 
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
 
       {/* ── SIDEBAR ── */}
-      <SidebarVoluntario ativo={aba} />
+      <SidebarGlass modulo="voluntario" ativo={aba} />
 
       {/* ── MAIN ── */}
-      <main className="main home-vol">
+      <main className="sv-main home-vol">
 
         {/* ── CABEÇALHO ── */}
         <header className="hv-topo">
@@ -176,8 +174,8 @@ const PainelVoluntario = () => {
             <p className="hv-breadcrumb">
               Home{aba === 'perfil' && <> &gt; <span>Meu perfil</span></>}
             </p>
-            <h1 className="hv-titulo">
-              {aba === 'perfil' ? 'Meu perfil' : <>Olá, {primeiroNome} 👋</>}
+            <h1 className="sv-titulo">
+              {aba === 'perfil' ? 'Meu perfil' : <>Olá, {primeiroNome}</>}
             </h1>
             <p className="hv-subtitulo">
               {aba === 'perfil' ? 'Seus dados de cadastro' : <>Veja onde você pode ajudar hoje · {hoje}</>}
@@ -191,11 +189,11 @@ const PainelVoluntario = () => {
               title="Solicitações em andamento"
               onClick={() => navigate('/solicitacoes-ajuda-voluntario')}
             >
-              <FaRegBell />
+              <LuBell />
               {emAndamento > 0 && <span className="hv-sino-badge">{emAndamento}</span>}
             </button>
             <button className="hv-botao-primario" onClick={() => navigate('/solicitacoes-ajuda-voluntario')}>
-              <FaHandHoldingHeart /> Quero ajudar
+              <LuHandHeart /> Quero ajudar
             </button>
           </div>
         </header>
@@ -217,18 +215,18 @@ const PainelVoluntario = () => {
 
             <dl className="hv-perfil-campos">
               {[
-                { icone: <FaPhoneAlt />,     rotulo: 'Telefone',        valor: voluntario?.telefone },
-                { icone: <FaIdCard />,       rotulo: 'CPF',             valor: voluntario?.cpf },
-                { icone: <FaBirthdayCake />, rotulo: 'Data de nascimento',
+                { icone: <LuPhone />,     rotulo: 'Telefone',        valor: voluntario?.telefone },
+                { icone: <LuIdCard />,       rotulo: 'CPF',             valor: voluntario?.cpf },
+                { icone: <LuCake />, rotulo: 'Data de nascimento',
                   valor: voluntario?.dataNascimento
                     // A data vem como "2000-01-31T00:00:00.000Z" — UTC evita mostrar o dia anterior
                     ? new Date(voluntario.dataNascimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
                     : null },
-                { icone: <FaVenusMars />,    rotulo: 'Gênero',
+                { icone: <LuUserRound />,    rotulo: 'Gênero',
                   valor: voluntario?.genero ? voluntario.genero.charAt(0).toUpperCase() + voluntario.genero.slice(1) : null },
-                { icone: <FaLocationDot />,  rotulo: 'Abrigo vinculado',
+                { icone: <LuMapPin />,  rotulo: 'Abrigo vinculado',
                   valor: abrigoVinculado ? `${abrigoVinculado.nome} — ${abrigoVinculado.cidade}` : 'Sem abrigo vinculado' },
-                { icone: <FaHeart />,        rotulo: 'Solicitações atendidas',
+                { icone: <LuHeart />,        rotulo: 'Solicitações atendidas',
                   valor: `${totalSolicitacoes} (${concluidas} concluída${concluidas !== 1 ? 's' : ''})` },
               ].map(campo => (
                 <div className="hv-campo" key={campo.rotulo}>
@@ -279,12 +277,12 @@ const PainelVoluntario = () => {
                   <p>O que os abrigos estão precisando agora — as mais urgentes primeiro</p>
                 </div>
                 <button className="hv-link" onClick={() => navigate('/solicitacoes-ajuda-voluntario')}>
-                  Ver todas <FaChevronRight />
+                  Ver todas <LuChevronRight />
                 </button>
               </div>
 
               {solicitacoes.length === 0 ? (
-                <p className="hv-vazio">🎉 Nenhuma solicitação de ajuda aberta no momento.</p>
+                <p className="hv-vazio">Nenhuma solicitação de ajuda aberta no momento.</p>
               ) : (
                 <ul className="hv-solicitacoes">
                   {solicitacoes.slice(0, MAXIMO_SOLICITACOES).map(s => {
@@ -295,7 +293,7 @@ const PainelVoluntario = () => {
                           <p className="hv-solicitacao-titulo" title={s.titulo}>{s.titulo}</p>
                           <p className="hv-solicitacao-meta">
                             {categoriaLabel[s.categoria] ?? s.categoria}
-                            {' · '}<FaHome /> {s.abrigo?.nome ?? 'Abrigo'}{s.abrigo?.cidade ? ` — ${s.abrigo.cidade}` : ''}
+                            {' · '}<LuHouse /> {s.abrigo?.nome ?? 'Abrigo'}{s.abrigo?.cidade ? ` — ${s.abrigo.cidade}` : ''}
                             {s.createdAt && <> · {formatarTempo(s.createdAt)}</>}
                           </p>
                         </div>
@@ -316,7 +314,7 @@ const PainelVoluntario = () => {
 
               {solicitacoes.length > MAXIMO_SOLICITACOES && (
                 <button className="hv-link hv-link--centro" onClick={() => navigate('/solicitacoes-ajuda-voluntario')}>
-                  Ver as outras {solicitacoes.length - MAXIMO_SOLICITACOES} solicitações <FaChevronRight />
+                  Ver as outras {solicitacoes.length - MAXIMO_SOLICITACOES} solicitações <LuChevronRight />
                 </button>
               )}
             </div>
@@ -337,13 +335,13 @@ const PainelVoluntario = () => {
                 <div className="hv-vazio">
                   <p>Você ainda não atendeu nenhuma solicitação.</p>
                   <button className="hv-link hv-link--centro" onClick={() => navigate('/solicitacoes-ajuda-voluntario')}>
-                    Ver onde ajudar <FaChevronRight />
+                    Ver onde ajudar <LuChevronRight />
                   </button>
                 </div>
               ) : (
                 <ul className="hv-contribuicoes">
                   {minhasSolicitacoes.slice(0, MAXIMO_CONTRIBUICOES).map((solicitacao, index) => {
-                    const badge = badgeStatus[solicitacao.status] ?? { label: solicitacao.status, bg: '#f1f5f9', cor: '#64748b' };
+                    const badge = badgeStatus[solicitacao.status] ?? { label: solicitacao.status, bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)' };
                     return (
                       <li key={solicitacao.id_solicitacao ?? index} className="hv-contribuicao">
                         <div className="hv-contribuicao-info">

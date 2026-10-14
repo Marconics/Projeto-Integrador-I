@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaMapMarkedAlt } from 'react-icons/fa';
+import { LuMapPinned } from 'react-icons/lu';
 import { API_URL } from '../services/api';
 
 // Busca uma rota pública da API (estados, cidades e bairros não exigem login)
@@ -98,25 +98,25 @@ function SeletorLocalidade({
 
   return (
     <>
-      <div className="form-group">
-        <label><FaMapMarkedAlt /> Estado</label>
-        <select className="select-cidade" value={estadoId} disabled={disabled} onChange={handleEstado} required={obrigatorio}>
+      <div className="sv-campo">
+        <label><LuMapPinned /> Estado</label>
+        <select className="sv-entrada" value={estadoId} disabled={disabled} onChange={handleEstado} required={obrigatorio}>
           <option value="" disabled>Selecione o estado</option>
           {estados.map(est => (
             <option key={est.id_estado} value={est.id_estado}>{est.nome} ({est.sigla})</option>
           ))}
         </select>
         {!disabled && estados.length === 0 && (
-          <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+          <span style={{ fontSize: '12px', color: 'var(--sv-tinta-3)' }}>
             Nenhuma cidade cadastrada. <a href="/regioes">Cadastre em Regiões</a>.
           </span>
         )}
       </div>
 
-      <div className="form-group">
-        <label><FaMapMarkedAlt /> Cidade</label>
+      <div className="sv-campo">
+        <label><LuMapPinned /> Cidade</label>
         <select
-          className="select-cidade"
+          className="sv-entrada"
           value={cidadeId ?? ''}
           disabled={disabled || !estadoId}
           onChange={handleCidade}
@@ -130,10 +130,10 @@ function SeletorLocalidade({
       </div>
 
       {mostrarBairro && (
-        <div className="form-group">
-          <label><FaMapMarkedAlt /> Bairro</label>
+        <div className="sv-campo">
+          <label><LuMapPinned /> Bairro</label>
           <select
-            className="select-cidade"
+            className="sv-entrada"
             value={bairroId ?? ''}
             disabled={disabled || !cidadeId}
             onChange={handleBairro}
@@ -147,7 +147,7 @@ function SeletorLocalidade({
             ))}
           </select>
           {!disabled && cidadeId && bairros.length === 0 && (
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+            <span style={{ fontSize: '12px', color: 'var(--sv-tinta-3)' }}>
               Esta cidade ainda não tem bairros. <a href="/regioes">Cadastre em Regiões</a>.
             </span>
           )}

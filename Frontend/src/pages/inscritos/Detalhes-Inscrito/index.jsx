@@ -1,13 +1,12 @@
 // --------- Imports -----------
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaIdCard, FaEnvelope, FaPhoneAlt, FaWhatsapp, FaPlus, FaClock } from 'react-icons/fa';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuClock, LuIdCard, LuMail, LuMessageCircle, LuPhone, LuPlus, LuX } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import SeletorLocalidade from '../../../components/SeletorLocalidade';
 import { apiAdmin, formatarDataHora, formatarTempo, formatarTelefone } from '../../../services/api';
 import { STATUS_ALERTA } from '../../alertas/constantes';
-import '../../pg_adm/style.css';
-import '../../Solicitacoes-Abrigo/Detalhes-solicitacao/DetalhesSolicitacao.css';
 import '../../alertas/alertas.css';
 
 function DetalhesInscrito() {
@@ -124,10 +123,11 @@ function DetalhesInscrito() {
   // ─── TELA DE LOADING / ERRO ─────────────────────────────────
   if (carregando || !inscrito) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="inscritos" />
-        <main className="main">
-          <p style={{ padding: '40px', color: erro ? '#ef4444' : '#64748b' }}>
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="inscritos" />
+        <main className="sv-main">
+          <p style={{ padding: '40px', color: erro ? 'var(--sv-sirene)' : 'var(--sv-tinta-2)' }}>
             {erro || 'Carregando inscrito...'}
           </p>
         </main>
@@ -143,67 +143,68 @@ function DetalhesInscrito() {
 
   // ─── TELA PRINCIPAL ─────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="inscritos" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="inscritos" />
 
-      <main className="main">
-        <header className="top">
-          <div>
-            <p className="modulo-breadcrumb"><a href="/inscritos">Inscritos</a> &gt; <span>{inscrito.nome}</span></p>
-            <h1 className="modulo-titulo">{inscrito.nome}</h1>
-            <p className="subtitle">Inscrito desde {formatarDataHora(inscrito.createdAt)}</p>
+      <main className="sv-main">
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha"><a href="/inscritos">Inscritos</a> &gt; <span>{inscrito.nome}</span></p>
+            <h1 className="sv-titulo">{inscrito.nome}</h1>
+            <p className="sv-subtitulo">Inscrito desde {formatarDataHora(inscrito.createdAt)}</p>
           </div>
-          <span className={`badge ${inscrito.ativo ? 'inscrito-ativo' : 'inscrito-inativo'}`} style={{ fontSize: '14px', padding: '6px 16px' }}>
+          <span className={`sv-tag sv-tag--lisa sv-status ${inscrito.ativo ? 'inscrito-ativo' : 'inscrito-inativo'}`} style={{ fontSize: '14px', padding: '6px 16px' }}>
             {inscrito.ativo ? 'Recebendo alertas' : 'Inativo'}
           </span>
         </header>
 
-        <form className="cadastro-form-container" onSubmit={handleSalvar}>
+        <form className="sv-vidro sv-painel sv-form-duas" onSubmit={handleSalvar}>
 
           {/* ── COLUNA ESQUERDA: dados e bairro ── */}
-          <div className="form-column-left">
-            <h3 className="secao-titulo">Dados pessoais</h3>
+          <div className="sv-form-coluna">
+            <h3 className="sv-secao-titulo">Dados pessoais</h3>
 
-            <div className="form-group">
-              <label><FaIdCard /> Nome</label>
+            <div className="sv-campo">
+              <label><LuIdCard /> Nome</label>
               <input value={nome} onChange={e => setNome(e.target.value)} required minLength={2} />
             </div>
 
-            <div className="form-group">
-              <label><FaEnvelope /> E-mail</label>
+            <div className="sv-campo">
+              <label><LuMail /> E-mail</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
 
             {/* Telefone e WhatsApp só leitura: vêm do WhatsApp da pessoa e são o que
                 identifica quem recebe os alertas — trocar por engano mandaria os avisos
                 para outra pessoa */}
-            <div className="form-group">
-              <label><FaPhoneAlt /> Telefone</label>
-              <p style={{ fontSize: '15px', color: '#0f172a', fontWeight: 600 }}>
+            <div className="sv-campo">
+              <label><LuPhone /> Telefone</label>
+              <p style={{ fontSize: '15px', color: 'var(--sv-tinta)', fontWeight: 600 }}>
                 {telefoneIdentificado
                   ? formatarTelefone(inscrito.telefone)
-                  : <span style={{ color: '#94a3b8', fontWeight: 400 }}>
+                  : <span style={{ color: 'var(--sv-tinta-3)', fontWeight: 400 }}>
                       Ainda não identificado — o bot descobre o número quando for reiniciado
                     </span>}
               </p>
             </div>
 
-            <div className="form-group">
-              <label><FaWhatsapp /> Código do WhatsApp (usado para enviar os alertas)</label>
-              <p style={{ fontSize: '13px', color: '#64748b', fontFamily: 'monospace' }}>{inscrito.whatsappId}</p>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+            <div className="sv-campo">
+              <label><LuMessageCircle /> Código do WhatsApp (usado para enviar os alertas)</label>
+              <p style={{ fontSize: '13px', color: 'var(--sv-tinta-2)', fontFamily: 'monospace' }}>{inscrito.whatsappId}</p>
+              <span style={{ fontSize: '12px', color: 'var(--sv-tinta-3)' }}>
                 Telefone e WhatsApp não podem ser alterados. Se a pessoa trocou de número, ela deve se inscrever de novo pelo bot.
               </span>
             </div>
 
-            <label className="checkbox-card">
+            <label className="sv-opcao">
               <input type="checkbox" checked={ativo} onChange={e => setAtivo(e.target.checked)} />
-              <div className="checkbox-content">
+              <div className="sv-opcao-caixa">
                 <span>Recebendo alertas (inscrição ativa)</span>
               </div>
             </label>
 
-            <h3 className="secao-titulo">Onde mora</h3>
+            <h3 className="sv-secao-titulo">Onde mora</h3>
             <SeletorLocalidade
               cidadeId={residencia.cidadeId}
               bairroId={residencia.bairroId}
@@ -213,14 +214,14 @@ function DetalhesInscrito() {
           </div>
 
           {/* ── COLUNA DIREITA: bairros acompanhados e relatos ── */}
-          <div className="form-column-right">
-            <h3 className="secao-titulo">Bairros acompanhados</h3>
-            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '10px' }}>
+          <div className="sv-form-coluna">
+            <h3 className="sv-secao-titulo">Bairros acompanhados</h3>
+            <p style={{ fontSize: '13px', color: 'var(--sv-tinta-2)', marginBottom: '10px' }}>
               Além do bairro onde mora, a pessoa recebe os alertas destes bairros.
             </p>
 
             {interesses.length === 0 ? (
-              <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '12px' }}>Nenhum bairro extra.</p>
+              <p style={{ fontSize: '14px', color: 'var(--sv-tinta-3)', marginBottom: '12px' }}>Nenhum bairro extra.</p>
             ) : (
               <div className="chips" style={{ marginBottom: '16px' }}>
                 {interesses.map(b => (
@@ -230,7 +231,7 @@ function DetalhesInscrito() {
                       type="button"
                       title="Remover"
                       onClick={() => setInteresses(interesses.filter(i => i.id_bairro !== b.id_bairro))}
-                    >×</button>
+                     aria-label="Remover"><LuX /></button>
                   </span>
                 ))}
               </div>
@@ -247,52 +248,52 @@ function DetalhesInscrito() {
             />
             <button
               type="button"
-              className="botao-secundario"
+              className="sv-btn sv-btn--vidro"
               disabled={!novoInteresse.bairroId}
               onClick={handleAdicionarInteresse}
               style={{ marginBottom: '24px' }}
             >
-              <FaPlus /> Adicionar bairro
+              <LuPlus /> Adicionar bairro
             </button>
 
-            <h3 className="secao-titulo">Últimos relatos</h3>
+            <h3 className="sv-secao-titulo">Últimos relatos</h3>
             {inscrito.relatos.length === 0 ? (
-              <p style={{ fontSize: '14px', color: '#94a3b8' }}>Nenhum relato enviado.</p>
+              <p style={{ fontSize: '14px', color: 'var(--sv-tinta-3)' }}>Nenhum relato enviado.</p>
             ) : (
               inscrito.relatos.map(r => (
                 <div className="relato-item" key={r.id_relato}>
-                  <div className="linha-info">
-                    <p className="linha-titulo" style={{ fontSize: '14px' }}>
+                  <div className="sv-linha-info">
+                    <p className="sv-linha-titulo" style={{ fontSize: '14px' }}>
                       <a href={`/alertas/${r.alertaId}`}>#{r.alertaId} · {r.tipoLabel}</a>
                     </p>
-                    <p className="linha-subtitulo">
+                    <p className="sv-linha-meta">
                       <span>{r.local}</span>
-                      <span><FaClock /> {formatarTempo(r.createdAt)}</span>
+                      <span><LuClock /> {formatarTempo(r.createdAt)}</span>
                     </p>
                   </div>
-                  <span className={`badge ${r.statusAlerta}`}>{STATUS_ALERTA[r.statusAlerta]}</span>
+                  <span className={`sv-tag sv-tag--lisa sv-status ${r.statusAlerta}`}>{STATUS_ALERTA[r.statusAlerta]}</span>
                 </div>
               ))
             )}
 
-            {mensagem && <p className="mensagem-sucesso" style={{ margin: '16px 0 0' }}>{mensagem}</p>}
-            {erro && <p className="mensagem-erro" style={{ margin: '16px 0 0' }}>{erro}</p>}
+            {mensagem && <p className="sv-aviso sv-aviso--sucesso" style={{ margin: '16px 0 0' }}>{mensagem}</p>}
+            {erro && <p className="sv-aviso sv-aviso--erro" style={{ margin: '16px 0 0' }}>{erro}</p>}
 
-            <div className="form-actions" style={{ marginTop: '24px' }}>
-              <button type="submit" className="btn-action salvar" disabled={salvando}>
+            <div className="sv-form-acoes" style={{ marginTop: '24px' }}>
+              <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco" disabled={salvando}>
                 {salvando ? 'Salvando...' : 'Salvar alterações'}
               </button>
-              <button type="button" className="btn-action cancelar" onClick={handleDescartar}>
+              <button type="button" className="sv-btn sv-btn--vidro sv-btn--bloco" onClick={handleDescartar}>
                 Descartar alterações
               </button>
-              <button type="button" className="btn-action excluir" onClick={handleExcluir}>
+              <button type="button" className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" onClick={handleExcluir}>
                 Excluir inscrito
               </button>
             </div>
           </div>
         </form>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

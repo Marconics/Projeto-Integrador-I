@@ -1,27 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMapPin, 
-  FaUpload, FaMapMarkerAlt, FaPhoneAlt, FaDog, FaUserNurse,
-  FaWheelchair, FaUtensils, FaBuilding, FaPeopleArrows,
-  FaMedkit, FaMapMarkedAlt,
-  FaLocationArrow, FaMap, FaHandHoldingHeart
-} from 'react-icons/fa';
-import { FaGear } from "react-icons/fa6";
-import { GoAlertFill } from "react-icons/go";
+import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuChevronRight, LuDog, LuHandHeart, LuHeartPulse, LuMapPin, LuMapPinned, LuPhone, LuPlus, LuTriangleAlert, LuUpload, LuUser, LuUtensils } from 'react-icons/lu';
 import SeletorLocalidade from '../../../components/SeletorLocalidade';
 import MensagemFeedback from '../../../components/MensagemFeedback';
 import { preencherPorCep, geocodificar } from '../../../services/localizacao';
-import "../../pg_adm/style.css";
-import './DetalhesAbrigo.css';
-import SidebarAdm from '../../../components/SidebarAdm';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 // ─── Badges das solicitações de ajuda ────────────────────────────────────────
 const badgeAjuda = {
-  aberto:       { label: 'Aberto',       bg: '#dbeafe', cor: '#1e40af' },
-  em_andamento: { label: 'Em andamento', bg: '#fef3c7', cor: '#92400e' },
-  concluido:    { label: 'Concluído',    bg: '#d1fae5', cor: '#065f46' },
-  cancelado:    { label: 'Cancelado',    bg: '#fee2e2', cor: '#991b1b' },
+  aberto:       { label: 'Aberto',       bg: 'var(--sv-azul-suave)', cor: 'var(--sv-azul-forte)' },
+  em_andamento: { label: 'Em andamento', bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+  concluido:    { label: 'Concluído',    bg: 'var(--sv-ok-suave)', cor: 'var(--sv-ok-forte)' },
+  cancelado:    { label: 'Cancelado',    bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)' },
 }
 
 const categoriaLabel = {
@@ -229,7 +220,7 @@ function DetalhesAbrigo() {
     const exata = ['endereco', 'rua'].includes(resultado.precisao)
     setFeedbackGeo({
       tipo: exata ? 'sucesso' : 'aviso',
-      mensagem: `📍 Localização encontrada ${resultado.descricao} (${resultado.latitude.toFixed(5)}, ${resultado.longitude.toFixed(5)})`
+      mensagem: `Localização encontrada ${resultado.descricao} (${resultado.latitude.toFixed(5)}, ${resultado.longitude.toFixed(5)})`
         + (exata ? '' : ' — o marcador ficará próximo, não no ponto exato.')
         + ' Clique em Salvar para gravar.',
     })
@@ -416,10 +407,11 @@ function DetalhesAbrigo() {
   // ─── LOADING ─────────────────────────────────────────────────────────────────
   if (carregando) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="abrigos" />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando dados do abrigo...</p>
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="abrigos" />
+        <main className="sv-main">
+          <p className="sv-vazio">Carregando dados do abrigo...</p>
         </main>
       </div>
     );
@@ -427,35 +419,36 @@ function DetalhesAbrigo() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="abrigos" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="abrigos" />
 
-      <main className="main">
+      <main className="sv-main">
 
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Abrigos &gt; <span>{nomeAbrigo}</span>
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               {editando ? 'Editar Abrigo' : 'Detalhes do Abrigo'}
             </h1>
-            <p className="subtitle">Gerencia as informações deste abrigo</p>
+            <p className="sv-subtitulo">Gerencia as informações deste abrigo</p>
           </div>
         </header>
 
-        <form onSubmit={handleSalvar} className="cadastro-form-container">
+        <form onSubmit={handleSalvar} className="sv-vidro sv-painel sv-form-duas">
 
           {/* ── COLUNA ESQUERDA ── */}
-          <div className="form-column-left">
+          <div className="sv-form-coluna">
 
-            <div className="form-group">
+            <div className="sv-campo">
               <label htmlFor="status">Status</label>
               <select
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className={`select-status ${status}`}
+                className={`sv-entrada sv-estado ${status}`}
                 disabled={!editando}
                 style={!editando ? { opacity: 1, cursor: 'default', appearance: 'none', WebkitAppearance: 'none' } : {}}
               >
@@ -465,8 +458,8 @@ function DetalhesAbrigo() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label><FaBuilding /> Nome do Abrigo</label>
+            <div className="sv-campo">
+              <label><LuBuilding2 /> Nome do Abrigo</label>
               {editando ? (
                 <input value={nomeAbrigo} onChange={(e) => setNomeAbrigo(e.target.value)} />
               ) : (
@@ -474,8 +467,8 @@ function DetalhesAbrigo() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaPhoneAlt /> CEP</label>
+            <div className="sv-campo">
+              <label><LuPhone /> CEP</label>
               {editando ? (
                 <>
                   {/* Ao completar o CEP, preenche estado, cidade, bairro e rua */}
@@ -496,44 +489,38 @@ function DetalhesAbrigo() {
               />
             ) : (
               <>
-                <div className="form-group">
-                  <label><FaMapMarkedAlt /> Estado</label>
+                <div className="sv-campo">
+                  <label><LuMapPinned /> Estado</label>
                   <p>{estado || '—'}</p>
                 </div>
 
-                <div className="form-group">
-                  <label><FaMapMarkedAlt /> Cidade</label>
+                <div className="sv-campo">
+                  <label><LuMapPinned /> Cidade</label>
                   <p>{cidade}</p>
                 </div>
 
-                <div className="form-group">
-                  <label><FaMapMarkedAlt /> Bairro</label>
+                <div className="sv-campo">
+                  <label><LuMapPinned /> Bairro</label>
                   <p>{bairro || '—'}</p>
                 </div>
               </>
             )}
 
-            <div className="form-group">
-              <label><FaMapMarkerAlt /> Endereço</label>
+            <div className="sv-campo">
+              <label><LuMapPin /> Endereço</label>
               {editando ? (
                 <>
                   <input value={endereco} onChange={(e) => setEndereco(e.target.value)} />
                   <button
                     type="button"
                     onClick={handleGeocodificar}
-                    style={{
-                      marginTop: '6px',
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      padding: '6px 12px', fontSize: '13px', borderRadius: '6px',
-                      border: 'none', cursor: 'pointer',
-                      background: latitude && longitude ? '#1b8a3c' : '#257c35',
-                      color: '#fff', fontWeight: '500'
-                    }}
+                    className="sv-btn sv-btn--vidro sv-btn--p sv-btn--inicio"
                   >
+                    <LuMapPinned />
                     {latitude && longitude ? 'Atualizar localização' : 'Buscar localização'}
                   </button>
                   {feedbackGeo?.tipo === 'existente'
-                    ? <p style={{ fontSize: '12px', marginTop: '4px', color: '#0ea5e9' }}>{feedbackGeo.mensagem}</p>
+                    ? <p style={{ fontSize: '12px', marginTop: '4px', color: 'var(--sv-azul)' }}>{feedbackGeo.mensagem}</p>
                     : <MensagemFeedback feedback={feedbackGeo} />}
                 </>
               ) : (
@@ -541,22 +528,22 @@ function DetalhesAbrigo() {
                   <p>{endereco}</p>
                   {latitude && longitude ? (
                     feedbackGeo && (
-                      <p style={{ fontSize: '12px', marginTop: '2px', color: '#0ea5e9' }}>
+                      <p style={{ fontSize: '12px', marginTop: '2px', color: 'var(--sv-azul)' }}>
                         {feedbackGeo.mensagem}
                       </p>
                     )
                   ) : (
                     // Sem coordenadas o abrigo não aparece no mapa — avisa e diz como resolver
-                    <p style={{ fontSize: '12px', marginTop: '2px', color: '#b45309' }}>
-                      ⚠️ Sem localização: este abrigo não aparece no mapa. Clique em "Editar Abrigo" e depois em "Buscar localização".
+                    <p style={{ fontSize: '12px', marginTop: '2px', color: 'var(--sv-atencao-forte)' }}>
+                      <LuTriangleAlert /> Sem localização: este abrigo não aparece no mapa. Clique em "Editar Abrigo" e depois em "Buscar localização".
                     </p>
                   )}
                 </>
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaPhoneAlt /> Telefone</label>
+            <div className="sv-campo">
+              <label><LuPhone /> Telefone</label>
               {editando ? (
                 <input value={telefone} onChange={(e) => setTelefone(e.target.value)} />
               ) : (
@@ -564,8 +551,8 @@ function DetalhesAbrigo() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaUser /> Responsável</label>
+            <div className="sv-campo">
+              <label><LuUser /> Responsável</label>
               {editando ? (
                 <input value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />
               ) : (
@@ -573,10 +560,10 @@ function DetalhesAbrigo() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaBuilding /> Tipo de Abrigo</label>
+            <div className="sv-campo">
+              <label><LuBuilding2 /> Tipo de Abrigo</label>
               {editando ? (
-                <select value={tipoAbrigo} onChange={(e) => setTipoAbrigo(e.target.value)} className="select-tipo-abrigo">
+                <select value={tipoAbrigo} onChange={(e) => setTipoAbrigo(e.target.value)} className="sv-entrada">
                   <option value="Escola">Escola</option>
                   <option value="Ginásio">Ginásio</option>
                   <option value="Igreja">Igreja</option>
@@ -591,8 +578,8 @@ function DetalhesAbrigo() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaPeopleArrows /> Capacidade Total</label>
+            <div className="sv-campo">
+              <label><LuArrowLeftRight /> Capacidade Total</label>
               {editando ? (
                 <input
                   type="number"
@@ -610,14 +597,14 @@ function DetalhesAbrigo() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaPeopleArrows /> Capacidade Ocupada</label>
+            <div className="sv-campo">
+              <label><LuArrowLeftRight /> Capacidade Ocupada</label>
               {editando ? (
                 <input
                   type="number"
                   name="capacidadeOcupada"
                   value={capacidadeOcupada}
-                  className={`input-capacidade ${erroCapacidade ? 'input-erro' : ''}`}
+                  className={`sv-entrada ${erroCapacidade ? 'sv-entrada--erro' : ''}`}
                   onChange={(e) => {
                     const ocupada = parseInt(e.target.value)
                     setCapacidadeOcupada(ocupada)
@@ -630,96 +617,96 @@ function DetalhesAbrigo() {
             </div>
 
             {erroCapacidade && (
-              <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '4px' }}>
+              <p style={{ color: 'var(--sv-sirene)', fontSize: '13px', marginTop: '4px' }}>
                 {erroCapacidade}
               </p>
             )}
 
-            <div className="infraestrutura-section">
-              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <div className="sv-form-secao">
+              <h3 className="sv-secao-titulo">
                 Infraestrutura
               </h3>
 
-              <label className="checkbox-card" style={!editando ? { pointerEvents: 'none' } : {}}>
+              <label className="sv-opcao" style={!editando ? { pointerEvents: 'none' } : {}}>
                 <input type="checkbox" name="possuiAtendimentoMedico" checked={infraestrutura.possuiAtendimentoMedico} onChange={handleCheckboxChange} disabled={!editando} />
-                <div className="checkbox-content"><FaMedkit className="icon" /><span>Atendimento Médico</span></div>
+                <div className="sv-opcao-caixa"><LuBriefcaseMedical className="sv-opcao-icone" /><span>Atendimento Médico</span></div>
               </label>
 
-              <label className="checkbox-card" style={!editando ? { pointerEvents: 'none' } : {}}>
+              <label className="sv-opcao" style={!editando ? { pointerEvents: 'none' } : {}}>
                 <input type="checkbox" name="possuiEnfermagem" checked={infraestrutura.possuiEnfermagem} onChange={handleCheckboxChange} disabled={!editando} />
-                <div className="checkbox-content"><FaUserNurse className="icon" /><span>Enfermagem</span></div>
+                <div className="sv-opcao-caixa"><LuHeartPulse className="sv-opcao-icone" /><span>Enfermagem</span></div>
               </label>
 
-              <label className="checkbox-card" style={!editando ? { pointerEvents: 'none' } : {}}>
+              <label className="sv-opcao" style={!editando ? { pointerEvents: 'none' } : {}}>
                 <input type="checkbox" name="possuiPets" checked={infraestrutura.possuiPets} onChange={handleCheckboxChange} disabled={!editando} />
-                <div className="checkbox-content"><FaDog className="icon" /><span>Pets Bem-Vindos</span></div>
+                <div className="sv-opcao-caixa"><LuDog className="sv-opcao-icone" /><span>Pets Bem-Vindos</span></div>
               </label>
 
-              <label className="checkbox-card" style={!editando ? { pointerEvents: 'none' } : {}}>
+              <label className="sv-opcao" style={!editando ? { pointerEvents: 'none' } : {}}>
                 <input type="checkbox" name="possuiAcessibilidade" checked={infraestrutura.possuiAcessibilidade} onChange={handleCheckboxChange} disabled={!editando} />
-                <div className="checkbox-content"><FaWheelchair className="icon" /><span>Acessibilidade</span></div>
+                <div className="sv-opcao-caixa"><LuAccessibility className="sv-opcao-icone" /><span>Acessibilidade</span></div>
               </label>
 
-              <label className="checkbox-card" style={!editando ? { pointerEvents: 'none' } : {}}>
+              <label className="sv-opcao" style={!editando ? { pointerEvents: 'none' } : {}}>
                 <input type="checkbox" name="possuiCozinha" checked={infraestrutura.possuiCozinha} onChange={handleCheckboxChange} disabled={!editando} />
-                <div className="checkbox-content"><FaUtensils className="icon" /><span>Cozinha Comunitária</span></div>
+                <div className="sv-opcao-caixa"><LuUtensils className="sv-opcao-icone" /><span>Cozinha Comunitária</span></div>
               </label>
             </div>
           </div>
 
           {/* ── COLUNA DIREITA ── */}
-          <div className="form-column-right">
+          <div className="sv-form-coluna">
 
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <h3 className="sv-secao-titulo">
               Imagem do Abrigo
             </h3>
 
             <>
               {editando ? (
-                <div className="upload-container">
+                <div className="sv-upload">
                   {fotoExibida ? (
-                    <div className="image-preview">
+                    <div className="sv-upload-previa">
                       <img src={fotoExibida} alt="Preview do abrigo" />
                       <button
                         type="button"
                         onClick={() => { setNovaFoto(false); setFotoUrl(null); }}
-                        className="btn-remove-image"
+                        className="sv-btn sv-btn--perigo-vidro sv-btn--p"
                       >
                         Remover Foto
                       </button>
                     </div>
                   ) : (
-                    <label className="upload-dropzone">
+                    <label className="sv-upload-area">
                       <input type="file" accept="image/*" onChange={handleImagem} style={{ display: 'none' }} />
-                      <FaUpload className="upload-icon" />
+                      <LuUpload className="sv-upload-icone" />
                       <p>Faça upload da foto principal do abrigo</p>
-                      <span className="btn-upload-trigger">Selecionar arquivo do computador</span>
+                      <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
                     </label>
                   )}
                 </div>
               ) : (
-                <div className="upload-container">
+                <div className="sv-upload">
                   {fotoExibida ? (
-                    <img src={fotoExibida} alt={nomeAbrigo} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '8px' }} />
+                    <img src={fotoExibida} alt={nomeAbrigo} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 'var(--sv-raio-s)' }} />
                   ) : (
-                    <p style={{ color: '#94a3b8', fontSize: '14px' }}>Sem foto cadastrada</p>
+                    <p style={{ color: 'var(--sv-tinta-3)', fontSize: '14px' }}>Sem foto cadastrada</p>
                   )}
                 </div>
               )}
             </>
 
-            <div className="form-actions">
+            <div className="sv-form-acoes">
               {editando ? (
                 <>
-                  <button type="submit" className="btn-action salvar">Salvar Alterações</button>
-                  <div className="danger-actions">
-                    <button type="button" onClick={handleExcluir} className="btn-action excluir">Excluir Registro</button>
-                    <button type="button" onClick={handleCancelExcluir} className="btn-action cancelar">Cancelar edição</button>
+                  <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">Salvar Alterações</button>
+                  <div className="sv-form-acoes-par">
+                    <button type="button" onClick={handleExcluir} className="sv-btn sv-btn--perigo-vidro sv-btn--bloco">Excluir Registro</button>
+                    <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--vidro sv-btn--bloco">Cancelar edição</button>
                   </div>
                 </>
               ) : null}
               {editando ? null : (
-                <button type="button" onClick={handleEditar} className="btn-action cancelar">
+                <button type="button" onClick={handleEditar} className="sv-btn sv-btn--vidro sv-btn--bloco">
                   Editar Abrigo
                 </button>
               )}
@@ -727,126 +714,100 @@ function DetalhesAbrigo() {
 
             {/* ── Vítimas Recentes — só no modo visualização ── */}
             {!editando && (
-              <div style={{ marginTop: '24px' }}>
+              <div className="sv-pilha">
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                <div className="sv-secao-linha">
+                  <h3 className="sv-secao-titulo">
                     Vítimas Presentes
                   </h3>
                   <button
                     type="button"
+                    className="sv-btn sv-btn--vidro sv-btn--p"
                     onClick={() => navigate(`/abrigos/${id}/vitimas`)}
-                    style={{
-                      fontSize: '13px', padding: '5px 12px', borderRadius: '6px',
-                      border: '1px solid #cbd5e1', background: '#f8fafc',
-                      color: '#334155', cursor: 'pointer', fontWeight: '500'
-                    }}
                   >
-                    Ver todas →
+                    Ver todas <LuChevronRight className="sv-seta" />
                   </button>
                 </div>
 
                 {vitimasRecentes.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                        <th style={{ textAlign: 'left', padding: '6px 8px', color: '#64748b', fontWeight: '600' }}>Nome</th>
-                        <th style={{ textAlign: 'center', padding: '6px 8px', color: '#64748b', fontWeight: '600' }}>Idade</th>
-                        <th style={{ textAlign: 'center', padding: '6px 8px', color: '#64748b', fontWeight: '600' }}>Entrada</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vitimasRecentes.map((vitima) => (
-                        <tr key={vitima.id_vitima} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '8px 8px', color: '#0f172a', fontWeight: '500' }}>{vitima.nome}</td>
-                          <td style={{ padding: '8px 8px', color: '#475569', textAlign: 'center' }}>{calcularIdade(vitima.dataNascimento)}</td>
-                          <td style={{ padding: '8px 8px', color: '#475569', textAlign: 'center' }}>{formatarData(vitima.dataEntrada ?? vitima.createdAt)}</td>
+                  <div className="sv-tabela-caixa">
+                    <table className="sv-tabela">
+                      <thead>
+                        <tr>
+                          <th>Nome</th>
+                          <th className="sv-centro">Idade</th>
+                          <th className="sv-centro">Entrada</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {vitimasRecentes.map((vitima) => (
+                          <tr key={vitima.id_vitima}>
+                            <td><strong>{vitima.nome}</strong></td>
+                            <td className="sv-centro">{calcularIdade(vitima.dataNascimento)}</td>
+                            <td className="sv-centro">{formatarData(vitima.dataEntrada ?? vitima.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
-                  <p style={{ fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>
+                  <p className="sv-apoio sv-centro">
                     Nenhuma vítima vinculada a este abrigo.
                   </p>
                 )}
 
                 {/* ── Solicitações de Ajuda ── */}
-                <div style={{ marginTop: '32px' }}>
+                <div className="sv-pilha">
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                  <div className="sv-secao-linha">
+                    <h3 className="sv-secao-titulo">
                       Solicitações de Ajuda
                     </h3>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="sv-acoes">
                       <button
                         type="button"
+                        className="sv-btn sv-btn--primario sv-btn--p"
                         onClick={() => navigate(`/abrigos/${id}/cadastrar-solicitacao-ajuda`)}
-                        style={{
-                          fontSize: '13px', padding: '5px 12px', borderRadius: '6px',
-                          border: 'none', background: '#0f172a', color: '#fff',
-                          cursor: 'pointer', fontWeight: '600'
-                        }}
                       >
-                        + Nova Solicitação
+                        <LuPlus /> Nova Solicitação
                       </button>
                       <button
                         type="button"
+                        className="sv-btn sv-btn--vidro sv-btn--p"
                         onClick={() => navigate(`/abrigos/${id}/solicitacoes-ajuda`)}
-                        style={{
-                          fontSize: '13px', padding: '5px 12px', borderRadius: '6px',
-                          border: '1px solid #cbd5e1', background: '#f8fafc',
-                          color: '#334155', cursor: 'pointer', fontWeight: '500'
-                        }}
                       >
-                        Ver todas →
+                        Ver todas <LuChevronRight className="sv-seta" />
                       </button>
                     </div>
                   </div>
 
                   {solicitacoesAjuda.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div className="sv-lista">
                       {solicitacoesAjuda.map((s) => {
-                        const badge = badgeAjuda[s.status] ?? { label: s.status, bg: '#f1f5f9', cor: '#64748b' }
+                        const badge = badgeAjuda[s.status] ?? { label: s.status, bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)' }
                         return (
                           <div
                             key={s.id_solicitacao}
+                            className="sv-linha sv-linha--clicavel"
                             onClick={() => navigate(`/visualizar-solicitacao-ajuda/${s.id_solicitacao}`)}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: '10px',
-                              padding: '10px 12px', borderRadius: '8px',
-                              border: '1px solid #e2e8f0', background: '#f8fafc',
-                              cursor: 'pointer', transition: 'background 0.15s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-                            onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
                           >
                             {/* Ícone */}
-                            <div style={{
-                              width: '34px', height: '34px', flexShrink: 0,
-                              borderRadius: '8px', background: '#ede9fe',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: '#7c3aed', fontSize: '15px'
-                            }}>
-                              <FaHandHoldingHeart />
-                            </div>
+                            <span className="sv-poco sv-poco--p sv-poco--aceso sv-poco--ciano">
+                              <LuHandHeart />
+                            </span>
 
                             {/* Título + categoria */}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontWeight: '600', color: '#0f172a', fontSize: '13px', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div className="sv-linha-info">
+                              <p className="sv-linha-titulo">
                                 {s.titulo}
                               </p>
-                              <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0' }}>
+                              <p className="sv-linha-meta">
                                 {categoriaLabel[s.categoria] ?? s.categoria}
                               </p>
                             </div>
 
                             {/* Badge status */}
-                            <span style={{
-                              background: badge.bg, color: badge.cor,
-                              padding: '3px 10px', borderRadius: '20px',
-                              fontSize: '11px', fontWeight: '600', flexShrink: 0
-                            }}>
+                            <span className="sv-tag sv-tag--lisa" style={{ background: badge.bg, color: badge.cor }}>
                               {badge.label}
                             </span>
                           </div>
@@ -854,7 +815,7 @@ function DetalhesAbrigo() {
                       })}
                     </div>
                   ) : (
-                    <p style={{ fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>
+                    <p className="sv-apoio sv-centro">
                       Nenhuma solicitação de ajuda cadastrada.
                     </p>
                   )}
@@ -867,7 +828,7 @@ function DetalhesAbrigo() {
           </div>
         </form>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

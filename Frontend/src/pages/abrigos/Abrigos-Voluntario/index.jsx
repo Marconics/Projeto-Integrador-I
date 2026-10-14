@@ -1,15 +1,12 @@
 // Abrigos (módulo Voluntário) — /voluntario/abrigos
 // O voluntário encontra um abrigo (busca, filtros e ordenação) e se vincula
 // a ele para ajudar. Só aparecem abrigos ativos.
-import '../../pg_adm/style.css'
 import '../../../styles/listagem.css'
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  FaSearch, FaCheck, FaPhoneAlt, FaHandHoldingHeart, FaTimes, FaHome
-} from 'react-icons/fa';
-import { FaLocationDot } from 'react-icons/fa6';
-import SidebarVoluntario from '../../../components/SidebarVoluntario';
+import { LuCheck, LuHandHeart, LuHouse, LuMapPin, LuPhone, LuSearch, LuX } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { API_URL } from '../../../services/api';
 import { alterarVinculoAbrigo } from '../../../services/voluntario';
 import {
@@ -147,9 +144,10 @@ function AbrigosVoluntario() {
   // ─── TELA DE CARREGANDO / ERRO ───────────────────────────────
   if (carregando || erro) {
     return (
-      <div className="dashboard">
-        <SidebarVoluntario ativo="abrigos" />
-        <main className="main pagina-listagem">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass modulo="voluntario" ativo="abrigos" />
+        <main className="sv-main pagina-listagem">
           <p className={erro ? 'lg-estado lg-estado--erro' : 'lg-estado'}>
             {erro ? `Não foi possível carregar os abrigos: ${erro}` : 'Carregando abrigos...'}
           </p>
@@ -159,34 +157,35 @@ function AbrigosVoluntario() {
   }
 
   return (
-    <div className="dashboard">
-      <SidebarVoluntario ativo="abrigos" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass modulo="voluntario" ativo="abrigos" />
 
-      <main className="main pagina-listagem">
+      <main className="sv-main pagina-listagem">
 
         {/* ── CABEÇALHO ── */}
         <header className="lg-topo">
-          <p className="lg-breadcrumb">Abrigos &gt;</p>
-          <h1 className="lg-titulo">Abrigos</h1>
-          <p className="lg-subtitulo">Encontre um abrigo e vincule-se a ele para ajudar</p>
+          <p className="sv-trilha">Abrigos &gt;</p>
+          <h1 className="sv-titulo">Abrigos</h1>
+          <p className="sv-subtitulo">Encontre um abrigo e vincule-se a ele para ajudar</p>
         </header>
 
         {/* ── MEU ABRIGO ── */}
         <section className={`lg-meu${meuAbrigo ? '' : ' lg-meu--vazio'}`}>
           {meuAbrigo ? (
             <>
-              <div className="lg-meu-icone"><FaHome /></div>
+              <div className="lg-meu-icone"><LuHouse /></div>
               <div className="lg-meu-info">
                 <span className="lg-meu-rotulo">Meu abrigo</span>
                 <strong>{meuAbrigo.nome}</strong>
                 <span>
-                  <FaLocationDot /> {[meuAbrigo.endereco, meuAbrigo.bairro, meuAbrigo.cidade].filter(Boolean).join(' — ')}
-                  {meuAbrigo.telefone && <> · <FaPhoneAlt /> {meuAbrigo.telefone}</>}
+                  <LuMapPin /> {[meuAbrigo.endereco, meuAbrigo.bairro, meuAbrigo.cidade].filter(Boolean).join(' — ')}
+                  {meuAbrigo.telefone && <> · <LuPhone /> {meuAbrigo.telefone}</>}
                 </span>
               </div>
               <div className="lg-meu-acoes">
                 <button className="lg-botao-secundario" onClick={() => navigate(`/solicitacoes-ajuda-voluntario?abrigo=${meuAbrigo.id}`)}>
-                  <FaHandHoldingHeart /> Ver solicitações
+                  <LuHandHeart /> Ver solicitações
                 </button>
                 <button className="lg-botao-sair" disabled={vinculando !== null} onClick={() => alterarVinculo(null)}>
                   {vinculando === 'sair' ? 'Saindo...' : 'Sair do abrigo'}
@@ -194,14 +193,14 @@ function AbrigosVoluntario() {
               </div>
             </>
           ) : (
-            <p>🏠 Você ainda não está vinculado a nenhum abrigo. Escolha um abaixo e clique em <strong>Vincular</strong>.</p>
+            <p><LuHouse /> Você ainda não está vinculado a nenhum abrigo. Escolha um abaixo e clique em <strong>Vincular</strong>.</p>
           )}
         </section>
 
         {aviso && (
           <p className={`lg-aviso${aviso.erro ? ' lg-aviso--erro' : ''}`}>
             {aviso.texto}
-            <button aria-label="Fechar aviso" onClick={() => setAviso(null)}><FaTimes /></button>
+            <button aria-label="Fechar aviso" onClick={() => setAviso(null)}><LuX /></button>
           </p>
         )}
 
@@ -209,7 +208,7 @@ function AbrigosVoluntario() {
         <section className="lg-filtros">
           <div className="lg-filtros-linha">
             <div className="lg-busca">
-              <FaSearch className="lg-busca-icone" />
+              <LuSearch className="lg-busca-icone" />
               <input
                 placeholder="Buscar por nome, bairro ou endereço..."
                 value={filtros.busca}
@@ -263,7 +262,7 @@ function AbrigosVoluntario() {
                 className={`lg-chip${filtros.comPedidos ? ' lg-chip--ativo' : ''}`}
                 onClick={() => mudarFiltro('comPedidos', !filtros.comPedidos)}
               >
-                <FaHandHoldingHeart /> Com pedidos de ajuda
+                <LuHandHeart /> Com pedidos de ajuda
               </button>
             </div>
           </div>
@@ -275,7 +274,7 @@ function AbrigosVoluntario() {
           </span>
           {filtrosAtivos && (
             <button className="lg-limpar" onClick={() => setFiltros(FILTROS_INICIAIS)}>
-              <FaTimes /> Limpar filtros
+              <LuX /> Limpar filtros
             </button>
           )}
         </div>
@@ -298,12 +297,12 @@ function AbrigosVoluntario() {
                 <article key={abrigo.id} className={`lg-card${meu ? ' lg-card--meu' : ''}`}>
                   <div className="lg-card-topo">
                     <span className="lg-tipo">{abrigo.tipoAbrigo}</span>
-                    {meu && <span className="lg-selo-meu"><FaCheck /> Meu abrigo</span>}
+                    {meu && <span className="lg-selo-meu"><LuCheck /> Meu abrigo</span>}
                   </div>
 
                   <h3 className="lg-card-nome" title={abrigo.nome}>{abrigo.nome}</h3>
                   <p className="lg-card-local">
-                    <FaLocationDot /> {abrigo.bairro ? `${abrigo.bairro}, ` : ''}{abrigo.cidade}/{abrigo.estado}
+                    <LuMapPin /> {abrigo.bairro ? `${abrigo.bairro}, ` : ''}{abrigo.cidade}/{abrigo.estado}
                   </p>
                   <p className="lg-card-endereco" title={abrigo.endereco}>{abrigo.endereco}</p>
 
@@ -322,11 +321,11 @@ function AbrigosVoluntario() {
                         : estruturas.map(e => <span key={e.campo} title={e.label}>{e.icone}</span>)}
                     </div>
                     {pedidos > 0 && (
-                      <span className="lg-pedidos"><FaHandHoldingHeart /> {pedidos} pedido{pedidos !== 1 ? 's' : ''}</span>
+                      <span className="lg-pedidos"><LuHandHeart /> {pedidos} pedido{pedidos !== 1 ? 's' : ''}</span>
                     )}
                   </div>
 
-                  {abrigo.telefone && <p className="lg-card-telefone"><FaPhoneAlt /> {abrigo.telefone}</p>}
+                  {abrigo.telefone && <p className="lg-card-telefone"><LuPhone /> {abrigo.telefone}</p>}
 
                   <div className="lg-card-acoes">
                     <button
@@ -337,7 +336,7 @@ function AbrigosVoluntario() {
                     </button>
                     {meu ? (
                       <button className="lg-botao-vinculado" disabled>
-                        <FaCheck /> Vinculado
+                        <LuCheck /> Vinculado
                       </button>
                     ) : (
                       <button
@@ -355,7 +354,7 @@ function AbrigosVoluntario() {
           </section>
         )}
 
-        <footer className="lg-rodape">
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

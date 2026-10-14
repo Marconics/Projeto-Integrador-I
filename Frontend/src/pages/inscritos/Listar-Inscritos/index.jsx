@@ -1,11 +1,10 @@
 // --------- Imports -----------
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUsers, FaEnvelope, FaPhoneAlt, FaHome, FaEye } from 'react-icons/fa';
-import { GoAlertFill } from 'react-icons/go';
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuEye, LuHouse, LuMail, LuPhone, LuTriangleAlert, LuUsers } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { apiAdmin, formatarTelefone } from '../../../services/api';
-import '../../pg_adm/style.css';
 import '../../alertas/alertas.css';
 
 // Minúsculo e sem acento — para a busca achar "joao" em "João"
@@ -59,25 +58,26 @@ function ListarInscritos() {
 
   // ─── TELA ────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarAdm ativo="inscritos" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass ativo="inscritos" />
 
-      <main className="main">
+      <main className="sv-main">
 
-        <header className="top">
-          <div>
-            <p className="modulo-breadcrumb"><a href="/alertas">Alertas</a> &gt; <span>Inscritos</span></p>
-            <h1 className="modulo-titulo">Inscritos nos alertas</h1>
-            <p className="subtitle">
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha"><a href="/alertas">Alertas</a> &gt; <span>Inscritos</span></p>
+            <h1 className="sv-titulo">Inscritos nos alertas</h1>
+            <p className="sv-subtitulo">
               Moradores que se inscreveram pelo WhatsApp. {totalAtivos} ativo{totalAtivos !== 1 ? 's' : ''} de {inscritos.length}.
             </p>
           </div>
-          <div className="modulo-acoes-topo">
-            <a className="botao-secundario" href="/alertas"><GoAlertFill /> Alertas</a>
+          <div className="sv-topo-acoes">
+            <a className="sv-btn sv-btn--vidro" href="/alertas"><LuTriangleAlert /> Alertas</a>
           </div>
         </header>
 
-        <div className="panel">
+        <div className="sv-vidro sv-painel">
 
           <div className="barra-filtros">
             <input
@@ -104,46 +104,46 @@ function ListarInscritos() {
             </span>
           </div>
 
-          {erro && <p className="mensagem-erro" style={{ marginBottom: '12px' }}>{erro}</p>}
+          {erro && <p className="sv-aviso sv-aviso--erro" style={{ marginBottom: '12px' }}>{erro}</p>}
 
           {carregando ? (
-            <p style={{ color: '#64748b' }}>Carregando inscritos...</p>
+            <p style={{ color: 'var(--sv-tinta-2)' }}>Carregando inscritos...</p>
           ) : inscritosFiltrados.length === 0 ? (
-            <div className="lista-vazia">
-              <FaUsers />
+            <div className="sv-vazio">
+              <LuUsers />
               <p>Nenhum inscrito encontrado.</p>
               <p style={{ fontSize: '13px' }}>As inscrições são feitas pelo WhatsApp (opção 1 do menu do bot).</p>
             </div>
           ) : (
             inscritosFiltrados.map(i => (
-              <div className="linha-lista" key={i.id_inscrito}>
-                <div className="linha-icone">{i.nome.charAt(0).toUpperCase()}</div>
+              <div className="sv-linha" key={i.id_inscrito}>
+                <div className="sv-poco sv-poco--p">{i.nome.charAt(0).toUpperCase()}</div>
 
-                <div className="linha-info">
-                  <p className="linha-titulo">{i.nome}</p>
-                  <p className="linha-subtitulo">
-                    <span><FaEnvelope /> {i.email}</span>
-                    {i.telefone && !(i.whatsappId.endsWith('@lid') && i.telefone === i.whatsappId.split('@')[0]) && <span><FaPhoneAlt /> {formatarTelefone(i.telefone)}</span>}
-                    <span><FaHome /> {i.bairro} — {i.cidade}/{i.estado}</span>
+                <div className="sv-linha-info">
+                  <p className="sv-linha-titulo">{i.nome}</p>
+                  <p className="sv-linha-meta">
+                    <span><LuMail /> {i.email}</span>
+                    {i.telefone && !(i.whatsappId.endsWith('@lid') && i.telefone === i.whatsappId.split('@')[0]) && <span><LuPhone /> {formatarTelefone(i.telefone)}</span>}
+                    <span><LuHouse /> {i.bairro} — {i.cidade}/{i.estado}</span>
                     {i.bairrosInteresse.length > 0 && (
-                      <span><FaEye /> +{i.bairrosInteresse.length} bairro{i.bairrosInteresse.length !== 1 ? 's' : ''}</span>
+                      <span><LuEye /> +{i.bairrosInteresse.length} bairro{i.bairrosInteresse.length !== 1 ? 's' : ''}</span>
                     )}
                   </p>
                 </div>
 
-                <span style={{ fontSize: '12px', color: '#64748b', flexShrink: 0 }}>
+                <span style={{ fontSize: '12px', color: 'var(--sv-tinta-2)', flexShrink: 0 }}>
                   {i.totalRelatos} relato{i.totalRelatos !== 1 ? 's' : ''}<br />
                   desde {new Date(i.createdAt).toLocaleDateString('pt-BR')}
                 </span>
 
-                <span className={`badge ${i.ativo ? 'inscrito-ativo' : 'inscrito-inativo'}`}>
+                <span className={`sv-tag sv-tag--lisa sv-status ${i.ativo ? 'inscrito-ativo' : 'inscrito-inativo'}`}>
                   {i.ativo ? 'Ativo' : 'Inativo'}
                 </span>
 
                 <button
                   onClick={() => navigate(`/inscritos/${i.id_inscrito}`)}
-                  className="btn-action cancelar"
-                  style={{ width: 'auto', padding: '8px 16px', fontSize: '13px', flexShrink: 0 }}
+                  className="sv-btn sv-btn--vidro "
+                  
                 >
                   Ver / editar
                 </button>
@@ -152,7 +152,7 @@ function ListarInscritos() {
           )}
         </div>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

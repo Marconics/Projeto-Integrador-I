@@ -1,6 +1,6 @@
 /* ─── Telas de listagem com filtros e cards ───────────────────────────────────
    Usado em: Abrigos do voluntário, Abrigos do admin (Hub) e Vítimas do admin.
-   A base (dashboard, sidebar, main) vem de pg_adm/style.css.
+   A base (página, sidebar, main) vem do tema: styles/sosvale-glass.css.
    Tudo fica dentro de .pagina-listagem para não afetar as outras telas.
    Auxiliares em JS (estruturas, ocupação, busca sem acento): utils/listagem.jsx
 ────────────────────────────────────────────────────────────────────────────── */
@@ -12,30 +12,30 @@
 
 .pagina-listagem .lg-estado {
     padding: 40px 0;
-    color: #64748b;
+    color: var(--sv-tinta-2);
 }
 
 .pagina-listagem .lg-estado--erro {
-    color: #dc2626;
+    color: var(--sv-sirene);
 }
 
 /* ---------- Cabeçalho ---------- */
 
 .pagina-listagem .lg-breadcrumb {
     font-size: 14px;
-    color: #64748b;
+    color: var(--sv-tinta-2);
 }
 
 .pagina-listagem .lg-titulo {
     font-size: 26px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--sv-tinta);
     margin-top: 4px;
 }
 
 .pagina-listagem .lg-subtitulo {
     font-size: 14px;
-    color: #64748b;
+    color: var(--sv-tinta-2);
     margin-top: 4px;
 }
 
@@ -46,24 +46,24 @@
     align-items: center;
     gap: 16px;
     padding: 16px 20px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 14px;
+    background: var(--sv-azul-suave);
+    border: 1px solid var(--sv-azul-suave);
+    border-radius: var(--sv-raio-l);
 }
 
 .pagina-listagem .lg-meu--vazio {
     background: #ffffff;
-    border: 1px dashed #cbd5e1;
+    border: 1px dashed var(--sv-linha);
     font-size: 14px;
-    color: #475569;
+    color: var(--sv-tinta-2);
 }
 
 .pagina-listagem .lg-meu-icone {
     flex-shrink: 0;
     width: 44px;
     height: 44px;
-    border-radius: 12px;
-    background: #1e3a5f;
+    border-radius: var(--sv-raio-m);
+    background: var(--sv-azul);
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -84,17 +84,17 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #1d4ed8;
+    color: var(--sv-azul-forte);
 }
 
 .pagina-listagem .lg-meu-info strong {
     font-size: 16px;
-    color: #0f172a;
+    color: var(--sv-tinta);
 }
 
 .pagina-listagem .lg-meu-info span:last-child {
     font-size: 13px;
-    color: #475569;
+    color: var(--sv-tinta-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -118,15 +118,15 @@
     align-items: center;
     gap: 12px;
     font-size: 14px;
-    color: #166534;
-    background: #dcfce7;
-    border-radius: 10px;
+    color: var(--sv-ok-forte);
+    background: var(--sv-ok-suave);
+    border-radius: var(--sv-raio-s);
     padding: 10px 14px;
 }
 
 .pagina-listagem .lg-aviso--erro {
-    color: #b91c1c;
-    background: #fee2e2;
+    color: var(--sv-sirene-forte);
+    background: var(--sv-sirene-suave);
 }
 
 .pagina-listagem .lg-aviso button {
@@ -145,8 +145,8 @@
     gap: 12px;
     padding: 16px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
+    border: 1px solid var(--sv-linha);
+    border-radius: var(--sv-raio-l);
 }
 
 .pagina-listagem .lg-filtros-linha {
@@ -165,11 +165,11 @@
 .pagina-listagem .lg-busca input,
 .pagina-listagem .lg-filtros select {
     height: 40px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    border-radius: var(--sv-raio-s);
+    border: 1px solid var(--sv-linha);
     background: #ffffff;
     font-size: 14px;
-    color: #0f172a;
+    color: var(--sv-tinta);
 }
 
 .pagina-listagem .lg-busca input {
@@ -182,7 +182,7 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: #94a3b8;
+    color: var(--sv-tinta-3);
     font-size: 14px;
 }
 
@@ -204,27 +204,27 @@
     gap: 6px;
     height: 32px;
     padding: 0 12px;
-    border-radius: 99px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    color: #475569;
+    border-radius: var(--sv-raio-xs);
+    border: 1px solid var(--sv-linha);
+    background: var(--sv-fundo-suave);
+    color: var(--sv-tinta-2);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
 }
 
 .pagina-listagem .lg-chip:hover {
-    border-color: #94a3b8;
+    border-color: var(--sv-tinta-3);
 }
 
 .pagina-listagem .lg-chip--ativo {
-    background: #0f172a;
-    border-color: #0f172a;
+    background: var(--sv-tinta);
+    border-color: var(--sv-tinta);
     color: #ffffff;
 }
 
 .pagina-listagem .lg-chip--ativo:hover {
-    border-color: #0f172a;
+    border-color: var(--sv-tinta);
 }
 
 /* Rótulo das linhas de chips — largura fixa para os chips começarem alinhados */
@@ -235,7 +235,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #94a3b8;
+    color: var(--sv-tinta-3);
 }
 
 .pagina-listagem .lg-resultado {
@@ -243,12 +243,12 @@
     justify-content: space-between;
     align-items: center;
     font-size: 14px;
-    color: #64748b;
+    color: var(--sv-tinta-2);
     min-height: 28px;
 }
 
 .pagina-listagem .lg-resultado strong {
-    color: #0f172a;
+    color: var(--sv-tinta);
 }
 
 .pagina-listagem .lg-limpar {
@@ -257,7 +257,7 @@
     gap: 6px;
     border: none;
     background: transparent;
-    color: #2563eb;
+    color: var(--sv-azul);
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
@@ -265,12 +265,12 @@
 
 .pagina-listagem .lg-vazio {
     font-size: 14px;
-    color: #64748b;
+    color: var(--sv-tinta-2);
     text-align: center;
     padding: 40px 12px;
     background: #ffffff;
-    border: 1px dashed #e2e8f0;
-    border-radius: 14px;
+    border: 1px dashed var(--sv-linha);
+    border-radius: var(--sv-raio-l);
 }
 
 /* ---------- Cards dos abrigos ---------- */
@@ -287,15 +287,15 @@
     gap: 8px;
     padding: 18px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
+    border: 1px solid var(--sv-linha);
+    border-radius: var(--sv-raio-l);
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     min-width: 0;
 }
 
 .pagina-listagem .lg-card--meu {
-    border-color: #93c5fd;
-    box-shadow: 0 0 0 3px #dbeafe;
+    border-color: var(--sv-azul-suave);
+    box-shadow: 0 0 0 3px var(--sv-azul-suave);
 }
 
 .pagina-listagem .lg-card-topo {
@@ -310,10 +310,10 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #64748b;
-    background: #f1f5f9;
+    color: var(--sv-tinta-2);
+    background: var(--sv-fundo-suave);
     padding: 3px 8px;
-    border-radius: 6px;
+    border-radius: var(--sv-raio-xs);
 }
 
 .pagina-listagem .lg-selo-meu {
@@ -322,13 +322,13 @@
     gap: 4px;
     font-size: 12px;
     font-weight: 700;
-    color: #1d4ed8;
+    color: var(--sv-azul-forte);
 }
 
 .pagina-listagem .lg-card-nome {
     font-size: 16px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--sv-tinta);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -340,12 +340,12 @@
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    color: #475569;
+    color: var(--sv-tinta-2);
 }
 
 .pagina-listagem .lg-card-endereco {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--sv-tinta-3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -363,19 +363,19 @@
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    color: #475569;
+    color: var(--sv-tinta-2);
 }
 
 .pagina-listagem .lg-barra {
     height: 6px;
-    background: #e2e8f0;
-    border-radius: 99px;
+    background: var(--sv-linha);
+    border-radius: var(--sv-raio-xs);
     overflow: hidden;
 }
 
 .pagina-listagem .lg-barra div {
     height: 100%;
-    border-radius: 99px;
+    border-radius: var(--sv-raio-xs);
 }
 
 .pagina-listagem .lg-card-infos {
@@ -393,9 +393,9 @@
 .pagina-listagem .lg-estruturas span {
     width: 28px;
     height: 28px;
-    border-radius: 8px;
-    background: #f1f5f9;
-    color: #334155;
+    border-radius: var(--sv-raio-s);
+    background: var(--sv-fundo-suave);
+    color: var(--sv-tinta-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -406,7 +406,7 @@
     width: auto;
     background: transparent;
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--sv-tinta-3);
 }
 
 .pagina-listagem .lg-pedidos {
@@ -417,10 +417,10 @@
     gap: 5px;
     font-size: 12px;
     font-weight: 700;
-    color: #c2410c;
-    background: #ffedd5;
+    color: var(--sv-atencao-forte);
+    background: var(--sv-atencao-suave);
     padding: 4px 10px;
-    border-radius: 99px;
+    border-radius: var(--sv-raio-xs);
 }
 
 /* Botões sempre no fim do card → alinhados entre cards da mesma linha */
@@ -442,7 +442,7 @@
     gap: 6px;
     height: 36px;
     padding: 0 12px;
-    border-radius: 8px;
+    border-radius: var(--sv-raio-s);
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
@@ -450,40 +450,40 @@
 }
 
 .pagina-listagem .lg-botao-secundario {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--sv-linha);
     background: #ffffff;
-    color: #1e293b;
+    color: var(--sv-tinta);
 }
 
 .pagina-listagem .lg-botao-secundario:hover {
-    background: #f8fafc;
+    background: var(--sv-fundo-suave);
 }
 
 .pagina-listagem .lg-botao-vincular {
-    border: 1px solid #1e3a5f;
-    background: #1e3a5f;
+    border: 1px solid var(--sv-azul);
+    background: var(--sv-azul);
     color: #ffffff;
 }
 
 .pagina-listagem .lg-botao-vincular:hover:not(:disabled) {
-    background: #16304f;
+    background: var(--sv-azul-forte);
 }
 
 .pagina-listagem .lg-botao-vinculado {
-    border: 1px solid #bfdbfe;
-    background: #eff6ff;
-    color: #1d4ed8;
+    border: 1px solid var(--sv-azul-suave);
+    background: var(--sv-azul-suave);
+    color: var(--sv-azul-forte);
     cursor: default;
 }
 
 .pagina-listagem .lg-botao-sair {
-    border: 1px solid #fecaca;
+    border: 1px solid rgba(208, 50, 58, .3);
     background: #ffffff;
-    color: #dc2626;
+    color: var(--sv-sirene);
 }
 
 .pagina-listagem .lg-botao-sair:hover:not(:disabled) {
-    background: #fef2f2;
+    background: var(--sv-sirene-suave);
 }
 
 .pagina-listagem .lg-botao-vincular:disabled,
@@ -515,9 +515,9 @@
     gap: 8px;
     height: 40px;
     padding: 0 18px;
-    border: 1px solid #1e3a5f;
-    border-radius: 10px;
-    background: #1e3a5f;
+    border: 1px solid var(--sv-azul);
+    border-radius: var(--sv-raio-s);
+    background: var(--sv-azul);
     color: #ffffff;
     font-size: 14px;
     font-weight: 600;
@@ -526,13 +526,13 @@
 }
 
 .pagina-listagem .lg-botao-primario:hover {
-    background: #16304f;
+    background: var(--sv-azul-forte);
 }
 
 .pagina-listagem .lg-topo-acoes .lg-botao-secundario {
     height: 40px;
     padding: 0 16px;
-    border-radius: 10px;
+    border-radius: var(--sv-raio-s);
     font-size: 14px;
     font-weight: 600;
 }
@@ -545,9 +545,9 @@
     gap: 6px;
     height: 36px;
     padding: 0 12px;
-    border: 1px solid #1e3a5f;
-    border-radius: 8px;
-    background: #1e3a5f;
+    border: 1px solid var(--sv-azul);
+    border-radius: var(--sv-raio-s);
+    background: var(--sv-azul);
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
@@ -556,7 +556,7 @@
 }
 
 .pagina-listagem .lg-botao-card:hover {
-    background: #16304f;
+    background: var(--sv-azul-forte);
 }
 
 /* ---------- Selos (status, alerta, sem abrigo...) ---------- */
@@ -568,15 +568,15 @@
     font-size: 11px;
     font-weight: 700;
     padding: 3px 9px;
-    border-radius: 99px;
+    border-radius: var(--sv-raio-xs);
     white-space: nowrap;
 }
 
-.pagina-listagem .lg-selo--verde    { background: #dcfce7; color: #166534; }
-.pagina-listagem .lg-selo--amarelo  { background: #fef9c3; color: #854d0e; }
-.pagina-listagem .lg-selo--vermelho { background: #fee2e2; color: #b91c1c; }
-.pagina-listagem .lg-selo--cinza    { background: #f1f5f9; color: #475569; }
-.pagina-listagem .lg-selo--azul     { background: #dbeafe; color: #1d4ed8; }
+.pagina-listagem .lg-selo--verde    { background: var(--sv-ok-suave); color: var(--sv-ok-forte); }
+.pagina-listagem .lg-selo--amarelo  { background: var(--sv-atencao-suave); color: var(--sv-atencao-forte); }
+.pagina-listagem .lg-selo--vermelho { background: var(--sv-sirene-suave); color: var(--sv-sirene-forte); }
+.pagina-listagem .lg-selo--cinza    { background: var(--sv-fundo-suave); color: var(--sv-tinta-2); }
+.pagina-listagem .lg-selo--azul     { background: var(--sv-azul-suave); color: var(--sv-azul-forte); }
 
 .pagina-listagem .lg-selos {
     display: flex;
@@ -600,7 +600,7 @@
     flex-shrink: 0;
     border-radius: 50%;
     object-fit: cover;
-    background: #1e3a5f;
+    background: var(--sv-azul);
     color: #ffffff;
     font-size: 17px;
     font-weight: 700;
@@ -615,7 +615,7 @@
 
 .pagina-listagem .lg-pessoa-sub {
     font-size: 12px;
-    color: #64748b;
+    color: var(--sv-tinta-2);
 }
 
 .pagina-listagem .lg-dados {
@@ -623,8 +623,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px 12px;
     padding: 10px 0;
-    border-top: 1px solid #f1f5f9;
-    border-bottom: 1px solid #f1f5f9;
+    border-top: 1px solid var(--sv-fundo-suave);
+    border-bottom: 1px solid var(--sv-fundo-suave);
 }
 
 .pagina-listagem .lg-dado {
@@ -634,14 +634,14 @@
 .pagina-listagem .lg-dado span {
     display: block;
     font-size: 11px;
-    color: #94a3b8;
+    color: var(--sv-tinta-3);
 }
 
 .pagina-listagem .lg-dado strong {
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--sv-tinta);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -658,14 +658,14 @@
     font-size: 11px;
     font-weight: 600;
     padding: 3px 8px;
-    border-radius: 6px;
-    background: #f3e8ff;
-    color: #6b21a8;
+    border-radius: var(--sv-raio-xs);
+    background: var(--sv-anil-suave);
+    color: var(--sv-anil);
 }
 
 .pagina-listagem .lg-sem-tags {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--sv-tinta-3);
 }
 
 /* ---------- Rodapé ---------- */
@@ -676,7 +676,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--sv-tinta-3);
 }
 
 /* ---------- Telas menores ---------- */
@@ -688,5 +688,188 @@
 
     .pagina-listagem .lg-meu-acoes {
         width: 100%;
+    }
+}
+
+
+/* ─── Novo visual (tema sosvale-glass) ────────────────────────────────────────
+   As cores, cantos e fontes acima já usam os tokens do tema. Aqui entra a
+   identidade: cards com o degradê azul e o canto vermelho, botões e campos
+   iguais aos do resto do sistema.
+────────────────────────────────────────────────────────────────────────────── */
+
+.pagina-listagem .lg-topo-linha > div:first-child {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* Painel dos filtros */
+.pagina-listagem .lg-filtros {
+    background: var(--sv-fundo-card);
+    border-color: var(--sv-borda-card);
+    border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l);
+    box-shadow: var(--sv-sombra-vidro);
+}
+
+.pagina-listagem .lg-busca input,
+.pagina-listagem .lg-filtros select {
+    border-color: var(--sv-borda-campo);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pagina-listagem .lg-busca input:focus,
+.pagina-listagem .lg-filtros select:focus {
+    outline: none;
+    border-color: var(--sv-azul);
+    box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.2);
+}
+
+.pagina-listagem .lg-filtros select {
+    max-width: 100%;
+}
+
+.pagina-listagem .lg-chip {
+    background: #ffffff;
+    border-color: var(--sv-borda-campo);
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.pagina-listagem .lg-chip:hover {
+    border-color: var(--sv-azul);
+    color: var(--sv-azul);
+}
+
+.pagina-listagem .lg-chip--ativo,
+.pagina-listagem .lg-chip--ativo:hover {
+    background: var(--sv-azul);
+    border-color: var(--sv-azul);
+    color: #ffffff;
+}
+
+/* Cards: degradê azul, canto vermelho no topo e dois cantos retos */
+.pagina-listagem .lg-card {
+    position: relative;
+    background: var(--sv-fundo-card);
+    border-color: var(--sv-borda-card);
+    border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l);
+    box-shadow: var(--sv-sombra-media);
+    transition: transform 0.35s var(--sv-suave), box-shadow 0.35s var(--sv-suave);
+}
+
+.pagina-listagem .lg-card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 26px;
+    height: 26px;
+    border-top: 3px solid var(--sv-sirene);
+    border-left: 3px solid var(--sv-sirene);
+    border-top-left-radius: var(--sv-raio-corte);
+    pointer-events: none;
+    transition: width 0.35s var(--sv-suave), height 0.35s var(--sv-suave);
+}
+
+.pagina-listagem .lg-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sv-sombra-alta);
+}
+
+.pagina-listagem .lg-card:hover::before {
+    width: 44px;
+    height: 44px;
+}
+
+.pagina-listagem .lg-card--meu {
+    border-color: var(--sv-azul);
+    box-shadow: 0 0 0 2px rgba(36, 87, 214, 0.18), var(--sv-sombra-media);
+}
+
+.pagina-listagem .lg-card-nome {
+    font-family: var(--sv-fonte-display);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--sv-azul-forte);
+}
+
+.pagina-listagem .lg-tipo,
+.pagina-listagem .lg-estruturas span {
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.pagina-listagem .lg-estruturas span {
+    color: var(--sv-azul);
+}
+
+.pagina-listagem .lg-dados {
+    border-color: var(--sv-linha);
+}
+
+.pagina-listagem .lg-meu {
+    border-color: var(--sv-borda-card);
+    border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l);
+    background: var(--sv-fundo-card);
+}
+
+.pagina-listagem .lg-meu--vazio,
+.pagina-listagem .lg-vazio {
+    border-color: var(--sv-borda-campo);
+}
+
+/* Botões no padrão do tema: azul para a ação principal, vidro para a secundária */
+.pagina-listagem .lg-botao-primario,
+.pagina-listagem .lg-botao-card,
+.pagina-listagem .lg-botao-vincular {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: linear-gradient(180deg, #3B6EF0, var(--sv-azul));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 12px 22px -12px rgba(36, 87, 214, 0.85);
+    font-weight: 600;
+    transition: transform 0.25s var(--sv-suave), box-shadow 0.25s var(--sv-suave);
+}
+
+.pagina-listagem .lg-botao-primario:hover,
+.pagina-listagem .lg-botao-card:hover,
+.pagina-listagem .lg-botao-vincular:hover:not(:disabled) {
+    background: linear-gradient(180deg, #3B6EF0, var(--sv-azul));
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 16px 26px -12px rgba(36, 87, 214, 0.9);
+}
+
+.pagina-listagem .lg-botao-secundario {
+    border-color: rgba(255, 255, 255, 0.85);
+    background: rgba(228, 238, 255, 0.8);
+    color: var(--sv-azul);
+    box-shadow: inset 0 1px 0 #ffffff, 0 6px 14px -8px rgba(34, 66, 128, 0.35);
+    transition: background-color 0.25s, color 0.25s;
+}
+
+.pagina-listagem .lg-botao-secundario:hover {
+    background: var(--sv-azul);
+    color: #ffffff;
+}
+
+.pagina-listagem .lg-botao-sair {
+    background: var(--sv-sirene-suave);
+}
+
+.pagina-listagem .lg-botao-sair:hover:not(:disabled) {
+    background: var(--sv-sirene);
+    color: #ffffff;
+}
+
+.pagina-listagem .lg-limpar {
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .pagina-listagem .lg-filtros select,
+    .pagina-listagem .lg-busca {
+        min-width: 0;
+        flex: 1 1 100%;
+    }
+
+    .pagina-listagem .lg-grade {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

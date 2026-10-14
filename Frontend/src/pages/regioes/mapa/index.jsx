@@ -2,16 +2,16 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
 import { renderToStaticMarkup } from 'react-dom/server';
-import { FaHome, FaSearch, FaPlus, FaCrosshairs, FaSyncAlt } from 'react-icons/fa';
+import { LuCircleCheck, LuClock, LuHouse, LuLocateFixed, LuPhone, LuPlus, LuRefreshCw, LuSearch, LuTriangleAlert } from 'react-icons/lu';
 import { MapContainer, TileLayer, Marker, Popup, Circle, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import SidebarAdm from '../../../components/SidebarAdm';
-import SidebarVoluntario from '../../../components/SidebarVoluntario';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 import { API_URL, formatarTempo } from '../../../services/api';
 import { geocodificar } from '../../../services/localizacao';
-import "../../pg_adm/style.css";
 import "./mapa.css";
+import { iconeDoTipoAlerta } from '../../../utils/alertas';
 
 // ─── Configuração do mapa ───────────────────────────────────────────────────
 // Coordenadas conhecidas das cidades (as outras são buscadas no Nominatim)
@@ -72,7 +72,7 @@ const situacaoAbrigo = (abrigo) => {
 const iconesAbrigo = {}
 function iconeAbrigo(situacao) {
   if (!iconesAbrigo[situacao]) {
-    const casa = renderToStaticMarkup(<FaHome />)
+    const casa = renderToStaticMarkup(<LuHouse />)
     iconesAbrigo[situacao] = L.divIcon({
       className: 'mapa-pino-wrapper',
       html: `<div class="mapa-pino" style="--cor:${COR_ABRIGO[situacao]}"><span>${casa}</span></div>`,
@@ -98,7 +98,7 @@ function CapturarMapa({ aoCarregar }) {
 function Mapa({ modulo = 'admin' }) {
 
   const ehVoluntario = modulo === 'voluntario'
-  const sidebar = ehVoluntario ? <SidebarVoluntario ativo="mapa" /> : <SidebarAdm ativo="mapa" />
+  const sidebar = ehVoluntario ? <SidebarGlass modulo="voluntario" ativo="mapa" /> : <SidebarGlass ativo="mapa" />
   const navigate = useNavigate()
 
   // ─── ESTADOS ────────────────────────────────────────────────
@@ -278,7 +278,7 @@ function Mapa({ modulo = 'admin' }) {
       .map(a => ({ tipo: 'abrigo', item: a, titulo: a.nome, detalhe: [a.bairro, a.cidade].filter(Boolean).join(' — ') }))
     const achaAlertas = alertas
       .filter(a => [a.tipoLabel, a.bairro, a.cidade].some(t => t?.toLowerCase().includes(termo)))
-      .map(a => ({ tipo: 'alerta', item: a, titulo: `${a.emoji} ${a.tipoLabel}`, detalhe: `${a.bairro} — ${a.cidade}` }))
+      .map(a => ({ tipo: 'alerta', item: a, titulo: a.tipoLabel, detalhe: `${a.bairro} — ${a.cidade}` }))
     setSugestoes([...achaAlertas, ...achaAbrigos].slice(0, 8))
   }
 
@@ -328,9 +328,10 @@ function Mapa({ modulo = 'admin' }) {
   //------- Tela de loading ------
   if (carregando) {
     return (
-      <div className="dashboard">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         {sidebar}
-        <main className="main">
+        <main className="sv-main">
           <p style={{ padding: '40px', color: '#64748b' }}>Carregando mapa...</p>
         </main>
       </div>
@@ -340,16 +341,17 @@ function Mapa({ modulo = 'admin' }) {
 
   //------- Tela Principal ------
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
       {sidebar}
 
-      <main className="main mapa-main">
+      <main className="sv-main mapa-main">
 
         <header className="mapa-topo">
           <div>
-            <p className="mapa-breadcrumb">Mapa &gt;</p>
-            <h1 className="mapa-titulo">{mostraAlertas ? 'Mapa de abrigos e alertas' : 'Mapa de abrigos'}</h1>
-            <p className="subtitle">
+            <p className="sv-trilha">Mapa &gt;</p>
+            <h1 className="sv-titulo">{mostraAlertas ? 'Mapa de abrigos e alertas' : 'Mapa de abrigos'}</h1>
+            <p className="sv-subtitulo">
               {mostraAlertas
                 ? 'Abrigos cadastrados e alertas ativos nas cidades do Vale do Paraíba'
                 : 'Abrigos cadastrados nas cidades do Vale do Paraíba'}
@@ -357,7 +359,7 @@ function Mapa({ modulo = 'admin' }) {
           </div>
           {!ehVoluntario && (
             <button type="button" className="mapa-botao-primario" onClick={() => navigate('/regioes')}>
-              <FaPlus /> Gerenciar regiões
+              <LuPlus /> Gerenciar regiões
             </button>
           )}
         </header>
@@ -392,7 +394,7 @@ function Mapa({ modulo = 'admin' }) {
           </select>
 
           <div className="mapa-busca">
-            <FaSearch className="mapa-busca-icone" />
+            <LuSearch className="mapa-busca-icone" />
             <input
               placeholder={mostraAlertas ? 'Buscar abrigo, bairro, cidade ou tipo de alerta...' : 'Buscar abrigo, bairro ou cidade...'}
               value={busca}
@@ -429,8 +431,8 @@ function Mapa({ modulo = 'admin' }) {
 
         {(avisoAlertas || semLocalizacao > 0) && (
           <div className="mapa-avisos">
-            {avisoAlertas && <span>⚠️ {avisoAlertas}</span>}
-            {semLocalizacao > 0 && <span>⚠️ {semLocalizacao} abrigo(s) sem localização cadastrada (não aparecem no mapa)</span>}
+            {avisoAlertas && <span><LuTriangleAlert /> {avisoAlertas}</span>}
+            {semLocalizacao > 0 && <span><LuTriangleAlert /> {semLocalizacao} abrigo(s) sem localização cadastrada (não aparecem no mapa)</span>}
           </div>
         )}
 
@@ -481,13 +483,13 @@ function Mapa({ modulo = 'admin' }) {
                     <Popup>
                       <div className="mapa-popup">
                         <span className="mapa-popup-selo" style={{ background: estilo.cor }}>{estilo.label}</span>
-                        <strong className="mapa-popup-titulo">{alerta.emoji} {alerta.tipoLabel}</strong>
+                        <strong className="mapa-popup-titulo">{iconeDoTipoAlerta(alerta.tipo)} {alerta.tipoLabel}</strong>
                         <span className="mapa-popup-sub">{alerta.bairro} — {alerta.cidade}/{alerta.estado}</span>
                         <span className="mapa-popup-info">
-                          ✅ Confirmado por {alerta.totalRelatos} morador(es)
+                          <LuCircleCheck /> Confirmado por {alerta.totalRelatos} morador(es)
                           {alerta.disparadoPorAdmin ? ' + administrador' : ''}
                         </span>
-                        {alerta.disparadoEm && <span className="mapa-popup-info">🕒 {formatarTempo(alerta.disparadoEm)}</span>}
+                        {alerta.disparadoEm && <span className="mapa-popup-info"><LuClock /> {formatarTempo(alerta.disparadoEm)}</span>}
                         {aproximado && <span className="mapa-popup-aviso">Localização aproximada (centro da cidade)</span>}
                         {alerta.orientacao && <p className="mapa-popup-orientacao">{alerta.orientacao}</p>}
                         {!ehVoluntario && (
@@ -531,8 +533,8 @@ function Mapa({ modulo = 'admin' }) {
                         <span className="mapa-popup-info">
                           {abrigo.status !== 'ativo' ? 'Abrigo inativo' : vagas > 0 ? `${vagas} vaga(s) livre(s)` : 'Sem vagas'}
                         </span>
-                        {abrigo.telefone && <span className="mapa-popup-info">📞 {abrigo.telefone}</span>}
-                        {mostraAlertas && abrigo.statusAlerta && <span className="mapa-popup-aviso">⚠️ Há alerta ativo neste bairro</span>}
+                        {abrigo.telefone && <span className="mapa-popup-info"><LuPhone /> {abrigo.telefone}</span>}
+                        {mostraAlertas && abrigo.statusAlerta && <span className="mapa-popup-aviso"><LuTriangleAlert /> Há alerta ativo neste bairro</span>}
 
                         {!ehVoluntario && (
                           <button type="button" className="mapa-popup-botao" onClick={() => navigate(`/detalhes-abrigos/${abrigo.id}`)}>
@@ -549,11 +551,11 @@ function Mapa({ modulo = 'admin' }) {
             {/* Botões e legenda por cima do mapa */}
             <div className="mapa-flutuante mapa-acoes">
               <button type="button" title="Centralizar na cidade" onClick={() => enquadrar(cidadeSelecionada)}>
-                <FaCrosshairs />
+                <LuLocateFixed />
               </button>
               {mostraAlertas && (
                 <button type="button" title="Atualizar alertas" onClick={buscarAlertas}>
-                  <FaSyncAlt />
+                  <LuRefreshCw />
                 </button>
               )}
             </div>
@@ -585,7 +587,7 @@ function Mapa({ modulo = 'admin' }) {
                 const estilo = ESTILO_GRAVIDADE[alerta.gravidade] ?? ESTILO_GRAVIDADE.leve
                 return (
                   <button key={alerta.id_alerta} type="button" className="mapa-item" style={{ '--cor': estilo.cor }} onClick={() => focar('alerta', alerta)}>
-                    <span className="mapa-item-titulo">{alerta.emoji} {alerta.tipoLabel}</span>
+                    <span className="mapa-item-titulo">{iconeDoTipoAlerta(alerta.tipo)} {alerta.tipoLabel}</span>
                     <span className="mapa-item-sub">{alerta.bairro} · {estilo.label}</span>
                     {alerta.disparadoEm && <span className="mapa-item-sub">{formatarTempo(alerta.disparadoEm)}</span>}
                   </button>

@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Sosvale from './pages/sosvale';
 import LoginAdm from './pages/login_adm';
 import Login from './pages/login';
-import PgAdm from './pages/pg_adm';
 import PgAdmGlass from './pages/PgAdmGlass/PgAdmGlass';
 import Cadastro from './pages/cadastro';
 import ListarAbrigos from './pages/abrigos/Hub-Abrigos';
@@ -41,9 +40,8 @@ function App() {
           <Route path="/" element={<Sosvale />} />
           <Route path="/login-adm" element={<LoginAdm />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/pg_adm" element={<PgAdm />} />
-          {/* Rota de teste do novo design da home (a /pg_adm continua sendo a oficial) */}
-          <Route path="/adm-nova" element={<PgAdmGlass />} />
+          {/* Home do admin no novo visual. A antiga continua em pages/pg_adm, sem rota */}
+          <Route path="/pg_adm" element={<PgAdmGlass />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/abrigos" element={<ListarAbrigos />} />
           <Route path="/cadastro-vitima" element={<CadastroVitima />} />

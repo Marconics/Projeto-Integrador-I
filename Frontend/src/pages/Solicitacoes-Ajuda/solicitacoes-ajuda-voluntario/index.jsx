@@ -1,21 +1,16 @@
 // ─── Imports ──────────────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  FaHome, FaUser, FaMap, FaHandHoldingHeart,
-  FaPhoneAlt, FaBuilding, FaHeart, FaRegHeart
-} from 'react-icons/fa';
-import { FaGear } from 'react-icons/fa6';
-import { GoAlertFill } from 'react-icons/go';
-import '../../pg_adm/style.css';
-import SidebarVoluntario from '../../../components/SidebarVoluntario';
+import { LuBuilding2, LuHandHeart, LuHeart, LuPhone, LuX } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 // ─── Badges e labels ──────────────────────────────────────────────────────────
 const badgeUrgencia = {
-  baixa:   { label: 'Baixa',   bg: '#f0fdf4', cor: '#166534' },
-  media:   { label: 'Média',   bg: '#fefce8', cor: '#854d0e' },
-  alta:    { label: 'Alta',    bg: '#fff7ed', cor: '#9a3412' },
-  critica: { label: 'Crítica', bg: '#fef2f2', cor: '#7f1d1d' },
+  baixa:   { label: 'Baixa',   bg: 'var(--sv-ok-suave)', cor: 'var(--sv-ok-forte)' },
+  media:   { label: 'Média',   bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+  alta:    { label: 'Alta',    bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
+  critica: { label: 'Crítica', bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)' },
 }
 
 const categoriaLabel = {
@@ -120,10 +115,11 @@ function SolicitacoesAjudaVoluntario() {
   // ─── Loading ─────────────────────────────────────────────────────────────────
   if (carregando) {
     return (
-      <div className="dashboard">
-        <SidebarVoluntario ativo="ajuda" />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando solicitações...</p>
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass modulo="voluntario" ativo="ajuda" />
+        <main className="sv-main">
+          <p className="sv-vazio">Carregando solicitações...</p>
         </main>
       </div>
     )
@@ -131,115 +127,95 @@ function SolicitacoesAjudaVoluntario() {
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
-      <SidebarVoluntario ativo="ajuda" />
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+      <SidebarGlass modulo="voluntario" ativo="ajuda" />
 
-      <main className="main">
+      <main className="sv-main">
 
         {/* Header */}
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Voluntário &gt; Solicitações de Ajuda
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               Solicitações de Ajuda
             </h1>
-            <p className="subtitle">
+            <p className="sv-subtitulo">
               Veja os pedidos dos abrigos e indique interesse em ajudar
             </p>
           </div>
         </header>
 
         {/* Painel */}
-        <div className="panel" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="sv-vidro sv-painel">
 
           {/* Filtros por categoria */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            {CATEGORIAS.map(c => (
-              <button
-                key={c}
-                onClick={() => setFiltroCategoria(c)}
-                style={{
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  background: filtroCategoria === c ? '#0f172a' : '#f1f5f9',
-                  color: filtroCategoria === c ? '#fff' : '#64748b',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {c === 'todas' ? 'Todas' : categoriaLabel[c]}
-              </button>
-            ))}
+          <div className="sv-filtros">
+            <div className="sv-chips" role="group" aria-label="Filtrar por categoria">
+              {CATEGORIAS.map(c => (
+                <button
+                  key={c}
+                  onClick={() => setFiltroCategoria(c)}
+                  className={`sv-chip${filtroCategoria === c ? ' sv-chip--ativo' : ''}`}
+                  aria-pressed={filtroCategoria === c}
+                >
+                  {c === 'todas' ? 'Todas' : categoriaLabel[c]}
+                </button>
+              ))}
 
-            {/* Filtro de abrigo vindo do painel — dá para remover */}
-            {filtroAbrigo && (
-              <button
-                onClick={() => setParametros({})}
-                title="Mostrar todos os abrigos"
-                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #bae6fd', background: '#e0f2fe', color: '#0c4a6e', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
-              >
-                Abrigo: {abrigoFiltrado?.nome ?? `#${filtroAbrigo}`} ✕
-              </button>
-            )}
+              {/* Filtro de abrigo vindo do painel — dá para remover */}
+              {filtroAbrigo && (
+                <button
+                  onClick={() => setParametros({})}
+                  title="Mostrar todos os abrigos"
+                  className="sv-chip sv-chip--removivel"
+                >
+                  Abrigo: {abrigoFiltrado?.nome ?? `#${filtroAbrigo}`} <LuX aria-hidden="true" />
+                </button>
+              )}
+            </div>
 
-            <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#94a3b8', alignSelf: 'center' }}>
+            <span className="sv-contagem">
               {lista.length} solicitaç{lista.length !== 1 ? 'ões' : 'ão'}
             </span>
           </div>
 
           {/* Lista vazia */}
           {lista.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8' }}>
-              <FaHandHoldingHeart style={{ fontSize: '40px', marginBottom: '12px' }} />
-              <p style={{ fontSize: '15px' }}>Nenhuma solicitação aberta no momento.</p>
+            <div className="sv-vazio">
+              <LuHandHeart />
+              <p>Nenhuma solicitação aberta no momento.</p>
             </div>
           ) : (
 
             /* Grid de cards */
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+            <div className="sv-grade">
               {lista.map(s => {
-                const urgBadge = badgeUrgencia[s.urgencia] ?? { label: s.urgencia, bg: '#f1f5f9', cor: '#64748b' }
+                const urgBadge = badgeUrgencia[s.urgencia] ?? { label: s.urgencia, bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)' }
                 const temInteresse = interesses.has(s.id_solicitacao)
                 const processando = carregandoInteresse === s.id_solicitacao
 
                 return (
                   <div
                     key={s.id_solicitacao}
-                    style={{
-                      borderRadius: '12px',
-                      border: temInteresse ? '1.5px solid #a78bfa' : '1px solid #e2e8f0',
-                      background: temInteresse ? '#faf5ff' : '#fff',
-                      padding: '20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      transition: 'border-color 0.2s, background 0.2s'
-                    }}
+                    className={`sv-card sv-card--branco sv-pilha${temInteresse ? ' sv-card--marcado' : ''}`}
                   >
                     {/* Topo: ícone + título + badges */}
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                      <div style={{
-                        width: '40px', height: '40px', flexShrink: 0,
-                        borderRadius: '10px', background: '#ede9fe',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#7c3aed', fontSize: '18px'
-                      }}>
-                        <FaHandHoldingHeart />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: '700', color: '#0f172a', fontSize: '14px', margin: '0 0 4px', lineHeight: '1.4' }}>
+                    <div className="sv-card-topo">
+                      <span className="sv-poco sv-poco--p sv-poco--aceso sv-poco--ciano">
+                        <LuHandHeart />
+                      </span>
+                      <div className="sv-linha-info">
+                        <p className="sv-linha-titulo">
                           {s.titulo}
                         </p>
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          <span style={{ background: urgBadge.bg, color: urgBadge.cor, padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+                        <div className="sv-etiquetas">
+                          <span className="sv-tag sv-tag--lisa" style={{ background: urgBadge.bg, color: urgBadge.cor }}>
                             {urgBadge.label}
                           </span>
-                          <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+                          <span className="sv-tag sv-tag--lisa sv-tag--neutro">
                             {categoriaLabel[s.categoria] ?? s.categoria}
                           </span>
                         </div>
@@ -247,40 +223,36 @@ function SolicitacoesAjudaVoluntario() {
                     </div>
 
                     {/* Descrição resumida */}
-                    <p style={{
-                      fontSize: '13px', color: '#64748b', lineHeight: '1.6',
-                      display: '-webkit-box', WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical', overflow: 'hidden'
-                    }}>
+                    <p className="sv-apoio sv-tres-linhas">
                       {s.descricao}
                     </p>
 
                     {/* Abrigo */}
                     {s.abrigo && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#475569' }}>
-                        <FaBuilding style={{ color: '#94a3b8', flexShrink: 0 }} />
-                        <span style={{ fontWeight: '500' }}>{s.abrigo.nome}</span>
+                      <div className="sv-apoio sv-apoio--icone">
+                        <LuBuilding2 />
+                        <strong>{s.abrigo.nome}</strong>
                         {s.abrigo.cidade && (
-                          <span style={{ color: '#94a3b8' }}>— {s.abrigo.cidade}/{s.abrigo.estado}</span>
+                          <span>— {s.abrigo.cidade}/{s.abrigo.estado}</span>
                         )}
                       </div>
                     )}
 
                     {/* Contato do abrigo */}
                     {s.abrigo?.telefone && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#2563eb' }}>
-                        <FaPhoneAlt />
-                        <a href={`tel:${s.abrigo.telefone}`} style={{ color: 'inherit', textDecoration: 'none', fontWeight: '500' }}>
+                      <div className="sv-apoio sv-apoio--icone">
+                        <LuPhone />
+                        <a className="sv-link" href={`tel:${s.abrigo.telefone}`}>
                           {s.abrigo.telefone}
                         </a>
                       </div>
                     )}
 
                     {/* Rodapé do card: interesse + data */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                    <div className="sv-card-rodape">
 
                       {/* Data */}
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      <span className="sv-campo-ajuda">
                         {new Date(s.createdAt).toLocaleDateString('pt-BR')}
                       </span>
 
@@ -288,20 +260,12 @@ function SolicitacoesAjudaVoluntario() {
                       <button
                         onClick={() => handleInteresse(s.id_solicitacao)}
                         disabled={processando}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '6px',
-                          padding: '7px 14px', borderRadius: '20px', border: 'none',
-                          cursor: processando ? 'wait' : 'pointer',
-                          background: temInteresse ? '#7c3aed' : '#f3f4f6',
-                          color: temInteresse ? '#fff' : '#374151',
-                          fontWeight: '600', fontSize: '13px',
-                          transition: 'all 0.2s',
-                          opacity: processando ? 0.7 : 1
-                        }}
+                        className={`sv-btn sv-btn--p ${temInteresse ? 'sv-btn--primario' : 'sv-btn--vidro'}`}
+                        aria-pressed={temInteresse}
                       >
                         {temInteresse
-                          ? <><FaHeart /> Tenho interesse</>
-                          : <><FaRegHeart /> Quero ajudar</>
+                          ? <><LuHeart fill="currentColor" /> Tenho interesse</>
+                          : <><LuHeart /> Quero ajudar</>
                         }
                       </button>
 
@@ -313,7 +277,7 @@ function SolicitacoesAjudaVoluntario() {
           )}
         </div>
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

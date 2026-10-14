@@ -1,13 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMap,
-  FaSearch, FaLink, FaUnlink, FaArrowLeft, FaExternalLinkAlt
-} from 'react-icons/fa';
-import { GoAlertFill } from 'react-icons/go';
-import { FaGear } from 'react-icons/fa6';
-import "../../pg_adm/style.css";
-import SidebarAdm from '../../../components/SidebarAdm';
+import { LuArrowLeft, LuExternalLink, LuLink, LuSearch, LuUnlink, LuUser, LuX } from 'react-icons/lu';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 // ── Utilitários ────────────────────────────────────────────────────────────
 const calcularIdade = (dataNascimento) => {
@@ -43,7 +38,9 @@ function VitimasDoAbrigo() {
   // ──────────────────────────────────────────────────────────────────────
 
   // ── Carga inicial ─────────────────────────────────────────────────────
-  const carregarDados = async () => {
+  // useCallback: a função só muda quando o id do abrigo muda, então o useEffect
+  // abaixo pode depender dela sem recarregar a cada render
+  const carregarDados = useCallback(async () => {
     try {
       const resAbrigo = await fetch(`http://localhost:3000/api/abrigos/listar/${id}`)
       const dadosAbrigo = await resAbrigo.json()
@@ -66,9 +63,9 @@ function VitimasDoAbrigo() {
     } finally {
       setCarregando(false)
     }
-  }
+  }, [id])
 
-  useEffect(() => { carregarDados() }, [id])
+  useEffect(() => { carregarDados() }, [carregarDados])
   // ──────────────────────────────────────────────────────────────────────
 
   // ── Vincular ──────────────────────────────────────────────────────────
@@ -151,162 +148,128 @@ function VitimasDoAbrigo() {
   const pct = capacidade.total > 0
     ? Math.min(100, Math.round((capacidade.ocupada / capacidade.total) * 100))
     : 0
-  const corBarra = pct >= 100 ? '#ef4444' : pct >= 80 ? '#f97316' : '#16a34a'
+  const corBarra = pct >= 100 ? 'var(--sv-sirene)' : pct >= 80 ? 'var(--sv-atencao)' : 'var(--sv-ok)'
   // ──────────────────────────────────────────────────────────────────────
 
   const Sidebar = () => (
-    <SidebarAdm ativo="abrigos" />
+    <SidebarGlass ativo="abrigos" />
   )
 
   if (carregando) {
     return (
-      <div className="dashboard">
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <Sidebar />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando vítimas do abrigo...</p>
+        <main className="sv-main">
+          <p className="sv-vazio">Carregando vítimas do abrigo...</p>
         </main>
       </div>
     )
   }
 
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
       <Sidebar />
 
-      <main className="main">
+      <main className="sv-main">
 
         {/* ── Cabeçalho ──────────────────────────────────────────────────── */}
-        <header className="top">
-          <div>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
             {/* Botão de voltar */}
             <button
+              className="sv-voltar"
               onClick={() => navigate(`/detalhes-abrigos/${id}`)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: '#64748b', fontSize: '14px', padding: 0, marginBottom: '6px'
-              }}
             >
-              <FaArrowLeft style={{ fontSize: '11px' }} />
+              <LuArrowLeft />
               Voltar para {nomeAbrigo}
             </button>
 
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+            <h1 className="sv-titulo">
               Vítimas do Abrigo
             </h1>
-            <p className="subtitle">
+            <p className="sv-subtitulo">
               {vitimasDoAbrigo.length} vítima{vitimasDoAbrigo.length !== 1 ? 's' : ''} vinculada{vitimasDoAbrigo.length !== 1 ? 's' : ''}
             </p>
           </div>
 
           <button
+            className="sv-btn sv-btn--primario"
             onClick={() => { setPainelVincular(true); setBusca('') }}
             disabled={pct >= 100}
             title={pct >= 100 ? 'Abrigo lotado' : 'Vincular vítima'}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 18px', borderRadius: '8px', border: 'none',
-              background: pct >= 100 ? '#94a3b8' : '#16a34a',
-              color: '#fff', fontWeight: '600', fontSize: '14px',
-              cursor: pct >= 100 ? 'not-allowed' : 'pointer'
-            }}
           >
-            <FaLink /> Vincular Vítima
+            <LuLink /> Vincular Vítima
           </button>
         </header>
         {/* ─────────────────────────────────────────────────────────────── */}
 
         {/* ── Card de capacidade ─────────────────────────────────────────── */}
-        <div style={{
-          background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0',
-          padding: '16px 20px', marginBottom: '16px',
-          display: 'flex', alignItems: 'center', gap: '20px'
-        }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
-                Capacidade do abrigo
-              </span>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: corBarra }}>
-                {capacidade.ocupada} / {capacidade.total}
-                {pct >= 100 && ' — Lotado'}
-              </span>
-            </div>
-            <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '99px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${pct}%`, background: corBarra, borderRadius: '99px', transition: 'width 0.3s' }} />
-            </div>
+        <div className="sv-card">
+          <div className="sv-par" style={{ marginBottom: '8px' }}>
+            <span>
+              Capacidade do abrigo
+            </span>
+            <strong style={{ color: corBarra, fontWeight: 700 }}>
+              {capacidade.ocupada} / {capacidade.total}
+              {pct >= 100 && ' — Lotado'}
+            </strong>
+          </div>
+          <div className="sv-barra">
+            <div style={{ width: `${pct}%`, background: corBarra, transition: 'width 0.3s' }} />
           </div>
         </div>
         {/* ─────────────────────────────────────────────────────────────── */}
 
         {/* ── Tabela de vítimas vinculadas ──────────────────────────────── */}
-        <div style={{
-          background: '#fff', borderRadius: '12px',
-          border: '1px solid #e2e8f0', overflow: 'hidden'
-        }}>
+        <div className="sv-tabela-caixa">
           {vitimasDoAbrigo.length > 0 ? (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+            <table className="sv-tabela">
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ textAlign: 'left',   padding: '12px 16px', color: '#64748b', fontWeight: '600' }}>Nome</th>
-                  <th style={{ textAlign: 'center', padding: '12px 16px', color: '#64748b', fontWeight: '600' }}>Idade</th>
-                  <th style={{ textAlign: 'center', padding: '12px 16px', color: '#64748b', fontWeight: '600' }}>Gênero</th>
-                  <th style={{ textAlign: 'center', padding: '12px 16px', color: '#64748b', fontWeight: '600' }}>Data de Entrada</th>
-                  <th style={{ textAlign: 'center', padding: '12px 16px', color: '#64748b', fontWeight: '600' }}>Ações</th>
+                <tr>
+                  <th>Nome</th>
+                  <th className="sv-centro">Idade</th>
+                  <th className="sv-centro">Gênero</th>
+                  <th className="sv-centro">Data de Entrada</th>
+                  <th className="sv-centro">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {vitimasDoAbrigo.map((vitima) => (
-                  <tr
-                    key={vitima.id_vitima}
-                    style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
+                  <tr key={vitima.id_vitima}>
                     {/* Nome — clicável para abrir os detalhes da vítima */}
-                    <td style={{ padding: '12px 16px' }}>
+                    <td>
                       <button
+                        className="sv-link sv-link--forte"
                         onClick={() => navigate(`/detalhes-vitimas/${vitima.id_vitima}`)}
-                        style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          color: '#0f172a', fontWeight: '600', fontSize: '14px',
-                          padding: 0, textAlign: 'left',
-                          display: 'inline-flex', alignItems: 'center', gap: '6px'
-                        }}
                       >
                         {vitima.nome}
-                        <FaExternalLinkAlt style={{ fontSize: '10px', color: '#94a3b8' }} />
+                        <LuExternalLink />
                       </button>
                     </td>
 
-                    <td style={{ padding: '12px 16px', color: '#475569', textAlign: 'center' }}>
+                    <td className="sv-centro">
                       {calcularIdade(vitima.dataNascimento)}
                     </td>
 
-                    <td style={{ padding: '12px 16px', color: '#475569', textAlign: 'center' }}>
+                    <td className="sv-centro">
                       {vitima.genero}
                     </td>
 
-                    <td style={{ padding: '12px 16px', color: '#475569', textAlign: 'center' }}>
+                    <td className="sv-centro">
                       {formatarData(vitima.dataEntrada)}
                     </td>
 
                     {/* Botão desvincular */}
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                    <td className="sv-centro">
                       <button
+                        className="sv-btn sv-btn--perigo-vidro sv-btn--p"
                         onClick={() => desvincularVitima(vitima)}
                         disabled={vinculando === vitima.id_vitima}
                         title="Desvincular deste abrigo"
-                        style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '5px',
-                          padding: '5px 12px', borderRadius: '6px',
-                          border: '1px solid #fca5a5', background: '#fff5f5',
-                          color: '#dc2626', fontSize: '12px', fontWeight: '500',
-                          cursor: vinculando === vitima.id_vitima ? 'not-allowed' : 'pointer',
-                          opacity: vinculando === vitima.id_vitima ? 0.6 : 1,
-                        }}
                       >
-                        <FaUnlink style={{ fontSize: '10px' }} />
+                        <LuUnlink />
                         {vinculando === vitima.id_vitima ? 'Aguarde...' : 'Desvincular'}
                       </button>
                     </td>
@@ -315,12 +278,12 @@ function VitimasDoAbrigo() {
               </tbody>
             </table>
           ) : (
-            <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-              <FaUser style={{ fontSize: '32px', color: '#cbd5e1', marginBottom: '12px' }} />
-              <p style={{ fontSize: '15px', color: '#64748b', fontWeight: '500', margin: '0 0 4px' }}>
+            <div className="sv-vazio">
+              <LuUser />
+              <strong>
                 Nenhuma vítima vinculada
-              </p>
-              <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
+              </strong>
+              <p className="sv-apoio">
                 Clique em "Vincular Vítima" para adicionar alguém a este abrigo.
               </p>
             </div>
@@ -332,72 +295,52 @@ function VitimasDoAbrigo() {
         {painelVincular && (
           <>
             <div
+              className="sv-gaveta-fundo"
               onClick={() => setPainelVincular(false)}
-              style={{
-                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
-                zIndex: 40, cursor: 'pointer'
-              }}
             />
 
-            <div style={{
-              position: 'fixed', top: 0, right: 0, bottom: 0,
-              width: '420px', background: '#fff', zIndex: 50,
-              display: 'flex', flexDirection: 'column',
-              boxShadow: '-4px 0 24px rgba(0,0,0,0.12)'
-            }}>
+            <div className="sv-gaveta" role="dialog" aria-modal="true" aria-labelledby="gaveta-vincular-titulo">
 
               {/* Cabeçalho do painel */}
-              <div style={{
-                padding: '20px 24px', borderBottom: '1px solid #e2e8f0',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-              }}>
+              <div className="sv-gaveta-topo">
                 <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                  <h2 id="gaveta-vincular-titulo" className="sv-modal-titulo" style={{ marginBottom: 0 }}>
                     Vincular Vítima
                   </h2>
-                  <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0' }}>
+                  <p className="sv-apoio">
                     {todasVitimas.length} vítima{todasVitimas.length !== 1 ? 's' : ''} sem abrigo
                   </p>
                 </div>
                 <button
+                  className="sv-btn sv-btn--vidro sv-btn--quadrado"
                   onClick={() => setPainelVincular(false)}
-                  style={{
-                    background: 'none', border: 'none', fontSize: '20px',
-                    color: '#64748b', cursor: 'pointer', padding: '4px'
-                  }}
+                  aria-label="Fechar"
                 >
-                  ✕
+                  <LuX />
                 </button>
               </div>
 
               {/* Campo de busca */}
-              <div style={{ padding: '16px 24px', borderBottom: '1px solid #f1f5f9' }}>
-                <div style={{ position: 'relative' }}>
-                  <FaSearch style={{
-                    position: 'absolute', left: '12px', top: '50%',
-                    transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '13px'
-                  }} />
+              <div className="sv-gaveta-busca sv-campo">
+                <label htmlFor="gaveta-vincular-busca" className="sv-oculto">Buscar vítima</label>
+                <span className="sv-campo-icone">
+                  <LuSearch />
                   <input
+                    id="gaveta-vincular-busca"
                     autoFocus
                     type="text"
                     placeholder="Buscar por nome ou CPF..."
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
-                    style={{
-                      width: '100%', padding: '9px 12px 9px 34px',
-                      borderRadius: '8px', border: '1px solid #e2e8f0',
-                      fontSize: '14px', color: '#0f172a', outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
                   />
-                </div>
+                </span>
               </div>
 
               {/* Lista de vítimas disponíveis */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+              <div className="sv-gaveta-corpo">
                 {vitmasFiltradas.length === 0 ? (
-                  <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-                    <p style={{ fontSize: '14px', color: '#64748b' }}>
+                  <div className="sv-vazio">
+                    <p>
                       {busca
                         ? 'Nenhuma vítima encontrada com esse nome ou CPF.'
                         : 'Todas as vítimas já estão vinculadas a um abrigo.'
@@ -406,39 +349,23 @@ function VitimasDoAbrigo() {
                   </div>
                 ) : (
                   vitmasFiltradas.map((vitima) => (
-                    <div
-                      key={vitima.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '12px 24px', borderBottom: '1px solid #f8fafc',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <div>
-                        <p style={{ margin: 0, fontWeight: '600', color: '#0f172a', fontSize: '14px' }}>
+                    <div key={vitima.id} className="sv-gaveta-item">
+                      <div className="sv-linha-info">
+                        <p className="sv-linha-titulo">
                           {vitima.nome}
                         </p>
-                        <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>
+                        <p className="sv-linha-meta">
                           {calcularIdade(vitima.dataNascimento)} anos
                           {vitima.cpf ? ` · CPF: ${vitima.cpf}` : ''}
                         </p>
                       </div>
 
                       <button
+                        className="sv-btn sv-btn--primario sv-btn--p"
                         onClick={() => vincularVitima(vitima)}
                         disabled={vinculando === vitima.id}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '5px',
-                          padding: '6px 14px', borderRadius: '6px', border: 'none',
-                          background: vinculando === vitima.id ? '#d1fae5' : '#16a34a',
-                          color: '#fff', fontSize: '13px', fontWeight: '500',
-                          cursor: vinculando === vitima.id ? 'not-allowed' : 'pointer',
-                          flexShrink: 0
-                        }}
                       >
-                        <FaLink style={{ fontSize: '10px' }} />
+                        <LuLink />
                         {vinculando === vitima.id ? 'Vinculando...' : 'Vincular'}
                       </button>
                     </div>
@@ -451,7 +378,7 @@ function VitimasDoAbrigo() {
         )}
         {/* ─────────────────────────────────────────────────────────────── */}
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

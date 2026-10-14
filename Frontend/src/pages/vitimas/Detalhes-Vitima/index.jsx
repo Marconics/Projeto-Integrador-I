@@ -1,17 +1,10 @@
 //--------- Imports-----------
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  FaHome, FaBoxOpen, FaUser, FaDonate, FaMap,
-  FaUpload, FaPhoneAlt, FaBuilding,
-  FaMedkit, FaCalendar, FaIdCard
-} from 'react-icons/fa';
-import { FaGear, FaPersonHalfDress } from "react-icons/fa6";
-import { GoAlertFill } from "react-icons/go";
+import { LuBuilding2, LuCalendar, LuHouse, LuIdCard, LuPhone, LuUpload, LuUserRound } from 'react-icons/lu';
 
-import "../../pg_adm/style.css";
-import './DetalhesVitima.css';
-import SidebarAdm from '../../../components/SidebarAdm';
+import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import '../../../styles/sosvale-glass.css';
 
 //------- Começo Função Principal -----
 function DetalhesVitimas() {
@@ -154,10 +147,11 @@ function DetalhesVitimas() {
   // ── Tela de loading ───────────────────────────────────────────────────
   if (carregando) {
     return (
-      <div className="dashboard">
-        <SidebarAdm ativo="vitimas" />
-        <main className="main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando dados da vítima...</p>
+      <div className="sv-app sv-pagina">
+        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
+        <SidebarGlass ativo="vitimas" />
+        <main className="sv-main">
+          <p className="sv-vazio">Carregando dados da vítima...</p>
         </main>
       </div>
     );
@@ -165,21 +159,22 @@ function DetalhesVitimas() {
 
   // ── Tela principal ────────────────────────────────────────────────────
   return (
-    <div className="dashboard">
+    <div className="sv-app sv-pagina">
+      <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
 
-      <SidebarAdm ativo="vitimas" />
+      <SidebarGlass ativo="vitimas" />
 
-      <main className="main">
+      <main className="sv-main">
 
-        <header className="top">
-          <div>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+        <header className="sv-topo">
+          <div className="sv-topo-texto">
+            <p className="sv-trilha">
               Vítimas &gt; <span>{nomeVitima}</span>
             </p>
-            <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
+            <h1 className="sv-titulo">
               {editando ? 'Editar Vítima' : 'Detalhes da Vítima'}
             </h1>
-            <p className="subtitle">Gerencia as informações desta vítima</p>
+            <p className="sv-subtitulo">Gerencia as informações desta vítima</p>
           </div>
         </header>
 
@@ -190,30 +185,30 @@ function DetalhesVitimas() {
         {abrigoVinculado ? (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#f0fdf4', border: '1px solid #bbf7d0',
-            borderRadius: '12px', padding: '16px 20px', marginBottom: '20px'
+            background: 'var(--sv-ok-suave)', border: '1px solid rgba(27, 138, 90, .3)',
+            borderRadius: 'var(--sv-raio-m)', padding: '16px 20px', marginBottom: '20px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               {/* Ícone */}
               <div style={{
-                width: '42px', height: '42px', borderRadius: '10px',
-                background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                width: '42px', height: '42px', borderRadius: 'var(--sv-raio-s)',
+                background: 'var(--sv-ok)', display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}>
-                <FaBuilding style={{ color: '#fff', fontSize: '18px' }} />
+                <LuBuilding2 style={{ color: '#fff', fontSize: '18px' }} />
               </div>
 
               {/* Info */}
               <div>
-                <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', color: 'var(--sv-ok)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Abrigo atual
                 </p>
-                <p style={{ margin: '2px 0 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+                <p style={{ margin: '2px 0 0', fontSize: '16px', fontWeight: '700', color: 'var(--sv-tinta)' }}>
                   {abrigoVinculado.nome}
                 </p>
-                <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#475569' }}>
+                <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--sv-tinta-2)' }}>
                   {abrigoVinculado.cidade}
                   {abrigoVinculado.dataEntrada && (
-                    <> · <FaCalendar style={{ fontSize: '11px', marginRight: '3px', verticalAlign: 'middle' }} />
+                    <> · <LuCalendar style={{ fontSize: '11px', marginRight: '3px', verticalAlign: 'middle' }} />
                     Entrada em {formatarData(abrigoVinculado.dataEntrada)}</>
                   )}
                 </p>
@@ -223,35 +218,29 @@ function DetalhesVitimas() {
             {/* Botão para ir ao abrigo */}
             <button
               onClick={() => navigate(`/detalhes-abrigos/${abrigoVinculado.id}`)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '8px 16px', borderRadius: '8px',
-                border: '1px solid #16a34a', background: '#fff',
-                color: '#16a34a', fontSize: '13px', fontWeight: '600',
-                cursor: 'pointer', whiteSpace: 'nowrap'
-              }}
+              className="sv-btn sv-btn--vidro"
             >
-              <FaBoxOpen style={{ fontSize: '12px' }} />
+              <LuHouse />
               Ver abrigo
             </button>
           </div>
         ) : (
           <div style={{
             display: 'flex', alignItems: 'center', gap: '14px',
-            background: '#f8fafc', border: '1px solid #e2e8f0',
-            borderRadius: '12px', padding: '16px 20px', marginBottom: '20px'
+            background: 'var(--sv-fundo-suave)', border: '1px solid var(--sv-linha)',
+            borderRadius: 'var(--sv-raio-m)', padding: '16px 20px', marginBottom: '20px'
           }}>
             <div style={{
-              width: '42px', height: '42px', borderRadius: '10px',
-              background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              width: '42px', height: '42px', borderRadius: 'var(--sv-raio-s)',
+              background: 'var(--sv-linha)', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-              <FaBuilding style={{ color: '#94a3b8', fontSize: '18px' }} />
+              <LuBuilding2 style={{ color: 'var(--sv-tinta-3)', fontSize: '18px' }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', color: 'var(--sv-tinta-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Sem abrigo vinculado
               </p>
-              <p style={{ margin: '2px 0 0', fontSize: '14px', color: '#64748b' }}>
+              <p style={{ margin: '2px 0 0', fontSize: '14px', color: 'var(--sv-tinta-2)' }}>
                 Esta vítima não está alocada em nenhum abrigo no momento.
               </p>
             </div>
@@ -260,13 +249,13 @@ function DetalhesVitimas() {
         {/* ─────────────────────────────────────────────────────────────── */}
 
         {/* ── Formulário ─────────────────────────────────────────────────── */}
-        <form onSubmit={handleSalvar} className="cadastro-form-container">
+        <form onSubmit={handleSalvar} className="sv-vidro sv-painel sv-form-duas">
 
           {/* Coluna esquerda */}
-          <div className="form-column-left">
+          <div className="sv-form-coluna">
 
-            <div className="form-group">
-              <label><FaBuilding /> Nome da Vítima</label>
+            <div className="sv-campo">
+              <label><LuBuilding2 /> Nome da Vítima</label>
               {editando ? (
                 <input value={nomeVitima} onChange={(e) => setNomeVitima(e.target.value)} />
               ) : (
@@ -274,8 +263,8 @@ function DetalhesVitimas() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaIdCard /> CPF</label>
+            <div className="sv-campo">
+              <label><LuIdCard /> CPF</label>
               {editando ? (
                 <input value={cpf} onChange={(e) => setCpf(e.target.value)} />
               ) : (
@@ -283,8 +272,8 @@ function DetalhesVitimas() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaPhoneAlt /> Telefone</label>
+            <div className="sv-campo">
+              <label><LuPhone /> Telefone</label>
               {editando ? (
                 <input value={telefone} onChange={(e) => setTelefone(e.target.value)} />
               ) : (
@@ -292,8 +281,8 @@ function DetalhesVitimas() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaCalendar /> Data de Nascimento</label>
+            <div className="sv-campo">
+              <label><LuCalendar /> Data de Nascimento</label>
               {editando ? (
                 <input type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} />
               ) : (
@@ -301,10 +290,10 @@ function DetalhesVitimas() {
               )}
             </div>
 
-            <div className="form-group">
-              <label><FaPersonHalfDress /> Gênero</label>
+            <div className="sv-campo">
+              <label><LuUserRound /> Gênero</label>
               {editando ? (
-                <select value={genero} onChange={(e) => setGenero(e.target.value)} className="select-genero">
+                <select value={genero} onChange={(e) => setGenero(e.target.value)} className="sv-entrada">
                   <option value="Masculino">Masculino</option>
                   <option value="Feminino">Feminino</option>
                   <option value="Outro">Outro</option>
@@ -316,60 +305,60 @@ function DetalhesVitimas() {
           </div>
 
           {/* Coluna direita */}
-          <div className="form-column-right">
+          <div className="sv-form-coluna">
 
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>
+            <h3 className="sv-secao-titulo">
               Imagem da Vítima
             </h3>
 
             <>
               {editando ? (
-                <div className="upload-container">
+                <div className="sv-upload">
                   {fotoExibida ? (
-                    <div className="image-preview">
+                    <div className="sv-upload-previa">
                       <img src={fotoExibida} alt="Preview da vítima" />
-                      <button type="button" onClick={() => { setNovaFoto(false); setFotoUrl(null); }} className="btn-remove-image">
+                      <button type="button" onClick={() => { setNovaFoto(false); setFotoUrl(null); }} className="sv-btn sv-btn--perigo-vidro sv-btn--p">
                         Remover Foto
                       </button>
                     </div>
                   ) : (
-                    <label className="upload-dropzone">
+                    <label className="sv-upload-area">
                       <input type="file" accept="image/*" onChange={handleImagem} style={{ display: 'none' }} />
-                      <FaUpload className="upload-icon" />
+                      <LuUpload className="sv-upload-icone" />
                       <p>Faça upload da foto da vítima</p>
-                      <span className="btn-upload-trigger">Selecionar arquivo do computador</span>
+                      <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
                     </label>
                   )}
                 </div>
               ) : (
-                <div className="upload-container">
-                  <div className="image-preview">
+                <div className="sv-upload">
+                  <div className="sv-upload-previa">
                     {fotoExibida ? (
                       <img src={fotoExibida} alt={nomeVitima} />
                     ) : (
-                      <p style={{ color: '#94a3b8', fontSize: '14px' }}>Sem foto cadastrada</p>
+                      <p style={{ color: 'var(--sv-tinta-3)', fontSize: '14px' }}>Sem foto cadastrada</p>
                     )}
                   </div>
                 </div>
               )}
             </>
 
-            <div className="form-actions">
+            <div className="sv-form-acoes">
               {editando ? (
                 <>
-                  <button type="submit" className="btn-action salvar">Salvar Alterações</button>
-                  <div className="danger-actions">
-                    <button type="button" onClick={handleExcluir} className="btn-action excluir">
+                  <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">Salvar Alterações</button>
+                  <div className="sv-form-acoes-par">
+                    <button type="button" onClick={handleExcluir} className="sv-btn sv-btn--perigo-vidro sv-btn--bloco">
                       Excluir Registro
                     </button>
-                    <button type="button" onClick={handleCancelExcluir} className="btn-action cancelar">
+                    <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--vidro sv-btn--bloco">
                       Cancelar edição
                     </button>
                   </div>
                 </>
               ) : null}
               {!editando && (
-                <button type="button" onClick={handleEditar} className="btn-action cancelar">
+                <button type="button" onClick={handleEditar} className="sv-btn sv-btn--vidro sv-btn--bloco">
                   Editar Vítima
                 </button>
               )}
@@ -379,7 +368,7 @@ function DetalhesVitimas() {
         </form>
         {/* ─────────────────────────────────────────────────────────────── */}
 
-        <footer style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+        <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>

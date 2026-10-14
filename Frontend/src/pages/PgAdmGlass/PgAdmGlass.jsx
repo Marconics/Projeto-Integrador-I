@@ -332,7 +332,9 @@ const PgAdmGlass = () => {
 
               <div className="pga-hero-texto">
                 <p className="pga-data"><LuCalendarDays /> {dataDeHoje()}</p>
-                <h2 id="pga-saudacao" className="pga-saudacao">{saudacao()}, equipe</h2>
+                <h2 id="pga-saudacao" className="pga-saudacao">
+                  {textoSaudacao(alertas ? alertasEmVerificacao : null)}
+                </h2>
                 <p className="pga-resumo">
                   {pendencias > 0
                     ? 'Estas pendências esperam alguém da rede. Comece pelo que está em vermelho.'
@@ -648,6 +650,15 @@ function saudacao() {
   if (hora >= 5 && hora < 12) return 'Bom dia'
   if (hora >= 12 && hora < 18) return 'Boa tarde'
   return 'Boa noite'
+}
+
+// Título do destaque: a saudação + quantos alertas novos (em verificação) existem.
+// null = sem login de admin, não dá para saber dos alertas → fica só a saudação
+function textoSaudacao(alertasNovos) {
+  if (alertasNovos === null) return `${saudacao()}, equipe`
+  if (alertasNovos === 0) return `${saudacao()}, nenhum alerta novo`
+  if (alertasNovos === 1) return `${saudacao()}, 1 alerta novo`
+  return `${saudacao()}, um total de ${alertasNovos} alertas novos`
 }
 
 // "terça-feira, 13 de outubro" → "Terça-feira, 13 de outubro"
