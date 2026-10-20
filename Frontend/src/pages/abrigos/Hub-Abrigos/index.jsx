@@ -2,7 +2,7 @@
 // Lista todos os abrigos com resumo da rede, busca, filtros e ordenação.
 // Peças do tema (styles/sosvale-glass.css) + o que é só desta tela (./style.css).
 // Os auxiliares de ocupação e filtros são os mesmos da tela de Abrigos do voluntário (utils/listagem.jsx).
-import { useState, useEffect, useMemo, useCallback, useSyncExternalStore } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LuBedDouble, LuChevronRight, LuChurch, LuClipboardList, LuDumbbell, LuHandHeart, LuHotel, LuHouse,
@@ -17,7 +17,7 @@ import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina'
 import { LIMITES } from '../../../utils/campos';
 import { API_URL } from '../../../services/api';
 import {
-  ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural
+  ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural, useCelular
 } from '../../../utils/listagem';
 
 // Status cadastrado no abrigo → rótulo e etiqueta (sv-tag)
@@ -55,15 +55,6 @@ const FILTROS_INICIAIS = {
   estruturas: [], comPedidos: false, emAlerta: false, ordem: 'nome',
 }
 
-// Celular (até 600px): os filtros extras abrem numa gaveta em vez de no painel
-const CONSULTA_CELULAR = '(max-width: 600px)'
-const assinarCelular = (avisar) => {
-  const consulta = window.matchMedia(CONSULTA_CELULAR)
-  consulta.addEventListener('change', avisar)
-  return () => consulta.removeEventListener('change', avisar)
-}
-const ehCelular = () => window.matchMedia(CONSULTA_CELULAR).matches
-
 // Foto pequena do abrigo; sem foto (ou se ela não carregar), o ícone do tipo
 function Miniatura({ abrigo }) {
   const [falhou, setFalhou] = useState(false)
@@ -79,7 +70,7 @@ function Miniatura({ abrigo }) {
 
 const ListarAbrigos = () => {
   const navigate = useNavigate()
-  const celular = useSyncExternalStore(assinarCelular, ehCelular, () => false)
+  const celular = useCelular() // no celular, "Mais filtros" abre numa gaveta
 
   // ─── ESTADOS ─────────────────────────────────────────────────
   const [abrigos,        setAbrigos]        = useState([])
@@ -222,30 +213,30 @@ const ListarAbrigos = () => {
 
   // ─── PEÇAS REPETIDAS (painel e gaveta) ───────────────────────
   const selectTipo = (id) => (
-    <select id={id} className="sv-entrada ha-select" value={filtros.tipo} onChange={e => mudarFiltro('tipo', e.target.value)}>
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.tipo} onChange={e => mudarFiltro('tipo', e.target.value)}>
       <option value="">Todos os tipos</option>
       {tipos.map(t => <option key={t} value={t}>{tipoDe(t).label}</option>)}
     </select>
   )
   const selectStatus = (id) => (
-    <select id={id} className="sv-entrada ha-select" value={filtros.status} onChange={e => mudarFiltro('status', e.target.value)}>
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.status} onChange={e => mudarFiltro('status', e.target.value)}>
       <option value="">Todos os status</option>
       {Object.entries(STATUS_ABRIGO).map(([valor, s]) => <option key={valor} value={valor}>{s.label}</option>)}
     </select>
   )
   const selectCidade = (id) => (
-    <select id={id} className="sv-entrada ha-select" value={filtros.cidade} onChange={e => mudarFiltro('cidade', e.target.value)}>
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.cidade} onChange={e => mudarFiltro('cidade', e.target.value)}>
       <option value="">Todas as cidades</option>
       {cidades.map(c => <option key={c} value={c}>{c}</option>)}
     </select>
   )
   const selectOrdem = (id) => (
-    <select id={id} className="sv-entrada ha-select" value={filtros.ordem} onChange={e => mudarFiltro('ordem', e.target.value)}>
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.ordem} onChange={e => mudarFiltro('ordem', e.target.value)}>
       {ORDENACOES.map(o => <option key={o.valor} value={o.valor}>Ordenar: {o.label}</option>)}
     </select>
   )
   const chipsSituacao = (
-    <div className="ha-grupo" role="group" aria-label="Alerta e pedidos">
+    <div className="sv-filtro-grupo" role="group" aria-label="Alerta e pedidos">
       <button type="button" className={`sv-chip${filtros.emAlerta ? ' sv-chip--ativo' : ''}`} aria-pressed={filtros.emAlerta}
         onClick={() => mudarFiltro('emAlerta', !filtros.emAlerta)}>
         <LuTriangleAlert /> Em alerta
@@ -257,8 +248,8 @@ const ListarAbrigos = () => {
     </div>
   )
   const chipsEstrutura = (
-    <div className="ha-grupo" role="group" aria-label="Estrutura">
-      <span className="ha-grupo-rotulo" aria-hidden="true">Estrutura</span>
+    <div className="sv-filtro-grupo" role="group" aria-label="Estrutura">
+      <span className="sv-filtro-grupo-rotulo" aria-hidden="true">Estrutura</span>
       {ESTRUTURAS.map(e => (
         <button key={e.campo} type="button" className={`sv-chip${filtros.estruturas.includes(e.campo) ? ' sv-chip--ativo' : ''}`}
           aria-pressed={filtros.estruturas.includes(e.campo)} onClick={() => alternarEstrutura(e.campo)}>
@@ -341,10 +332,10 @@ const ListarAbrigos = () => {
         </section>
 
         {/* ── FILTROS ── */}
-        <section className="sv-vidro sv-painel ha-filtros" aria-label="Filtros">
-          <div className="ha-linha">
+        <section className="sv-vidro sv-painel sv-filtro-painel" aria-label="Filtros">
+          <div className="sv-filtro-linha">
             <label htmlFor="busca-abrigo" className="sv-oculto">Buscar abrigo</label>
-            <span className="sv-campo-icone ha-busca">
+            <span className="sv-campo-icone sv-filtro-busca">
               <LuSearch />
               <input
                 id="busca-abrigo"
@@ -361,13 +352,13 @@ const ListarAbrigos = () => {
             <label htmlFor="filtro-ordem" className="sv-oculto">Ordenar por</label>
             {selectOrdem('filtro-ordem')}
             {/* No celular, o botão de filtros fica ao lado da busca */}
-            <button type="button" className="sv-btn sv-btn--vidro ha-so-celular" aria-haspopup="dialog" onClick={() => setMaisAberto(true)}>
+            <button type="button" className="sv-btn sv-btn--vidro sv-so-celular" aria-haspopup="dialog" onClick={() => setMaisAberto(true)}>
               <LuSlidersHorizontal /> Filtros
               {filtrosExtras > 0 && <span className="sv-btn-num">{filtrosExtras}</span>}
             </button>
           </div>
 
-          <div className="ha-linha ha-linha--abas">
+          <div className="sv-filtro-linha sv-filtro-linha--abas">
             <div className="sv-abas" role="tablist" aria-label="Situação" style={{ '--aba': indiceAba, '--abas': SITUACOES.length }}>
               <span className="sv-abas-marcador" aria-hidden="true" />
               {SITUACOES.map(s => (
@@ -379,15 +370,15 @@ const ListarAbrigos = () => {
                   aria-selected={filtros.situacao === s.valor}
                   onClick={() => mudarFiltro('situacao', s.valor)}
                 >
-                  <span className="ha-longo">{s.label}</span>
-                  <span className="ha-curto">{SITUACAO_CURTA[s.valor]}</span>
+                  <span className="sv-rotulo-longo">{s.label}</span>
+                  <span className="sv-rotulo-curto">{SITUACAO_CURTA[s.valor]}</span>
                   <span className="sv-aba-num">{abrigosBase.filter(a => passaSituacao(a, s.valor)).length}</span>
                 </button>
               ))}
             </div>
             <button
               type="button"
-              className="sv-btn sv-btn--vidro ha-so-desktop"
+              className="sv-btn sv-btn--vidro sv-so-desktop"
               aria-expanded={maisAberto && !celular}
               aria-controls="mais-filtros"
               onClick={() => setMaisAberto(a => !a)}
@@ -399,8 +390,8 @@ const ListarAbrigos = () => {
 
           {/* Mais filtros: no desktop abre aqui mesmo, no celular abre a gaveta */}
           {maisAberto && !celular && (
-            <div id="mais-filtros" className="ha-mais">
-              <div className="ha-linha">
+            <div id="mais-filtros" className="sv-filtro-mais">
+              <div className="sv-filtro-linha">
                 <label htmlFor="filtro-tipo" className="sv-oculto">Tipo de abrigo</label>
                 {selectTipo('filtro-tipo')}
                 <label htmlFor="filtro-status" className="sv-oculto">Status do abrigo</label>
@@ -411,7 +402,7 @@ const ListarAbrigos = () => {
             </div>
           )}
 
-          <div className="ha-ativos">
+          <div className="sv-filtro-ativos">
             {etiquetasAtivas.length > 0 && <span className="sv-contagem">Filtros:</span>}
             {etiquetasAtivas.map(e => (
               <button key={e.id} type="button" className="sv-chip sv-chip--removivel" onClick={e.remover} aria-label={`Remover filtro ${e.label}`}>
@@ -567,7 +558,7 @@ const ListarAbrigos = () => {
               </button>
             </div>
             <div className="sv-gaveta-corpo">
-              <div className="ha-gaveta-campos">
+              <div className="sv-gaveta-campos">
                 <label htmlFor="gaveta-cidade">Cidade{selectCidade('gaveta-cidade')}</label>
                 <label htmlFor="gaveta-ordem">Ordenar por{selectOrdem('gaveta-ordem')}</label>
                 <label htmlFor="gaveta-tipo">Tipo{selectTipo('gaveta-tipo')}</label>

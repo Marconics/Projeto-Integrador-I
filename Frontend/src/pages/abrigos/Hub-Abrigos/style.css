@@ -1,35 +1,6 @@
 /* Hub de Abrigos (admin) — peças só desta tela.
-   Página, cards de resumo, abas, chips, campos, botões, etiquetas, barra,
-   miniatura e gaveta vêm do tema (styles/sosvale-glass.css). */
-
-/* ─── Painel de filtros ─── */
-.ha-filtros { display: grid; gap: 14px; }
-.ha-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.ha-linha--abas { justify-content: space-between; }
-.ha-busca { flex: 1 1 300px; }
-.ha-busca .sv-entrada,
-.ha-select { height: 44px; }
-.ha-select { flex: 0 1 220px; width: auto; cursor: pointer; }
-.ha-mais { display: grid; gap: 14px; padding-top: 14px; border-top: 1px solid var(--sv-linha); }
-.ha-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.ha-grupo-rotulo {
-  margin-right: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--sv-tinta-2);
-}
-.ha-grupo .sv-chip { min-height: 38px; }
-.ha-ativos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 32px; }
-.ha-ativos .sv-contagem { margin-left: auto; }
-.ha-ativos .sv-contagem strong { color: var(--sv-tinta); }
-.ha-so-celular { display: none; }
-.ha-curto { display: none; }
-
-/* Gaveta (celular): campos com rótulo visível */
-.ha-gaveta-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.ha-gaveta-campos label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--sv-tinta); }
+   Página, cards de resumo, painel de filtros, abas, chips, campos, botões,
+   etiquetas, barra, miniatura e gaveta vêm do tema (styles/sosvale-glass.css). */
 
 /* ─── Cards de abrigo ─── */
 .ha-grade {
@@ -172,16 +143,6 @@
 
 /* ─── Celular ─── */
 @media (max-width: 600px) {
-  /* Cidade e ordenação vão para a gaveta "Filtros" */
-  .ha-linha > .ha-select,
-  .ha-so-desktop { display: none; }
-  .ha-gaveta-campos .ha-select { width: 100%; }
-  .ha-so-celular { display: inline-flex; }
-  .ha-busca { flex: 1 1 0; }
-  .ha-linha--abas .sv-abas { width: 100%; }
-  .ha-linha--abas .sv-aba { padding-inline: 4px; font-size: 12.5px; }
-  .ha-longo { display: none; }
-  .ha-curto { display: inline; }
   .ha-card { padding: 18px; }
   .ha-card-alerta { margin: -18px -18px 0; padding: 8px 18px; }
 }

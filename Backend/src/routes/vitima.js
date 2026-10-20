@@ -208,7 +208,9 @@ export default async function vitimaRoutes(app) {
       where: { id_vitima: Number(id) },
       // Inclui os dados do abrigo vinculado para exibir na tela de detalhes
       include: {
-        abrigo: { select: { nome: true, endereco: true, telefone: true, ...selectLocalizacao } }
+        abrigo: { select: { nome: true, endereco: true, telefone: true, ...selectLocalizacao } },
+        // Nomes das deficiências (a tela de detalhes mostra como etiquetas, igual à listagem)
+        deficiencias: { select: { deficiencia: { select: { nome: true } } } },
       }
     })
 
@@ -222,6 +224,7 @@ export default async function vitimaRoutes(app) {
     return reply.status(200).send({
       ...vitima,
       abrigo: achatarLocalizacao(vitima.abrigo),
+      deficiencias: vitima.deficiencias.map(d => d.deficiencia.nome),
       dataNascimento: dataParaTexto(vitima.dataNascimento)
     })
   })

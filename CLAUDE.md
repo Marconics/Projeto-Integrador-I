@@ -48,7 +48,7 @@ npm run seed                                      # só cadastra tipos de Defici
 cd Backend && npm run banco:teste     # terminal 1: banco de teste na porta 5433, com dados de exemplo (admin adm@teste.com/123456)
 cd Backend && npm run banco:teste:vazio  # idem, mas vazio — exigido pelo teste:api
 cd Backend && npm run back:teste      # terminal 2: API em modo teste (recusa subir se a API normal estiver aberta)
-cd Backend && npm run teste:api       # terminal 3: 107 verificações da API (recusa rodar contra a API real)
+cd Backend && npm run teste:api       # terminal 3: 108 verificações da API (recusa rodar contra a API real)
 cd ChatBot && npm run teste:conversa  # simula conversas do WhatsApp (roteiro fixo; rodar depois do teste:api)
 cd ChatBot && npm run teste:interativo  # você digita as mensagens (/foto, /numero, /grupo, /fila, /sair)
 # Portas ocupadas? BANCO_TESTE_PORTA=5434 e PORT=3100 (no banco:teste/back:teste) + API_URL=http://127.0.0.1:3100 (nos testes)

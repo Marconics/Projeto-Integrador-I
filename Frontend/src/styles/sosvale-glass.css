@@ -1759,3 +1759,48 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
   from { transform: translateY(40px); opacity: 0; }
   to   { transform: none; opacity: 1; }
 }
+
+/* ─── Painel de filtros das listagens (Abrigos, Vítimas) ─────────────
+   <section class="sv-vidro sv-painel sv-filtro-painel">
+     <div class="sv-filtro-linha">  busca (.sv-filtro-busca) + selects (.sv-filtro-select) + [Filtros] (.sv-so-celular)
+     <div class="sv-filtro-linha sv-filtro-linha--abas">  .sv-abas + [Mais filtros] (.sv-so-desktop)
+     <div class="sv-filtro-mais">  filtros extras (no celular vão para a gaveta, com .sv-gaveta-campos)
+     <div class="sv-filtro-ativos">  etiquetas removíveis, "Limpar filtros" e contagem
+   No celular os selects da 1ª linha somem (vão para a gaveta "Filtros"). */
+.sv-filtro-painel { display: grid; gap: 14px; }
+.sv-filtro-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.sv-filtro-linha--abas { justify-content: space-between; }
+.sv-filtro-busca { flex: 1 1 300px; }
+.sv-filtro-busca .sv-entrada,
+.sv-filtro-select { height: 44px; }
+.sv-filtro-select { flex: 0 1 220px; width: auto; cursor: pointer; }
+.sv-filtro-mais { display: grid; gap: 14px; padding-top: 14px; border-top: 1px solid var(--sv-linha); }
+.sv-filtro-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sv-filtro-grupo .sv-chip { min-height: 38px; }
+.sv-filtro-grupo-rotulo {
+  margin-right: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sv-tinta-2);
+}
+.sv-filtro-ativos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 32px; }
+.sv-filtro-ativos > .sv-contagem:last-child { margin-left: auto; }
+.sv-filtro-ativos .sv-contagem strong { color: var(--sv-tinta); }
+.sv-so-celular { display: none; }
+.sv-rotulo-curto { display: none; }
+/* Campos da gaveta de filtros, com rótulo visível */
+.sv-gaveta-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.sv-gaveta-campos label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--sv-tinta); }
+@media (max-width: 600px) {
+  .sv-filtro-linha > .sv-filtro-select,
+  .sv-so-desktop { display: none; }
+  .sv-so-celular { display: inline-flex; }
+  .sv-filtro-busca { flex: 1 1 0; }
+  .sv-filtro-linha--abas .sv-abas { width: 100%; }
+  .sv-filtro-linha--abas .sv-aba { padding-inline: 4px; font-size: 12.5px; }
+  .sv-rotulo-longo { display: none; }
+  .sv-rotulo-curto { display: inline; }
+  .sv-gaveta-campos .sv-filtro-select { width: 100%; }
+}

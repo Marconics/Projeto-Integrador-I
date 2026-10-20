@@ -1,14 +1,34 @@
+// Detalhes da vítima (admin) — /detalhes-vitimas/:id
+// Mostra o cadastro da pessoa, onde ela está agora e as deficiências; permite
+// editar os dados e a foto, e excluir o cadastro (com confirmação).
+// O vínculo com o abrigo não muda aqui: é feito na tela "Vítimas do abrigo".
 //--------- Imports-----------
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { LuBuilding2, LuCalendar, LuHouse, LuIdCard, LuPhone, LuUpload, LuUserRound } from 'react-icons/lu';
+import {
+  LuCalendar, LuHouse, LuIdCard, LuMapPin, LuPencil, LuPhone, LuTrash2, LuTriangleAlert, LuUpload, LuUserRound, LuUsers
+} from 'react-icons/lu';
 
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import './style.css';
 import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 import { fetchAdmin, formatarDataDia, hojeISO } from '../../../services/api';
 import { LIMITES, EXEMPLOS, somenteNome, mascaraCpf, mascaraTelefone, erroDosCampos } from '../../../utils/campos';
-import { Obrigatorio, Opcional } from '../../../components/MarcasCampo';
+import { Obrigatorio, Opcional, AvisoObrigatorios } from '../../../components/MarcasCampo';
+
+// Idade a partir de "AAAA-MM-DD" (sem fuso, para não errar o dia)
+const idadeDe = (texto) => {
+  const [ano, mes, dia] = String(texto ?? '').slice(0, 10).split('-').map(Number)
+  if (!ano) return null
+  const hoje = new Date()
+  let idade = hoje.getFullYear() - ano
+  if (hoje.getMonth() + 1 < mes || (hoje.getMonth() + 1 === mes && hoje.getDate() < dia)) idade--
+  return idade
+}
+const diasDesde = (iso) => iso ? Math.max(0, Math.floor((Date.now() - new Date(iso)) / 86400000)) : null
+const textoDias = (dias) => dias === null ? '' : dias === 0 ? 'hoje' : `há ${dias} dia${dias !== 1 ? 's' : ''}`
+const iniciais = (nome) => String(nome ?? '?').trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase()
 
 //------- Começo Função Principal -----
 function DetalhesVitimas() {
@@ -21,6 +41,14 @@ function DetalhesVitimas() {
   const [carregando, setCarregando]   = useState(true);
   const [erroCarga, setErroCarga]     = useState(null); // falha ao buscar a vítima
   const [editando, setEditando]       = useState(false);
+  const [salvando, setSalvando]       = useState(false);
+  const [aviso, setAviso]             = useState(null); // { tipo: 'sucesso' | 'erro', texto }
+  const [erroFoto, setErroFoto]       = useState('');
+
+  // Exclusão: confirmação na janela do tema (em vez do confirm() do navegador)
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
+  const [excluindo, setExcluindo]     = useState(false);
+  const [erroExcluir, setErroExcluir] = useState('');
 
   const [nomeVitima, setNomeVitima]       = useState('');
   const [cpf, setCpf]                     = useState('');
@@ -29,7 +57,7 @@ function DetalhesVitimas() {
   const [genero, setGenero]               = useState('');
 
   // Dados do abrigo vinculado — lidos mas não editáveis aqui
-  const [abrigoVinculado, setAbrigoVinculado] = useState(null)  // { id, nome, cidade, dataEntrada }
+  const [abrigoVinculado, setAbrigoVinculado] = useState(null)  // { id, nome, cidade, endereco, ... }
 
   const [fotoUrl, setFotoUrl]   = useState(null);
   const [novaFoto, setNovaFoto] = useState(null);
@@ -56,14 +84,16 @@ function DetalhesVitimas() {
         setGenero(dados.genero ?? '');
         setFotoUrl(dados.fotoVitima ? dados.fotoVitima + '?t=' + Date.now() : null)
 
-        // Monta o objeto de abrigo vinculado se existir
-        // O GET /vitimas/listar/:id já inclui o campo "abrigo" com nome e cidade
+        // O GET /vitimas/listar/:id já inclui o abrigo (nome, endereço, telefone e local)
         if (dados.abrigoId && dados.abrigo) {
           setAbrigoVinculado({
             id:          dados.abrigoId,
             nome:        dados.abrigo.nome,
             cidade:      dados.abrigo.cidade,
+            estado:      dados.abrigo.estado ?? null,
+            bairro:      dados.abrigo.bairro ?? null,
             endereco:    dados.abrigo.endereco ?? null,
+            telefone:    dados.abrigo.telefone ?? null,
             dataEntrada: dados.dataEntrada ?? null,
           })
         } else {
@@ -87,9 +117,10 @@ function DetalhesVitimas() {
     if (!arquivo) return
     const limiteMB = 2
     if (arquivo.size > limiteMB * 1024 * 1024) {
-      alert(`A imagem deve ter no máximo ${limiteMB}MB.`)
+      setErroFoto(`A imagem deve ter no máximo ${limiteMB}MB.`)
       return
     }
+    setErroFoto('')
     const reader = new FileReader()
     reader.onloadend = () => { setNovaFoto(reader.result) }
     reader.readAsDataURL(arquivo)
@@ -97,6 +128,7 @@ function DetalhesVitimas() {
 
   const handleSalvar = async (e) => {
     e.preventDefault();
+    setAviso(null);
 
     // Confere CPF e telefone só se foram alterados — cadastros antigos fora do
     // padrão continuam editáveis (a API faz a mesma coisa)
@@ -105,17 +137,18 @@ function DetalhesVitimas() {
       telefone: telefone !== (dadosVitima.telefone ?? '') ? telefone : null,
     })
     if (erroCampos) {
-      alert(erroCampos)
+      setAviso({ tipo: 'erro', texto: erroCampos })
       return
     }
 
+    setSalvando(true);
     try {
       const resposta = await fetchAdmin(`/vitimas/atualizar/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           nome: nomeVitima.trim(),
-          cpf, 
+          cpf,
           telefone,
           dataNascimento,
           genero,
@@ -127,46 +160,60 @@ function DetalhesVitimas() {
       const dadosResultado = await resposta.json()
 
       if (!resposta.ok) {
-        alert(dadosResultado.mensagem ?? 'Erro ao salvar.')
+        setAviso({ tipo: 'erro', texto: dadosResultado.mensagem ?? 'Erro ao salvar.' })
         return
       }
 
-      setDadosVitima({ ...dadosVitima, nome: nomeVitima, cpf, telefone, dataNascimento, genero })
+      setDadosVitima({ ...dadosVitima, nome: nomeVitima, cpf, telefone, dataNascimento, genero, fotoVitima: dadosResultado.fotoVitima })
       setFotoUrl(dadosResultado.fotoVitima ? dadosResultado.fotoVitima + '?t=' + Date.now() : null);
-      alert('Vítima atualizada com sucesso!');
       setNovaFoto(null);
       setEditando(false);
+      setAviso({ tipo: 'sucesso', texto: 'Cadastro atualizado com sucesso.' })
 
     } catch (erro) {
       console.error("Erro ao salvar:", erro);
+      setAviso({ tipo: 'erro', texto: 'Não foi possível salvar. Verifique a conexão e tente novamente.' })
+    } finally {
+      setSalvando(false);
     }
   };
 
   const handleExcluir = async () => {
-    if (!confirm('Tem certeza que deseja excluir esta vítima?')) return;
+    setExcluindo(true);
+    setErroExcluir('');
     try {
       const resposta = await fetchAdmin(`/vitimas/excluir/${id}`, { method: 'DELETE' });
       // Só volta para a lista se a API excluiu de verdade
       if (!resposta.ok) {
         const dados = await resposta.json().catch(() => ({}))
-        alert(dados.mensagem ?? 'Não foi possível excluir a vítima.')
+        setErroExcluir(dados.mensagem ?? 'Não foi possível excluir a vítima.')
         return
       }
       navigate('/vitimas');
     } catch (erro) {
       console.error("Erro ao excluir:", erro);
+      setErroExcluir('Não foi possível excluir. Verifique a conexão e tente novamente.')
+    } finally {
+      setExcluindo(false);
     }
   };
 
-  const handleEditar = () => setEditando(true)
+  const fecharConfirmacao = () => { if (!excluindo) { setConfirmarExclusao(false); setErroExcluir('') } }
 
+  const handleEditar = () => { setAviso(null); setEditando(true) }
+
+  // Cancelar a edição volta tudo ao que está salvo (inclusive a foto)
   const handleCancelExcluir = () => {
     setEditando(false);
+    setAviso(null);
+    setErroFoto('');
     setNomeVitima(dadosVitima.nome);
-    setCpf(dadosVitima.cpf);
-    setTelefone(dadosVitima.telefone);
-    setDataNascimento(dadosVitima.dataNascimento);
-    setGenero(dadosVitima.genero);
+    setCpf(dadosVitima.cpf ?? '');
+    setTelefone(dadosVitima.telefone ?? '');
+    setDataNascimento(dadosVitima.dataNascimento ?? '');
+    setGenero(dadosVitima.genero ?? '');
+    setNovaFoto(null);
+    setFotoUrl(dadosVitima.fotoVitima ? dadosVitima.fotoVitima + '?t=' + Date.now() : null);
   }
 
   // ── Formata data para exibição (em UTC, para não mostrar 1 dia a menos) ──
@@ -181,8 +228,8 @@ function DetalhesVitimas() {
         <main className="sv-main">
           <header className="sv-topo">
             <div className="sv-topo-texto">
-              <p className="sv-trilha"><a href="/vitimas">Vítimas</a> &gt; <span>Detalhes</span></p>
-              <h1 className="sv-titulo">Detalhes da Vítima</h1>
+              <p className="sv-trilha"><a href="/pg_adm">Visão geral</a> &gt; <a href="/vitimas">Vítimas</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Detalhes da vítima</h1>
             </div>
           </header>
           {carregando
@@ -193,6 +240,10 @@ function DetalhesVitimas() {
     );
   }
 
+  const idade = idadeDe(dadosVitima.dataNascimento)
+  const deficiencias = dadosVitima.deficiencias ?? []
+  const diasNoAbrigo = diasDesde(abrigoVinculado?.dataEntrada)
+
   // ── Tela principal ────────────────────────────────────────────────────
   return (
     <div className="sv-app sv-pagina">
@@ -202,216 +253,214 @@ function DetalhesVitimas() {
 
       <main className="sv-main">
 
+        {/* ── Cabeçalho: o nome da pessoa é o título ── */}
         <header className="sv-topo">
           <div className="sv-topo-texto">
             <p className="sv-trilha">
-              <a href="/vitimas">Vítimas</a> &gt; <span>{nomeVitima}</span>
+              <a href="/pg_adm">Visão geral</a> &gt; <a href="/vitimas">Vítimas</a> &gt; <span>{dadosVitima.nome}</span>
             </p>
-            <h1 className="sv-titulo">
-              {editando ? 'Editar Vítima' : 'Detalhes da Vítima'}
-            </h1>
-            <p className="sv-subtitulo">Gerencia as informações desta vítima</p>
+            <h1 className="sv-titulo">{dadosVitima.nome}</h1>
+            <p className="dv-meta">
+              {[idade !== null ? `${idade} ano${idade !== 1 ? 's' : ''}` : null, dadosVitima.genero].filter(Boolean).join(' · ')}
+              {abrigoVinculado
+                ? <span className="sv-tag sv-tag--ok">No abrigo</span>
+                : <span className="sv-tag sv-tag--atencao">Sem abrigo</span>}
+              {editando && <span className="sv-tag sv-tag--azul">Editando</span>}
+            </p>
           </div>
+          {!editando && (
+            <div className="sv-topo-acoes">
+              <button type="button" className="sv-btn sv-btn--vidro sv-anima" onClick={handleEditar}>
+                <span data-anim="giro"><LuPencil /></span> Editar cadastro
+              </button>
+            </div>
+          )}
         </header>
 
-        {/* ── Card de situação no abrigo ──────────────────────────────────
-            Sempre visível, acima do formulário.
-            Verde se vinculada, cinza se sem abrigo.
-        ─────────────────────────────────────────────────────────────────── */}
-        {abrigoVinculado ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: 'var(--sv-ok-suave)', border: '1px solid rgba(27, 138, 90, .3)',
-            borderRadius: 'var(--sv-raio-m)', padding: '16px 20px', marginBottom: '20px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              {/* Ícone */}
-              <div style={{
-                width: '42px', height: '42px', borderRadius: 'var(--sv-raio-s)',
-                background: 'var(--sv-ok)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <LuBuilding2 style={{ color: '#fff', fontSize: '18px' }} />
-              </div>
-
-              {/* Info */}
-              <div>
-                <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', color: 'var(--sv-ok)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Abrigo atual
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: '16px', fontWeight: '700', color: 'var(--sv-tinta)' }}>
-                  {abrigoVinculado.nome}
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--sv-tinta-2)' }}>
-                  {abrigoVinculado.cidade}
-                  {abrigoVinculado.dataEntrada && (
-                    <> · <LuCalendar style={{ fontSize: '11px', marginRight: '3px', verticalAlign: 'middle' }} />
-                    Entrada em {formatarData(abrigoVinculado.dataEntrada)}</>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Botão para ir ao abrigo */}
-            <button
-              onClick={() => navigate(`/detalhes-abrigos/${abrigoVinculado.id}`)}
-              className="sv-btn sv-btn--vidro"
-            >
-              <LuHouse />
-              Ver abrigo
-            </button>
-          </div>
-        ) : (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '14px',
-            background: 'var(--sv-fundo-suave)', border: '1px solid var(--sv-linha)',
-            borderRadius: 'var(--sv-raio-m)', padding: '16px 20px', marginBottom: '20px'
-          }}>
-            <div style={{
-              width: '42px', height: '42px', borderRadius: 'var(--sv-raio-s)',
-              background: 'var(--sv-linha)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <LuBuilding2 style={{ color: 'var(--sv-tinta-3)', fontSize: '18px' }} />
-            </div>
-            <div>
-              <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', color: 'var(--sv-tinta-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Sem abrigo vinculado
-              </p>
-              <p style={{ margin: '2px 0 0', fontSize: '14px', color: 'var(--sv-tinta-2)' }}>
-                Esta vítima não está alocada em nenhum abrigo no momento.
-              </p>
-            </div>
-          </div>
+        {aviso && (
+          <p className={`sv-aviso ${aviso.tipo === 'erro' ? 'sv-aviso--erro' : 'sv-aviso--sucesso'}`} role={aviso.tipo === 'erro' ? 'alert' : 'status'}>
+            {aviso.texto}
+          </p>
         )}
-        {/* ─────────────────────────────────────────────────────────────── */}
 
-        {/* ── Formulário ─────────────────────────────────────────────────── */}
-        <form onSubmit={handleSalvar} className="sv-vidro sv-painel sv-form-duas">
+        <div className="dv-grade">
 
-          {/* Coluna esquerda */}
-          <div className="sv-form-coluna">
+          {/* ── Cadastro (leitura ou edição) ── */}
+          <section className="sv-vidro sv-painel" aria-labelledby="titulo-cadastro">
+            <h2 id="titulo-cadastro" className="sv-secao-titulo"><LuUserRound /> Cadastro</h2>
 
-            <div className="sv-campo">
-              <label htmlFor="nome-vitima"><LuBuilding2 /> Nome da Vítima{editando && <Obrigatorio />}</label>
-              {editando ? (
-                <input id="nome-vitima" value={nomeVitima} maxLength={LIMITES.nomePessoa} minLength={2} required
-                  onChange={(e) => setNomeVitima(somenteNome(e.target.value))} />
-              ) : (
-                <p>{nomeVitima}</p>
-              )}
-            </div>
-
-            <div className="sv-campo">
-              <label htmlFor="cpf-vitima"><LuIdCard /> CPF{editando && <Obrigatorio />}</label>
-              {editando ? (
-                <input id="cpf-vitima" value={cpf} maxLength={LIMITES.cpf} inputMode="numeric" placeholder={EXEMPLOS.cpf} required
-                  onChange={(e) => setCpf(mascaraCpf(e.target.value))} />
-              ) : (
-                <p>{cpf || '—'}</p>
-              )}
-            </div>
-
-            <div className="sv-campo">
-              <label htmlFor="telefone-vitima"><LuPhone /> Telefone{editando && <Opcional />}</label>
-              {editando ? (
-                <input id="telefone-vitima" type="tel" value={telefone} maxLength={LIMITES.telefone} inputMode="numeric" placeholder={EXEMPLOS.telefone}
-                  onChange={(e) => setTelefone(mascaraTelefone(e.target.value))} />
-              ) : (
-                <p>{telefone || '—'}</p>
-              )}
-            </div>
-
-            <div className="sv-campo">
-              <label htmlFor="nascimento-vitima"><LuCalendar /> Data de Nascimento{editando && <Obrigatorio />}</label>
-              {editando ? (
-                <input id="nascimento-vitima" type="date" value={dataNascimento} min="1900-01-01" max={hojeISO()} required onChange={(e) => setDataNascimento(e.target.value)} />
-              ) : (
-                <p>{formatarData(dataNascimento)}</p>
-              )}
-            </div>
-
-            <div className="sv-campo">
-              <label htmlFor="genero-vitima"><LuUserRound /> Gênero{editando && <Obrigatorio />}</label>
-              {editando ? (
-                <select id="genero-vitima" required value={genero} onChange={(e) => setGenero(e.target.value)} className="sv-entrada">
-                  <option value="Masculino">Masculino</option>
-                  <option value="Feminino">Feminino</option>
-                  <option value="Outro">Outro</option>
-                </select>
-              ) : (
-                <p>{genero || '—'}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Coluna direita */}
-          <div className="sv-form-coluna">
-
-            <h3 className="sv-secao-titulo">
-              Imagem da Vítima
-            </h3>
-
-            <>
-              {editando ? (
-                <div className="sv-upload">
-                  {fotoExibida ? (
-                    <div className="sv-upload-previa">
-                      <img src={fotoExibida} alt="Preview da vítima" />
-                      <button type="button" onClick={() => { setNovaFoto(false); setFotoUrl(null); }} className="sv-btn sv-btn--perigo-vidro sv-btn--p">
-                        Remover Foto
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="sv-upload-area">
-                      <input type="file" accept="image/jpeg,image/png" onChange={handleImagem} style={{ display: 'none' }} />
-                      <LuUpload className="sv-upload-icone" />
-                      <p>Faça upload da foto da vítima (JPG ou PNG, até 2 MB)</p>
-                      <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
-                    </label>
+            {!editando ? (
+              <div className="dv-pessoa">
+                <span className="dv-foto">
+                  {fotoExibida ? <img src={fotoExibida} alt={`Foto de ${dadosVitima.nome}`} /> : <span aria-hidden="true">{iniciais(dadosVitima.nome)}</span>}
+                </span>
+                <div className="sv-pares">
+                  <p className="sv-par"><span>CPF</span><strong>{cpf || '—'}</strong></p>
+                  <p className="sv-par"><span>Telefone</span><strong>{telefone || '—'}</strong></p>
+                  <p className="sv-par"><span>Nascimento</span><strong>{formatarData(dataNascimento)}{idade !== null ? ` (${idade} anos)` : ''}</strong></p>
+                  <p className="sv-par"><span>Gênero</span><strong>{genero || '—'}</strong></p>
+                  {dadosVitima.createdAt && (
+                    <p className="sv-par"><span>Cadastrada em</span><strong>{new Date(dadosVitima.createdAt).toLocaleDateString('pt-BR')}</strong></p>
                   )}
+                  {!fotoExibida && <p className="sv-apoio">Sem foto cadastrada</p>}
                 </div>
-              ) : (
-                <div className="sv-upload">
-                  <div className="sv-upload-previa">
-                    {fotoExibida ? (
-                      <img src={fotoExibida} alt={nomeVitima} />
-                    ) : (
-                      <p style={{ color: 'var(--sv-tinta-3)', fontSize: '14px' }}>Sem foto cadastrada</p>
-                    )}
+              </div>
+            ) : (
+              <form onSubmit={handleSalvar} className="dv-form">
+                <AvisoObrigatorios />
+                <div className="dv-form-campos">
+                  <div className="sv-campo sv-campo--largo">
+                    <label htmlFor="nome-vitima"><LuUserRound /> Nome da vítima<Obrigatorio /></label>
+                    <input id="nome-vitima" value={nomeVitima} maxLength={LIMITES.nomePessoa} minLength={2} required
+                      onChange={(e) => setNomeVitima(somenteNome(e.target.value))} />
+                  </div>
+
+                  <div className="sv-campo">
+                    <label htmlFor="cpf-vitima"><LuIdCard /> CPF<Obrigatorio /></label>
+                    <input id="cpf-vitima" value={cpf} maxLength={LIMITES.cpf} inputMode="numeric" placeholder={EXEMPLOS.cpf} required
+                      onChange={(e) => setCpf(mascaraCpf(e.target.value))} />
+                  </div>
+
+                  <div className="sv-campo">
+                    <label htmlFor="telefone-vitima"><LuPhone /> Telefone<Opcional /></label>
+                    <input id="telefone-vitima" type="tel" value={telefone} maxLength={LIMITES.telefone} inputMode="numeric" placeholder={EXEMPLOS.telefone}
+                      onChange={(e) => setTelefone(mascaraTelefone(e.target.value))} />
+                  </div>
+
+                  <div className="sv-campo">
+                    <label htmlFor="nascimento-vitima"><LuCalendar /> Data de nascimento<Obrigatorio /></label>
+                    <input id="nascimento-vitima" type="date" value={dataNascimento} min="1900-01-01" max={hojeISO()} required onChange={(e) => setDataNascimento(e.target.value)} />
+                  </div>
+
+                  <div className="sv-campo">
+                    <label htmlFor="genero-vitima"><LuUserRound /> Gênero<Obrigatorio /></label>
+                    <select id="genero-vitima" required value={genero} onChange={(e) => setGenero(e.target.value)} className="sv-entrada">
+                      <option value="Masculino">Masculino</option>
+                      <option value="Feminino">Feminino</option>
+                      <option value="Outro">Outro</option>
+                    </select>
+                  </div>
+
+                  <div className="sv-campo sv-campo--largo">
+                    <span className="sv-rotulo"><LuUpload /> Foto<Opcional /></span>
+                    <div className="sv-upload">
+                      {fotoExibida ? (
+                        <div className="sv-upload-previa">
+                          <img src={fotoExibida} alt={`Prévia da foto de ${nomeVitima}`} />
+                          <button type="button" onClick={() => { setNovaFoto(false); setFotoUrl(null); }} className="sv-btn sv-btn--perigo-vidro sv-btn--p">
+                            Remover foto
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="sv-upload-area" htmlFor="foto-vitima">
+                          <input id="foto-vitima" type="file" accept="image/jpeg,image/png" onChange={handleImagem} style={{ display: 'none' }} />
+                          <LuUpload className="sv-upload-icone" />
+                          <p>Envie a foto da vítima (JPG ou PNG, até 2 MB)</p>
+                          <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
+                        </label>
+                      )}
+                    </div>
+                    {erroFoto && <p className="sv-campo-erro dv-erro-foto" role="alert">{erroFoto}</p>}
                   </div>
                 </div>
-              )}
-            </>
 
-            <div className="sv-form-acoes">
-              {editando ? (
-                <>
-                  <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">Salvar Alterações</button>
-                  <div className="sv-form-acoes-par">
-                    <button type="button" onClick={handleExcluir} className="sv-btn sv-btn--perigo-vidro sv-btn--bloco">
-                      Excluir Registro
+                {/* Cancelar discreto, ação principal em azul */}
+                <div className="sv-form-rodape">
+                  <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--discreto">Cancelar</button>
+                  <button type="submit" className="sv-btn sv-btn--primario" disabled={salvando}>
+                    {salvando ? 'Salvando...' : 'Salvar alterações'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
+
+          <div className="dv-coluna">
+            {/* ── Onde está ── */}
+            <section className="sv-vidro sv-painel" aria-labelledby="titulo-onde">
+              <h2 id="titulo-onde" className="sv-secao-titulo"><LuHouse /> Onde está</h2>
+              {abrigoVinculado ? (
+                <div className="dv-onde">
+                  <strong>{abrigoVinculado.nome}</strong>
+                  {abrigoVinculado.endereco && <p><LuMapPin aria-hidden="true" /> {abrigoVinculado.endereco}</p>}
+                  <p>{[abrigoVinculado.bairro, abrigoVinculado.cidade && `${abrigoVinculado.cidade}${abrigoVinculado.estado ? '/' + abrigoVinculado.estado : ''}`].filter(Boolean).join(', ')}</p>
+                  {abrigoVinculado.telefone && <p><LuPhone aria-hidden="true" /> {abrigoVinculado.telefone}</p>}
+                  {abrigoVinculado.dataEntrada && (
+                    <p className="dv-entrada"><LuCalendar aria-hidden="true" /> Entrada em {formatarData(abrigoVinculado.dataEntrada)} · {textoDias(diasNoAbrigo)}</p>
+                  )}
+                  <div className="dv-acoes">
+                    <button type="button" className="sv-btn sv-btn--vidro" onClick={() => navigate(`/detalhes-abrigos/${abrigoVinculado.id}`)}>
+                      <LuHouse /> Ver abrigo
                     </button>
-                    <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--discreto sv-btn--bloco">
-                      Cancelar edição
+                    <button type="button" className="sv-btn sv-btn--vidro" onClick={() => navigate(`/abrigos/${abrigoVinculado.id}/vitimas`)}>
+                      <LuUsers /> Vítimas do abrigo
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="sv-aviso sv-aviso--atencao">
+                    <LuTriangleAlert /> Sem abrigo vinculado. Para vincular, abra o abrigo e use “Vincular vítima”.
+                  </p>
+                  <div className="dv-acoes">
+                    <button type="button" className="sv-btn sv-btn--vidro" onClick={() => navigate('/abrigos')}>
+                      <LuHouse /> Ver abrigos
                     </button>
                   </div>
                 </>
-              ) : null}
-              {!editando && (
-                <button type="button" onClick={handleEditar} className="sv-btn sv-btn--vidro sv-btn--bloco">
-                  Editar Vítima
-                </button>
               )}
-            </div>
+            </section>
 
+            {/* ── Deficiências ── */}
+            <section className="sv-vidro sv-painel" aria-labelledby="titulo-deficiencias">
+              <h2 id="titulo-deficiencias" className="sv-secao-titulo">Deficiências</h2>
+              {deficiencias.length > 0 ? (
+                <div className="sv-etiquetas">
+                  {deficiencias.map(d => <span key={d} className="sv-tag sv-tag--lisa sv-tag--anil sv-tag--g">{d}</span>)}
+                </div>
+              ) : (
+                <p className="sv-apoio">Nenhuma deficiência informada.</p>
+              )}
+            </section>
           </div>
-        </form>
-        {/* ─────────────────────────────────────────────────────────────── */}
+        </div>
+
+        {/* ── Excluir: discreto e longe de "Salvar" ── */}
+        <section className="dv-excluir" aria-label="Excluir cadastro">
+          <p>
+            <strong>Excluir cadastro</strong>
+            Apaga esta pessoa do sistema{abrigoVinculado ? ' e libera a vaga no abrigo' : ''}. Não dá para desfazer.
+          </p>
+          <button type="button" className="sv-btn sv-btn--perigo-vidro" onClick={() => setConfirmarExclusao(true)}>
+            <LuTrash2 /> Excluir cadastro
+          </button>
+        </section>
 
         <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
           <p>Versão 1.0.0</p>
         </footer>
       </main>
+
+      {/* ── Confirmação da exclusão ── */}
+      {confirmarExclusao && (
+        <div className="sv-modal-fundo" onClick={(e) => { if (e.target === e.currentTarget) fecharConfirmacao() }}>
+          <div className="sv-modal" role="dialog" aria-modal="true" aria-labelledby="modal-excluir-titulo"
+            onKeyDown={(e) => { if (e.key === 'Escape') fecharConfirmacao() }}>
+            <h2 id="modal-excluir-titulo" className="sv-modal-titulo">Excluir o cadastro de {dadosVitima.nome}?</h2>
+            <p className="sv-apoio">
+              {abrigoVinculado ? `A vaga em ${abrigoVinculado.nome} será liberada. ` : ''}Esta ação não pode ser desfeita.
+            </p>
+            {erroExcluir && <p className="sv-aviso sv-aviso--erro" role="alert" style={{ marginTop: '12px' }}>{erroExcluir}</p>}
+            <div className="sv-acoes">
+              <button type="button" className="sv-btn sv-btn--discreto" autoFocus onClick={fecharConfirmacao} disabled={excluindo}>Cancelar</button>
+              <button type="button" className="sv-btn sv-btn--perigo" onClick={handleExcluir} disabled={excluindo}>
+                <LuTrash2 /> {excluindo ? 'Excluindo...' : 'Excluir cadastro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
