@@ -8,7 +8,13 @@
 
 .mapa-main {
   gap: 18px;
+  /* Quanto da altura da tela vai para o resto da página (título, números, rodapé),
+     para o mapa ocupar o que sobra sem a página rolar à toa */
+  --mapa-desconto: 315px;
 }
+.mapa-main:has(> .mapa-urgencia) { --mapa-desconto: 404px; }
+.mapa-main:has(> .mapa-aviso) { --mapa-desconto: 380px; }
+.mapa-main:has(> .mapa-urgencia):has(> .mapa-aviso) { --mapa-desconto: 470px; }
 
 /* ─── Faixa de urgência (só com alerta ativo) ─── */
 .mapa-urgencia {
@@ -152,7 +158,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 18px;
-  height: max(480px, calc(100vh - 290px));
+  height: max(420px, calc(100vh - var(--mapa-desconto)));
 }
 
 .mapa-area {

@@ -1426,15 +1426,17 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ─── Sidebar igual à da home: colada na borda, ocupando o lado esquerdo ── */
+/* Sem margem embaixo: com ela a sidebar (sticky) era empurrada para cima no fim
+   da rolagem e sobrava uma faixa vazia, e páginas curtas rolavam à toa. */
 @media (min-width: 961px) {
-  .sv-pagina { padding: 0 16px 16px 0; }
+  .sv-pagina { padding: 0 16px 0 0; }
   .sv-pagina > .sbg {
     top: 0;
     height: 100vh;
     border-radius: 0;
     border-width: 0 1px 0 0;
   }
-  .sv-pagina > .sv-main { padding-top: 26px; }
+  .sv-pagina > .sv-main { padding-top: 26px; padding-bottom: 20px; }
 }
 
 /* ─── Resumo: cards de número no topo (como os cards da home) ─────────
