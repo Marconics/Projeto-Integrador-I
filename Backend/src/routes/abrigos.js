@@ -1,6 +1,26 @@
 import prisma from '../lib/prisma.js'
 import supabase from '../supabase.js'
 import { selectLocalizacao, achatarLocalizacao, validarCidadeBairro } from '../lib/localizacao.js'
+import { LIMITE_CORPO_COM_FOTO, LIMITES, capacidadeValida, validarTamanhos, validarFormatos } from '../lib/validacao.js'
+
+
+// Capacidade total e ocupada: inteiros de 0 a 99.999 e ocupada <= total
+// Retorna a mensagem de erro ou null
+function erroCapacidade(total, ocupada) {
+  if (!capacidadeValida(total)) return 'A capacidade total deve ser um número inteiro de 0 a 99.999.'
+  if (!capacidadeValida(ocupada)) return 'A capacidade ocupada deve ser um número inteiro de 0 a 99.999.'
+  if (Number(ocupada) > Number(total)) return 'A capacidade ocupada não pode ser maior que a total.'
+  return null
+}
+
+// Tamanho dos textos + formato do telefone e do CEP
+// "atuais" = abrigo do banco (na edição): o que não mudou não é conferido
+function erroTextosAbrigo({ nome, endereco, responsavel, telefone, cep }, atuais) {
+  return validarTamanhos([
+    ['Nome do abrigo', nome, LIMITES.nomeLocal], ['Endereço', endereco, LIMITES.endereco],
+    ['Responsável', responsavel, LIMITES.nomePessoa], ['Telefone', telefone, LIMITES.telefone], ['CEP', cep, LIMITES.cep],
+  ]) ?? validarFormatos({ telefone, cep }, atuais)
+}
 
 
 export default async function abrigoRoutes(app) {
@@ -8,12 +28,28 @@ export default async function abrigoRoutes(app) {
   //----- Cadastrar ----- 
   //Método POST para cadastrar um novo abrigo
   //URL: http://localhost:3000/api/abrigos/cadastrar
-  app.post('/cadastrar', async (request, reply) => {
+  //Somente administradores
+  app.post('/cadastrar', { onRequest: [app.authenticateAdmin], bodyLimit: LIMITE_CORPO_COM_FOTO }, async (request, reply) => {
 
     const { nome, cep, cidadeId, bairroId, endereco, telefone, responsavel, tipoAbrigo,
       capacidadeTotal, capacidadeOcupada, possuiAtendimentoMedico,
       possuiEnfermagem, possuiPets, possuiAcessibilidade, possuiCozinha,
       status, fotoAbrigo, latitude, longitude } = request.body
+
+    if (!nome?.trim() || !cep || !endereco?.trim() || !tipoAbrigo) {
+      return reply.status(400).send({ mensagem: 'Nome, CEP, endereço e tipo do abrigo são obrigatórios.' })
+    }
+
+    const erroCampos = erroTextosAbrigo({ nome, endereco, responsavel, telefone, cep })
+    if (erroCampos) {
+      return reply.status(400).send({ mensagem: erroCampos })
+    }
+
+    // Capacidade ocupada não informada = 0
+    const erroCap = erroCapacidade(capacidadeTotal, capacidadeOcupada ?? 0)
+    if (erroCap) {
+      return reply.status(400).send({ mensagem: erroCap })
+    }
 
     // A cidade é obrigatória; o bairro, se vier, precisa ser da mesma cidade
     const erroLocalizacao = await validarCidadeBairro(prisma, cidadeId, bairroId)
@@ -42,8 +78,8 @@ export default async function abrigoRoutes(app) {
         telefone,
         responsavel,
         tipoAbrigo,
-        capacidadeTotal,
-        capacidadeOcupada,
+        capacidadeTotal: Number(capacidadeTotal),
+        capacidadeOcupada: Number(capacidadeOcupada ?? 0),
         possuiAtendimentoMedico: possuiAtendimentoMedico ?? false,
         possuiEnfermagem: possuiEnfermagem ?? false,
         possuiPets: possuiPets ?? false,
@@ -129,6 +165,8 @@ export default async function abrigoRoutes(app) {
   //URL: http://localhost:3000/api/abrigos/listar?cidade=
   //URL: http://localhost:3000/api/abrigos/listar?endereco=
   //URL: http://localhost:3000/api/abrigos/listar?cidadeId=1&bairroId=2&status=ativo
+  //Pública de propósito: o ChatBot e o módulo do voluntário usam esta rota,
+  //e ela só traz os dados do abrigo (nada de vítimas)
   app.get('/listar', async (request, reply) => {
 
     const { id, nome, cep, endereco, cidade, estado, bairro, cidadeId, bairroId, status } = request.query
@@ -209,7 +247,8 @@ export default async function abrigoRoutes(app) {
   //Método GET para buscar um abrigo específico pelo ID
   //Retorna TODOS os campos — usado pela tela de Detalhes
   //URL: http://localhost:3000/api/abrigos/listar/:id
-  app.get('/listar/:id', async (request, reply) => {
+  //Somente administradores — traz as vítimas abrigadas (dados pessoais)
+  app.get('/listar/:id', { onRequest: [app.authenticateAdmin] }, async (request, reply) => {
 
     const { id } = request.params
 
@@ -249,7 +288,8 @@ export default async function abrigoRoutes(app) {
   //----- Atualizar -----
   //Método PUT para atualizar as informações de um abrigo
   //URL: http://localhost:3000/api/abrigos/atualizar/:id
-  app.put('/atualizar/:id', async (request, reply) => {
+  //Somente administradores
+  app.put('/atualizar/:id', { onRequest: [app.authenticateAdmin], bodyLimit: LIMITE_CORPO_COM_FOTO }, async (request, reply) => {
     try {
 
     const { id } = request.params
@@ -264,6 +304,22 @@ export default async function abrigoRoutes(app) {
 
     if (!abrigoExistente) {
       return reply.status(404).send({ mensagem: 'Abrigo não encontrado.' })
+    }
+
+    // Textos e formatos (telefone e CEP só se mudaram — cadastros antigos continuam editáveis)
+    const erroCampos = erroTextosAbrigo({ nome, endereco, responsavel, telefone, cep }, abrigoExistente)
+    if (erroCampos) {
+      return reply.status(400).send({ mensagem: erroCampos })
+    }
+
+    // Confere a capacidade com os valores finais (o que não veio no body continua como está;
+    // null — campo apagado na tela — conta como valor inválido)
+    const erroCap = erroCapacidade(
+      capacidadeTotal   === undefined ? abrigoExistente.capacidadeTotal   : capacidadeTotal,
+      capacidadeOcupada === undefined ? abrigoExistente.capacidadeOcupada : capacidadeOcupada
+    )
+    if (erroCap) {
+      return reply.status(400).send({ mensagem: erroCap })
     }
 
     // Se a cidade ou o bairro vieram no body, confere se combinam
@@ -341,8 +397,8 @@ export default async function abrigoRoutes(app) {
         telefone,
         responsavel,
         tipoAbrigo,
-        capacidadeTotal,
-        capacidadeOcupada,
+        capacidadeTotal:   capacidadeTotal   !== undefined ? Number(capacidadeTotal)   : undefined,
+        capacidadeOcupada: capacidadeOcupada !== undefined ? Number(capacidadeOcupada) : undefined,
         possuiAtendimentoMedico: possuiAtendimentoMedico ?? false,
         possuiEnfermagem:        possuiEnfermagem        ?? false,
         possuiPets:              possuiPets              ?? false,
@@ -397,19 +453,34 @@ export default async function abrigoRoutes(app) {
   // ─── EXCLUIR ─────────────────────────────────────────────────
   // Método DELETE para excluir um abrigo
   // URL: http://localhost:3000/api/abrigos/excluir/:id
-  app.delete('/excluir/:id', async (request, reply) => {
+  // Somente administradores
+  app.delete('/excluir/:id', { onRequest: [app.authenticateAdmin] }, async (request, reply) => {
 
     const { id } = request.params
 
     const abrigoExistente = await prisma.abrigo.findUnique({
-      where: { id_abrigo: Number(id) }
+      where: { id_abrigo: Number(id) },
+      include: { _count: { select: { solicitacoesAjuda: true } } }
     })
 
     if (!abrigoExistente) {
       return reply.status(404).send({ mensagem: 'Abrigo não encontrado.' })
     }
 
-    // Se o abrigo tiver foto, remove do Storage antes de deletar o registro
+    // O banco não deixa excluir um abrigo que tem solicitações de ajuda (histórico).
+    // Antes a API tentava mesmo assim: dava erro 500 e a foto já tinha sido apagada.
+    const totalSolicitacoes = abrigoExistente._count.solicitacoesAjuda
+    if (totalSolicitacoes > 0) {
+      return reply.status(409).send({
+        mensagem: `Não é possível excluir: este abrigo tem ${totalSolicitacoes} solicitação(ões) de ajuda vinculada(s). Exclua-as antes.`
+      })
+    }
+
+    await prisma.abrigo.delete({
+      where: { id_abrigo: Number(id) }
+    })
+
+    // Só apaga a foto do Storage depois que o registro foi excluído de verdade
     // O nome do arquivo é extraído da URL salva no banco, já que agora o nome tem timestamp
     // Exemplo: "https://...supabase.co/.../abrigo-24-1718323200000.jpg" → "abrigo-24-1718323200000.jpg"
     if (abrigoExistente.fotoAbrigo) {
@@ -418,10 +489,6 @@ export default async function abrigoRoutes(app) {
         .from('fotos-abrigo')
         .remove([nomeArquivo])
     }
-
-    await prisma.abrigo.delete({
-      where: { id_abrigo: Number(id) }
-    })
 
     return reply.status(200).send({ mensagem: 'Abrigo excluído com sucesso!' })
   })

@@ -4,6 +4,7 @@
 import prisma from '../lib/prisma.js'
 import { includeInscrito, formatarInscrito, emailValido } from '../lib/inscritos.js'
 import { TIPOS_ALERTA, GRAVIDADES } from '../lib/alertas.js'
+import { LIMITES, validarTamanhos } from '../lib/validacao.js'
 
 
 export default async function inscritoRoutes(app) {
@@ -127,6 +128,10 @@ export default async function inscritoRoutes(app) {
     }
     if (email !== undefined && !emailValido(email)) {
       return reply.status(400).send({ mensagem: 'E-mail inválido.' })
+    }
+    const erroTamanho = validarTamanhos([['Nome', nome?.trim(), LIMITES.nomePessoa], ['E-mail', email?.trim(), LIMITES.email]])
+    if (erroTamanho) {
+      return reply.status(400).send({ mensagem: erroTamanho })
     }
 
     const novoBairroId = bairroId !== undefined ? Number(bairroId) : inscrito.bairroId

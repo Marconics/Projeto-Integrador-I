@@ -28,7 +28,7 @@
    (só nesta tela e só no desktop). Para voltar à sidebar flutuante, apague este bloco. */
 @media (min-width: 961px) {
   .pga {
-    padding: 0 16px 16px 0;
+    padding: 0 16px 0 0; /* sem margem embaixo: a sidebar fica presa até o fim da rolagem */
   }
   .pga > .sbg {
     top: 0;
@@ -36,7 +36,7 @@
     border-radius: 0;
     border-width: 0 1px 0 0;
   }
-  .pga-main { padding-top: 26px; }
+  .pga-main { padding-top: 26px; padding-bottom: 20px; }
 }
 
 /* ─── Topo ─────────────────────────────────────────────────────────── */

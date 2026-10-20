@@ -5,6 +5,7 @@ import { LuBell, LuCake, LuChevronRight, LuHandHeart, LuHeart, LuHouse, LuIdCard
 import SidebarGlass from '../../components/SidebarGlass/SidebarGlass';
 import '../../styles/sosvale-glass.css';
 import { API_URL, formatarTempo } from '../../services/api';
+import { Esqueleto, ErroPagina, Vazio } from '../../components/EstadosPagina';
 
 // ─── Labels e cores de status/categoria/urgência ────────────────
 // Mesmo padrão usado nas outras telas de Solicitação de Ajuda
@@ -68,6 +69,8 @@ const PainelVoluntario = () => {
   // ─── BUSCA DE DADOS ──────────────────────────────────────────
   // Em paralelo: solicitações de ajuda abertas + dados do voluntário
   async function buscarDados() {
+    setCarregando(true);
+    setErro(null);
     try {
       const [resSolicitacoes, resVoluntario] = await Promise.all([
         fetch(`${API_URL}/api/solicitacoes-ajuda/publico`),
@@ -150,9 +153,13 @@ const PainelVoluntario = () => {
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass modulo="voluntario" ativo={aba} />
         <main className="sv-main home-vol">
-          <p className={erro ? 'hv-estado hv-estado--erro' : 'hv-estado'}>
-            {erro ? `Não foi possível carregar o painel: ${erro}` : 'Carregando...'}
-          </p>
+          {carregando
+            ? <Esqueleto forma="lista" />
+            : <ErroPagina
+                titulo="Não foi possível carregar o seu painel"
+                mensagem={`${erro}. Verifique a conexão e tente novamente.`}
+                onTentar={buscarDados}
+              />}
         </main>
       </div>
     );
@@ -282,7 +289,11 @@ const PainelVoluntario = () => {
               </div>
 
               {solicitacoes.length === 0 ? (
-                <p className="hv-vazio">Nenhuma solicitação de ajuda aberta no momento.</p>
+                <Vazio
+                  icone={<LuHandHeart />}
+                  titulo="Nenhuma solicitação de ajuda aberta no momento."
+                  dica="Quando um abrigo precisar de ajuda, o pedido aparece aqui."
+                />
               ) : (
                 <ul className="hv-solicitacoes">
                   {solicitacoes.slice(0, MAXIMO_SOLICITACOES).map(s => {

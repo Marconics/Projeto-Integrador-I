@@ -1,9 +1,13 @@
 // ─── Imports ──────────────────────────────────────────────────────────────────
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LuBan, LuBuilding2, LuCircleCheck, LuClock, LuPhone, LuTrash2 } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin } from '../../../services/api';
+import { LIMITES } from '../../../utils/campos';
+import { Opcional, ContadorCaracteres } from '../../../components/MarcasCampo';
+import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 
 // ─── Badges e labels ──────────────────────────────────────────────────────────
 const badgeStatus = {
@@ -53,27 +57,32 @@ function DetalhesSolicitacaoAjuda() {
   const [voluntarios, setVoluntarios]     = useState([])
 
   // ─── Busca ───────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const buscar = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const buscar = useCallback(async () => {
+      setCarregando(true)
+      setErro(null)
       try {
         // Rota do backend é /listar/:id, não /:id
-        const res = await fetch(`http://localhost:3000/api/solicitacoes-ajuda/listar/${id}`)
+        const res = await fetchAdmin(`/solicitacoes-ajuda/listar/${id}`)
+        if (!res.ok) {
+          throw new Error(res.status === 404 ? 'Esta solicitação não foi encontrada. Ela pode ter sido excluída.' : `Erro ${res.status}`)
+        }
         const d = await res.json()
         setDados(d.solicitacao ?? d)
 
         // Busca lista de voluntários para o select de "quem atendeu"
-        const resVol = await fetch('http://localhost:3000/api/voluntarios/listar')
+        const resVol = await fetchAdmin('/voluntarios/listar')
         const dVol = await resVol.json()
         setVoluntarios(dVol.voluntarios ?? [])
       } catch (err) {
         console.error('Erro ao buscar dados:', err)
-        setErro('Não foi possível carregar a solicitação.')
+        setErro(err.message?.startsWith('Esta solicitação') ? err.message : 'O servidor não respondeu. Verifique a conexão e tente novamente.')
       } finally {
         setCarregando(false)
       }
-    }
-    buscar()
   }, [id])
+
+  useEffect(() => { buscar() }, [buscar])
 
   // ─── Atualizar status ────────────────────────────────────────────────────────
   const handleAtualizarStatus = async (novoStatus) => {
@@ -90,7 +99,7 @@ function DetalhesSolicitacaoAjuda() {
       }
 
       // Rota do backend é PUT /atualizar/:id, não PATCH /:id
-      const res = await fetch(`http://localhost:3000/api/solicitacoes-ajuda/atualizar/${id}`, {
+      const res = await fetchAdmin(`/solicitacoes-ajuda/atualizar/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -118,7 +127,13 @@ function DetalhesSolicitacaoAjuda() {
     if (!confirm('Tem certeza que deseja apagar esta solicitação? Esta ação não pode ser desfeita.')) return
     try {
       // Rota do backend é DELETE /excluir/:id, não DELETE /:id
-      await fetch(`http://localhost:3000/api/solicitacoes-ajuda/excluir/${id}`, { method: 'DELETE' })
+      const resposta = await fetchAdmin(`/solicitacoes-ajuda/excluir/${id}`, { method: 'DELETE' })
+      // Só sai da tela se a API excluiu de verdade
+      if (!resposta.ok) {
+        const d = await resposta.json().catch(() => ({}))
+        alert(d.mensagem ?? 'Não foi possível excluir a solicitação.')
+        return
+      }
       navigate(`/abrigos/${dados.abrigoId}/solicitacoes-ajuda`)
     } catch (err) {
       console.error('Erro ao excluir:', err)
@@ -126,25 +141,21 @@ function DetalhesSolicitacaoAjuda() {
   }
 
   // ─── Loading / erro ───────────────────────────────────────────────────────────
-  if (carregando) {
+  if (carregando || !dados) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <Sidebar />
         <main className="sv-main">
-          <p className="sv-vazio">Carregando solicitação...</p>
-        </main>
-      </div>
-    )
-  }
-
-  if (!dados) {
-    return (
-      <div className="sv-app sv-pagina">
-        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
-        <Sidebar />
-        <main className="sv-main">
-          <p className="sv-aviso sv-aviso--erro" role="alert">{erro ?? 'Solicitação não encontrada.'}</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/solicitacoes-ajuda">Solicitações de ajuda</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Solicitação de ajuda</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="detalhe" />
+            : <ErroPagina titulo="Não foi possível carregar a solicitação" mensagem={erro ?? 'Solicitação não encontrada.'} onTentar={buscar} />}
         </main>
       </div>
     )
@@ -344,7 +355,7 @@ function DetalhesSolicitacaoAjuda() {
                 {modal === 'concluir' && (
                   <div className="sv-campo">
                     <label htmlFor="modal-ajuda-voluntario">
-                      Voluntário que atendeu (opcional)
+                      Voluntário que atendeu<Opcional />
                     </label>
                     <select
                       id="modal-ajuda-voluntario"
@@ -363,14 +374,16 @@ function DetalhesSolicitacaoAjuda() {
                 {/* Observação */}
                 <div className="sv-campo">
                   <label htmlFor="modal-ajuda-observacao">
-                    Observação (opcional)
+                    Observação<Opcional />
                   </label>
                   <textarea
                     id="modal-ajuda-observacao"
+                    maxLength={LIMITES.observacao}
                     value={observacao}
                     onChange={e => setObservacao(e.target.value)}
                     placeholder="Ex: Recebemos 40 cobertores doados pela empresa X..."
                   />
+                  <ContadorCaracteres valor={observacao} limite={LIMITES.observacao} />
                 </div>
               </div>
 

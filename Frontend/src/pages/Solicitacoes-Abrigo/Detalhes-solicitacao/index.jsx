@@ -4,6 +4,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuDog, LuHeartPulse, LuIdCard, LuMail, LuMapPin, LuMapPinned, LuNavigation, LuPhone, LuUser, LuUtensils } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin } from '../../../services/api';
+import { LIMITES } from '../../../utils/campos';
+import { Obrigatorio, ContadorCaracteres } from '../../../components/MarcasCampo';
 
 function DetalhesSolicitacao() {
 
@@ -63,7 +66,7 @@ function DetalhesSolicitacao() {
   useEffect(() => {
     const buscarSolicitacao = async () => {
       try {
-        const resposta = await fetch(`http://localhost:3000/api/solicitacoes/listar/${id}`)
+        const resposta = await fetchAdmin(`/solicitacoes/listar/${id}`)
         const dados = await resposta.json()
 
         // Guarda backup para o cancelar (igual ao DetalhesAbrigo)
@@ -118,13 +121,11 @@ function DetalhesSolicitacao() {
     if (!confirm('Confirmar aprovação desta solicitação? Um abrigo será criado automaticamente.')) return
 
     try {
-      const resposta = await fetch(`http://localhost:3000/api/solicitacoes/analisar/${id}`, {
+      const resposta = await fetchAdmin(`/solicitacoes/analisar/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'aprovado',
-          adminId: 1 // TODO: substituir pelo ID do admin logado quando tiver autenticação
-        })
+        // Quem aprovou vem do token do admin logado (antes era "adminId: 1" fixo)
+        body: JSON.stringify({ status: 'aprovado' })
       })
 
       const dados = await resposta.json()
@@ -155,14 +156,11 @@ function DetalhesSolicitacao() {
     if (!confirm('Confirmar recusa desta solicitação?')) return
 
     try {
-      const resposta = await fetch(`http://localhost:3000/api/solicitacoes/analisar/${id}`, {
+      const resposta = await fetchAdmin(`/solicitacoes/analisar/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'recusado',
-          motivoRecusa,
-          adminId: 1 // TODO: substituir pelo ID do admin logado
-        })
+        // Quem recusou vem do token do admin logado (antes era "adminId: 1" fixo)
+        body: JSON.stringify({ status: 'recusado', motivoRecusa })
       })
 
       const dados = await resposta.json()
@@ -187,7 +185,13 @@ function DetalhesSolicitacao() {
     if (!confirm('Tem certeza que deseja excluir esta solicitação?')) return
 
     try {
-      await fetch(`http://localhost:3000/api/solicitacoes/excluir/${id}`, { method: 'DELETE' })
+      const resposta = await fetchAdmin(`/solicitacoes/excluir/${id}`, { method: 'DELETE' })
+      // Só sai da tela se a API excluiu de verdade
+      if (!resposta.ok) {
+        const dados = await resposta.json().catch(() => ({}))
+        alert(dados.mensagem ?? 'Não foi possível excluir a solicitação.')
+        return
+      }
       navigate('../listar-solicitação-abrigo')
     } catch (erro) {
       console.error('Erro ao excluir:', erro)
@@ -458,10 +462,12 @@ function DetalhesSolicitacao() {
                 {/* Painel de recusa aberto — exige motivo antes de confirmar */}
                 {painelDecisao === 'recusar' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
-                      Motivo da recusa (obrigatório)
+                    <label htmlFor="motivo-recusa" style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
+                      Motivo da recusa<Obrigatorio />
                     </label>
                     <textarea
+                      id="motivo-recusa"
+                      maxLength={LIMITES.observacao}
                       value={motivoRecusa}
                       onChange={(e) => setMotivoRecusa(e.target.value)}
                       placeholder="Descreva o motivo..."
@@ -471,6 +477,7 @@ function DetalhesSolicitacao() {
                         padding: '10px', fontSize: '14px', resize: 'vertical'
                       }}
                     />
+                    <ContadorCaracteres valor={motivoRecusa} limite={LIMITES.observacao} />
                     <button type="button" className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" onClick={handleRecusar}>
                       Confirmar Recusa
                     </button>

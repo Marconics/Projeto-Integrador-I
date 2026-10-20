@@ -2,6 +2,7 @@
 import prisma from '../lib/prisma.js'
 import bcrypt from 'bcrypt'
 import { selectLocalizacao, achatarLocalizacao } from '../lib/localizacao.js'
+import { LIMITES, validarNascimento, dataParaTexto, textoOuNull, validarTamanhos, validarFormatos, emailValido } from '../lib/validacao.js'
 
 
 // Exporta a função que define as rotas de voluntário
@@ -9,12 +10,38 @@ export default async function voluntarioRoutes(app) {
 
   //----- Cadastrar -----
   // Rota POST para cadastrar um novo voluntário
+  // Pública: é o próprio voluntário quem se cadastra
   // URL http://localhost:3000/api/voluntarios/cadastrar
   app.post('/cadastrar', async (request, reply) => {
 
     // Extrai os dados do corpo da requisição
-    const { nome, cpf, telefone, email, senha, dataNascimento, genero } = request.body
-    const dataFormatada = new Date(dataNascimento)
+    const { nome, email, senha, dataNascimento, genero } = request.body
+    const cpf      = textoOuNull(request.body.cpf)
+    const telefone = textoOuNull(request.body.telefone)
+
+    if (!nome?.trim() || !email?.trim() || !senha || !genero?.trim()) {
+      return reply.status(400).send({ mensagem: 'Nome, e-mail, senha e gênero são obrigatórios.' })
+    }
+
+    if (!emailValido(email)) {
+      return reply.status(400).send({ mensagem: 'Informe um e-mail válido.' })
+    }
+    if (String(senha).length < LIMITES.senhaMin || String(senha).length > LIMITES.senhaMax) {
+      return reply.status(400).send({ mensagem: `A senha deve ter entre ${LIMITES.senhaMin} e ${LIMITES.senhaMax} caracteres.` })
+    }
+
+    const nascimento = validarNascimento(dataNascimento)
+    if (nascimento.erro) {
+      return reply.status(400).send({ mensagem: nascimento.erro })
+    }
+
+    const erroTamanho = validarTamanhos([
+      ['Nome', nome, LIMITES.nomePessoa], ['E-mail', email, LIMITES.email],
+      ['CPF', cpf, LIMITES.cpf], ['Telefone', telefone, LIMITES.telefone],
+    ]) ?? validarFormatos({ cpf, telefone })
+    if (erroTamanho) {
+      return reply.status(400).send({ mensagem: erroTamanho })
+    }
 
     // Verifica se já existe um voluntário com o mesmo email
     const voluntarioExistente = await prisma.voluntario.findUnique({
@@ -38,7 +65,7 @@ export default async function voluntarioRoutes(app) {
         telefone:       telefone ?? null,
         email,
         senha:          senhaCriptografada,
-        dataNascimento: dataFormatada,
+        dataNascimento: nascimento.data,
         genero,
         status:         'ativo',
         abrigoId:       null
@@ -186,7 +213,8 @@ export default async function voluntarioRoutes(app) {
   // URL http://localhost:3000/api/voluntarios/listar
   // URL http://localhost:3000/api/voluntarios/listar?nome=João
   // URL http://localhost:3000/api/voluntarios/listar?status=ativo
-  app.get('/listar', async (request, reply) => {
+  // Somente administradores (e-mail e telefone são dados pessoais — LGPD)
+  app.get('/listar', { onRequest: [app.authenticateAdmin] }, async (request, reply) => {
 
     // Filtros opcionais por nome, status e abrigo
     const { nome, status, abrigoId } = request.query
@@ -227,7 +255,8 @@ export default async function voluntarioRoutes(app) {
   // Método GET para buscar um voluntário específico pelo ID
   // Retorna TODOS os campos — usado pela tela de Detalhes
   // URL: http://localhost:3000/api/voluntarios/listar/:id
-  app.get('/listar/:id', async (request, reply) => {
+  // Somente administradores (traz CPF, telefone e e-mail)
+  app.get('/listar/:id', { onRequest: [app.authenticateAdmin] }, async (request, reply) => {
 
     const { id } = request.params
 
@@ -249,14 +278,14 @@ export default async function voluntarioRoutes(app) {
       return reply.status(404).send({ mensagem: 'Voluntário não encontrado.' })
     }
 
-    // Formata a data para exibição no padrão brasileiro antes de retornar
+    // A data vai como AAAA-MM-DD (UTC) — o formato local perdia 1 dia por causa do fuso
     // Nunca devolve o hash da senha
     const { senha, ...voluntarioSemSenha } = voluntario
 
     return reply.status(200).send({
       ...voluntarioSemSenha,
       abrigo: achatarLocalizacao(voluntario.abrigo),
-      dataNascimento: voluntario.dataNascimento?.toLocaleDateString('pt-BR')
+      dataNascimento: dataParaTexto(voluntario.dataNascimento)
     })
   })
 
@@ -264,12 +293,15 @@ export default async function voluntarioRoutes(app) {
   //----- Atualizar -----
   // Rota PUT para atualizar os dados de um voluntário
   // URL http://localhost:3000/api/voluntarios/atualizar/:id
-  app.put('/atualizar/:id', async (request, reply) => {
+  // Somente administradores
+  app.put('/atualizar/:id', { onRequest: [app.authenticateAdmin] }, async (request, reply) => {
     try {
 
       // Extrai o ID da URL e os dados do corpo
       const { id } = request.params
-      const { nome, cpf, telefone, email, dataNascimento, genero, status, abrigoId } = request.body
+      const { nome, email, dataNascimento, genero, status, abrigoId } = request.body
+      const cpf      = textoOuNull(request.body.cpf)
+      const telefone = textoOuNull(request.body.telefone)
 
       // Verifica se o voluntário existe
       const voluntarioExistente = await prisma.voluntario.findUnique({
@@ -281,12 +313,29 @@ export default async function voluntarioRoutes(app) {
         return reply.status(404).send({ mensagem: 'Voluntário não encontrado.' })
       }
 
-      // Converte a string de data para objeto Date antes de salvar no banco
-      // "01/02/2000" → split('/') → ['01','02','2000'] → reverse → ['2000','02','01'] → join('-') → "2000-02-01"
-      // Se a data já vier no formato ISO (YYYY-MM-DD), o new Date() funciona normalmente
-      const dataConvertida = dataNascimento.includes('/')
-        ? new Date(dataNascimento.split('/').reverse().join('-'))
-        : new Date(dataNascimento)
+      // Aceita AAAA-MM-DD ou DD/MM/AAAA; se não veio, mantém a data atual
+      // (antes, sem a data no body, o .includes quebrava e dava erro 500)
+      let dataConvertida = undefined
+      if (dataNascimento !== undefined) {
+        const nascimento = validarNascimento(dataNascimento)
+        if (nascimento.erro) {
+          return reply.status(400).send({ mensagem: nascimento.erro })
+        }
+        dataConvertida = nascimento.data
+      }
+
+      if (email !== undefined && !emailValido(email)) {
+        return reply.status(400).send({ mensagem: 'Informe um e-mail válido.' })
+      }
+
+      // CPF/telefone só são conferidos se mudaram (cadastros antigos continuam editáveis)
+      const erroTamanho = validarTamanhos([
+        ['Nome', nome, LIMITES.nomePessoa], ['E-mail', email, LIMITES.email],
+        ['CPF', cpf, LIMITES.cpf], ['Telefone', telefone, LIMITES.telefone],
+      ]) ?? validarFormatos({ cpf, telefone }, voluntarioExistente)
+      if (erroTamanho) {
+        return reply.status(400).send({ mensagem: erroTamanho })
+      }
 
       const voluntarioAtualizado = await prisma.voluntario.update({
         where: { id_voluntario: Number(id) },
@@ -309,7 +358,7 @@ export default async function voluntarioRoutes(app) {
         email:          voluntarioAtualizado.email,
         cpf:            voluntarioAtualizado.cpf,
         telefone:       voluntarioAtualizado.telefone,
-        dataNascimento: voluntarioAtualizado.dataNascimento?.toLocaleDateString('pt-BR'),
+        dataNascimento: dataParaTexto(voluntarioAtualizado.dataNascimento),
         genero:         voluntarioAtualizado.genero,
         status:         voluntarioAtualizado.status,
         abrigoId:       voluntarioAtualizado.abrigoId,
@@ -326,7 +375,8 @@ export default async function voluntarioRoutes(app) {
   //----- Deletar -----
   // Rota DELETE para excluir um voluntário
   // URL http://localhost:3000/api/voluntarios/excluir/:id
-  app.delete('/excluir/:id', async (request, reply) => {
+  // Somente administradores
+  app.delete('/excluir/:id', { onRequest: [app.authenticateAdmin] }, async (request, reply) => {
 
     const { id } = request.params
 

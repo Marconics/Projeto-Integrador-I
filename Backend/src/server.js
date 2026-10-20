@@ -70,6 +70,22 @@ app.decorate('authenticateBot', async (request, reply) => {
   }
 })
 
+// Erros que as rotas não trataram (foto grande demais, JSON inválido, falha no banco...)
+// O Fastify responderia { message } em inglês; as telas leem { mensagem }.
+app.setErrorHandler((erro, request, reply) => {
+  const status = erro.statusCode ?? 500
+
+  let mensagem = erro.message
+  if (status === 413) {
+    mensagem = 'O arquivo enviado é grande demais. Envie uma foto de até 2 MB.'
+  } else if (status >= 500) {
+    request.log.error(erro)
+    mensagem = 'Erro interno no servidor. Tente novamente.'
+  }
+
+  return reply.status(status).send({ mensagem })
+})
+
 // Registra as suas rotas
 app.register(authRoutes, { prefix: '/api/auth' })
 app.register(abrigoRoutes, { prefix: '/api/abrigos' })

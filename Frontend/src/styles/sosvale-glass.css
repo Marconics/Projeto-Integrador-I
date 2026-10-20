@@ -646,6 +646,17 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
 .sv-campo-ajuda { font-size: 12.5px; color: var(--sv-tinta-3); }
 .sv-campo-erro { font-size: 12.5px; font-weight: 500; color: var(--sv-sirene); }
 
+/* Marcas dos formulários (components/MarcasCampo.jsx)
+   <label>Nome<Obrigatorio /></label>   → "Nome *"
+   <label>Cargo<Opcional /></label>     → "Cargo (opcional)"
+   <AvisoObrigatorios />                → "* Campos obrigatórios"
+   <ContadorCaracteres />               → "12/120" (âmbar perto do limite) */
+.sv-campo-obrigatorio { color: var(--sv-sirene); font-weight: 700; }
+.sv-campo-opcional { color: var(--sv-tinta-3); font-weight: 400; font-size: .9em; }
+.sv-aviso-obrigatorios { margin: 0; font-size: 12.5px; color: var(--sv-tinta-3); }
+.sv-contador { display: block; margin-top: -2px; font-size: 12px; color: var(--sv-tinta-3); text-align: right; font-variant-numeric: tabular-nums; }
+.sv-contador--perto { color: var(--sv-atencao-forte); font-weight: 600; }
+
 /* Campo com ícone à esquerda (busca, login) */
 .sv-campo-icone { position: relative; display: block; min-width: 0; }
 .sv-campo-icone > svg {
@@ -1407,4 +1418,389 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
 @media (max-width: 960px) {
   .sv-pagina,
   .sv-app.pga { grid-template-rows: auto minmax(0, 1fr); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PEÇAS DO REDESENHO (mesma linguagem da home: PgAdmGlass)
+   Componentes React que usam estas peças: components/EstadosPagina.jsx
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Sidebar igual à da home: colada na borda, ocupando o lado esquerdo ── */
+/* Sem margem embaixo: com ela a sidebar (sticky) era empurrada para cima no fim
+   da rolagem e sobrava uma faixa vazia, e páginas curtas rolavam à toa. */
+@media (min-width: 961px) {
+  .sv-pagina { padding: 0 16px 0 0; }
+  .sv-pagina > .sbg {
+    top: 0;
+    height: 100vh;
+    border-radius: 0;
+    border-width: 0 1px 0 0;
+  }
+  .sv-pagina > .sv-main { padding-top: 26px; padding-bottom: 20px; }
+}
+
+/* ─── Resumo: cards de número no topo (como os cards da home) ─────────
+   <div class="sv-resumo">
+     <button class="sv-resumo-card sv-anima [sv-resumo-card--urgente] [sv-resumo-card--ativo]">
+       <span class="sv-poco sv-poco--azul"><span data-anim="pulo"><Icone/></span></span>
+       <span class="sv-resumo-valor">3</span>
+       <span class="sv-resumo-rotulo">Pendentes</span>
+       <span class="sv-resumo-detalhe">aguardando decisão</span>
+     </button>
+   </div>                                                              */
+.sv-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 18px;
+}
+.sv-resumo-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding: 18px 18px 16px;
+  text-align: left;
+  color: var(--sv-tinta);
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l);
+  box-shadow: var(--sv-sombra-media);
+  font: inherit;
+  transition: transform .35s var(--sv-suave), box-shadow .35s var(--sv-suave), border-color .25s;
+}
+/* Canto vermelho da identidade */
+.sv-resumo-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 26px;
+  height: 26px;
+  border-top: 3px solid var(--sv-sirene);
+  border-left: 3px solid var(--sv-sirene);
+  border-top-left-radius: var(--sv-raio-corte);
+  pointer-events: none;
+  transition: width .35s var(--sv-suave), height .35s var(--sv-suave);
+}
+:is(button, a).sv-resumo-card { cursor: pointer; }
+:is(button, a).sv-resumo-card:hover { transform: translateY(-3px); box-shadow: var(--sv-sombra-alta); }
+:is(button, a).sv-resumo-card:hover::before { width: 44px; height: 44px; }
+:is(button, a).sv-resumo-card:active { transform: translateY(0); box-shadow: var(--sv-sombra-funda); }
+.sv-resumo-card .sv-poco { margin-bottom: 12px; }
+.sv-resumo-valor {
+  font-family: var(--sv-fonte-display);
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+.sv-resumo-rotulo { font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.sv-resumo-detalhe { margin-top: auto; padding-top: 6px; font-size: 12.5px; color: var(--sv-tinta-2); }
+/* Pede atenção agora: filete vermelho inteiro no topo e número em vermelho */
+.sv-resumo-card--urgente { border-top: 3px solid var(--sv-sirene); }
+.sv-resumo-card--urgente::before { display: none; }
+.sv-resumo-card--urgente .sv-resumo-valor { color: var(--sv-sirene); }
+/* Card que está servindo de filtro */
+.sv-resumo-card--ativo { border-color: var(--sv-azul); box-shadow: 0 0 0 2px rgba(36, 87, 214, .2), var(--sv-sombra-media); }
+@media (max-width: 600px) {
+  .sv-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  /* Número ímpar de cards: o último ocupa a linha inteira */
+  .sv-resumo > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .sv-resumo-valor { font-size: 30px; }
+  .sv-resumo-card { padding: 14px; }
+}
+
+/* Título de painel com poço de ícone (como "Atividades recentes" da home) */
+.sv-painel-titulo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  font-family: var(--sv-fonte-display);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--sv-azul-forte);
+}
+.sv-painel-titulo .sv-poco { width: 32px; height: 32px; font-size: 16px; border-radius: 8px; }
+.sv-painel-titulo::after {
+  content: '';
+  position: absolute;
+  left: 44px;
+  bottom: 0;
+  width: 28px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--sv-sirene);
+}
+/* Topo do painel: título à esquerda, abas/filtros à direita */
+.sv-painel-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+/* Número pequeno dentro de uma aba ("Pendentes 3") */
+.sv-aba-num {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: var(--sv-raio-xs);
+  background: rgba(15, 35, 65, .08);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.sv-aba[aria-selected="true"] .sv-aba-num { background: rgba(255, 255, 255, .25); }
+@media (max-width: 600px) {
+  .sv-painel-topo .sv-abas { width: 100%; }
+  .sv-painel-topo .sv-aba { padding-inline: 4px; font-size: 12.5px; }
+  .sv-aba-num { margin-left: 3px; }
+}
+
+/* ─── Tabela que vira cards no celular, com cabeçalho fixo ────────────
+   <div class="sv-tabela-caixa sv-tabela-caixa--fixa">
+     <table class="sv-tabela sv-tabela--cards">
+       <thead>...</thead>
+       <tbody><tr><td>nome</td><td data-rotulo="Local">...</td><td class="sv-tabela-fim">botão</td></tr></tbody>
+     </table>
+   </div>
+   No celular cada <tr> vira um card; o data-rotulo aparece antes do valor. */
+.sv-tabela-caixa--fixa { max-height: min(70vh, 680px); overflow: auto; }
+.sv-tabela-caixa--fixa .sv-tabela thead th { position: sticky; top: 0; z-index: 1; }
+.sv-tabela td.sv-tabela-fim { width: 1%; white-space: nowrap; text-align: right; }
+.sv-tabela-principal { display: grid; gap: 2px; min-width: 0; }
+.sv-tabela-principal strong { font-weight: 600; color: var(--sv-tinta); overflow-wrap: anywhere; }
+.sv-tabela-principal span { font-size: 12.5px; color: var(--sv-tinta-2); }
+@media (max-width: 720px) {
+  .sv-tabela-caixa:has(.sv-tabela--cards) {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+  .sv-tabela--cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .sv-tabela--cards { display: block; }
+  .sv-tabela--cards tbody { display: grid; gap: 12px; }
+  .sv-tabela--cards tr {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--sv-borda-card);
+    border-radius: var(--sv-raio-corte) var(--sv-raio-m) var(--sv-raio-m) var(--sv-raio-m);
+    box-shadow: var(--sv-sombra-baixa);
+  }
+  .sv-tabela--cards td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 12px;
+    padding: 0;
+    border: 0;
+    text-align: right;
+  }
+  .sv-tabela--cards td[data-rotulo]::before {
+    content: attr(data-rotulo);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--sv-tinta-3);
+    text-align: left;
+  }
+  /* Célula sem rótulo (nome, ação) ocupa a largura toda */
+  .sv-tabela--cards td:not([data-rotulo]) { display: block; text-align: left; }
+  .sv-tabela--cards tbody tr:hover td { background: transparent; }
+  .sv-tabela--cards td.sv-tabela-fim { width: auto; padding-top: 4px; text-align: left; }
+  .sv-tabela--cards td.sv-tabela-fim .sv-btn { width: 100%; }
+  /* Colunas centralizadas no desktop voltam ao alinhamento do card */
+  .sv-tabela--cards td.sv-centro { text-align: right !important; }
+  .sv-tabela--cards td.sv-tabela-fim.sv-centro { text-align: left !important; }
+}
+
+/* ─── Estados da página: erro e vazio ─────────────────────────────── */
+/* Erro: ícone, título, explicação e o botão "Tentar novamente" */
+.sv-erro-pagina {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 52px 24px;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-xl) var(--sv-raio-xl) var(--sv-raio-xl);
+  text-align: center;
+}
+.sv-erro-pagina h2 { margin-top: 8px; font-size: 21px; color: var(--sv-tinta); }
+.sv-erro-pagina p { max-width: 46ch; color: var(--sv-tinta-2); }
+.sv-erro-pagina .sv-btn { margin-top: 10px; padding: 11px 20px; }
+/* Vazio: o que vai aparecer ali + ação principal (opcional) */
+.sv-vazio .sv-poco { margin-bottom: 8px; color: var(--sv-tinta-3); }
+.sv-vazio-titulo { font-weight: 600; color: var(--sv-tinta); }
+.sv-vazio-dica { max-width: 46ch; font-size: 13.5px; }
+.sv-vazio .sv-btn { margin-top: 10px; }
+
+/* ─── Esqueleto: formas prontas ───────────────────────────────────── */
+.sv-esq-pilha { display: flex; flex-direction: column; gap: 18px; }
+.sv-esq-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 18px; }
+.sv-esq-card { height: 150px; border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l); }
+.sv-esq-painel { display: grid; gap: 10px; padding: 22px 24px; border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l); background: rgba(236, 243, 255, .35); }
+.sv-esq-titulo { width: 220px; max-width: 60%; height: 26px; border-radius: var(--sv-raio-xs); }
+.sv-esq-linha { height: 54px; border-radius: var(--sv-raio-s); }
+.sv-esq-campo { height: 64px; border-radius: var(--sv-raio-s); }
+.sv-esq-bloco { height: 260px; }
+.sv-esq-duas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
+
+/* ─── Formulários: rodapé com ação principal e cancelar discreto ──── */
+.sv-btn--discreto {
+  color: var(--sv-tinta-2);
+  background: transparent;
+  border-color: transparent;
+}
+.sv-btn--discreto:hover { color: var(--sv-azul); background: var(--sv-azul-suave); }
+.sv-form-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sv-linha);
+}
+@media (max-width: 600px) {
+  .sv-form-rodape > .sv-btn { flex: 1 1 100%; }
+}
+
+/* ─── Número pequeno dentro de um botão ("Mais filtros 2") ────────── */
+.sv-btn-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--sv-raio-pilula);
+  background: var(--sv-azul);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sv-btn--vidro:hover .sv-btn-num { background: #fff; color: var(--sv-azul); }
+
+/* ─── Miniatura: foto pequena ou, sem foto, um ícone de reserva ─────
+   <span class="sv-miniatura"><img src="..." alt="" loading="lazy"></span>
+   <span class="sv-miniatura sv-miniatura--reserva"><Icone/></span>   */
+.sv-miniatura {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-m) var(--sv-raio-corte) var(--sv-raio-m);
+  background: var(--sv-fundo-suave);
+  box-shadow: 0 6px 14px -8px rgba(15, 35, 65, .45);
+}
+.sv-miniatura img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sv-miniatura--reserva {
+  border: 1px solid var(--sv-borda-card);
+  background: linear-gradient(150deg, #FFFFFF, #E3ECFB);
+  color: var(--sv-azul);
+  font-size: 26px;
+}
+@media (max-width: 600px) {
+  .sv-miniatura { width: 52px; height: 52px; }
+  .sv-miniatura--reserva { font-size: 23px; }
+}
+
+/* ─── Gaveta que sobe da parte de baixo (filtros no celular) ────────
+   <div class="sv-gaveta-fundo" />
+   <div class="sv-gaveta sv-gaveta--baixo" role="dialog">
+     <div class="sv-gaveta-topo">...</div>
+     <div class="sv-gaveta-corpo">...</div>
+     <div class="sv-gaveta-rodape">[Limpar] [Ver resultados]</div>
+   </div>                                                              */
+.sv-gaveta--baixo {
+  top: auto;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-height: min(88vh, 720px);
+  border-left: 0;
+  border-top: 3px solid var(--sv-sirene);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-xl) 0 0;
+  background: linear-gradient(170deg, rgba(246, 248, 252, .98), rgba(234, 240, 250, .98));
+  box-shadow: 0 -18px 40px -16px rgba(7, 34, 70, .5);
+  animation: sv-sobe .35s var(--sv-suave);
+}
+.sv-gaveta--baixo .sv-gaveta-corpo { display: grid; align-content: start; gap: 18px; padding: 16px 22px; }
+.sv-gaveta-rodape {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--sv-linha);
+  background: rgba(255, 255, 255, .7);
+}
+.sv-gaveta-rodape .sv-btn { min-height: 46px; }
+@keyframes sv-sobe {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* ─── Painel de filtros das listagens (Abrigos, Vítimas) ─────────────
+   <section class="sv-vidro sv-painel sv-filtro-painel">
+     <div class="sv-filtro-linha">  busca (.sv-filtro-busca) + selects (.sv-filtro-select) + [Filtros] (.sv-so-celular)
+     <div class="sv-filtro-linha sv-filtro-linha--abas">  .sv-abas + [Mais filtros] (.sv-so-desktop)
+     <div class="sv-filtro-mais">  filtros extras (no celular vão para a gaveta, com .sv-gaveta-campos)
+     <div class="sv-filtro-ativos">  etiquetas removíveis, "Limpar filtros" e contagem
+   No celular os selects da 1ª linha somem (vão para a gaveta "Filtros"). */
+.sv-filtro-painel { display: grid; gap: 14px; }
+.sv-filtro-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.sv-filtro-linha--abas { justify-content: space-between; }
+.sv-filtro-busca { flex: 1 1 300px; }
+.sv-filtro-busca .sv-entrada,
+.sv-filtro-select { height: 44px; }
+.sv-filtro-select { flex: 0 1 220px; width: auto; cursor: pointer; }
+.sv-filtro-mais { display: grid; gap: 14px; padding-top: 14px; border-top: 1px solid var(--sv-linha); }
+.sv-filtro-grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sv-filtro-grupo .sv-chip { min-height: 38px; }
+.sv-filtro-grupo-rotulo {
+  margin-right: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sv-tinta-2);
+}
+.sv-filtro-ativos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 32px; }
+.sv-filtro-ativos > .sv-contagem:last-child { margin-left: auto; }
+.sv-filtro-ativos .sv-contagem strong { color: var(--sv-tinta); }
+.sv-so-celular { display: none; }
+.sv-rotulo-curto { display: none; }
+/* Campos da gaveta de filtros, com rótulo visível */
+.sv-gaveta-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.sv-gaveta-campos label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--sv-tinta); }
+@media (max-width: 600px) {
+  .sv-filtro-linha > .sv-filtro-select,
+  .sv-so-desktop { display: none; }
+  .sv-so-celular { display: inline-flex; }
+  .sv-filtro-busca { flex: 1 1 0; }
+  .sv-filtro-linha--abas .sv-abas { width: 100%; }
+  .sv-filtro-linha--abas .sv-aba { padding-inline: 4px; font-size: 12.5px; }
+  .sv-rotulo-longo { display: none; }
+  .sv-rotulo-curto { display: inline; }
+  .sv-gaveta-campos .sv-filtro-select { width: 100%; }
 }

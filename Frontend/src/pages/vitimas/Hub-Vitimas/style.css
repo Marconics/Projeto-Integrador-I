@@ -1,0 +1,167 @@
+/* Hub de Vítimas (admin) — peças só desta tela: grupos, fichas e painel da pessoa.
+   Página, cards de resumo, painel de filtros, abas, chips, botões, etiquetas
+   e gavetas vêm do tema (styles/sosvale-glass.css). */
+
+.vt-fim { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; margin-left: auto; }
+.vt-agrupar { display: flex; align-items: center; gap: 8px; }
+.vt-agrupar-rotulo { font-size: 12.5px; font-weight: 600; color: var(--sv-tinta-2); white-space: nowrap; }
+.vt-agrupar .sv-aba { padding-inline: 12px; }
+
+/* ─── Grupos (por abrigo ou por letra) ─── */
+.vt-grupos { display: grid; gap: 16px; }
+.vt-grupo {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l);
+  box-shadow: var(--sv-sombra-media);
+}
+/* Canto vermelho da identidade */
+.vt-grupo::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 26px;
+  height: 26px;
+  border-top: 3px solid var(--sv-sirene);
+  border-left: 3px solid var(--sv-sirene);
+  border-top-left-radius: var(--sv-raio-corte);
+  pointer-events: none;
+}
+/* "Sem abrigo" pede ação: filete vermelho inteiro no topo */
+.vt-grupo--sem { border-top: 3px solid var(--sv-sirene); background: linear-gradient(120deg, #FFF6F6, #EEF4FF 60%, #DCE8FD); }
+.vt-grupo--sem::before { display: none; }
+
+.vt-grupo-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.vt-grupo-alternar {
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--sv-raio-s);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  color: var(--sv-tinta);
+  cursor: pointer;
+}
+.vt-grupo-texto { display: grid; min-width: 0; }
+.vt-grupo-texto strong {
+  font-family: var(--sv-fonte-display);
+  font-size: 16.5px;
+  font-weight: 500;
+  color: var(--sv-azul-forte);
+  overflow-wrap: anywhere;
+}
+.vt-grupo-texto small { font-size: 12.5px; color: var(--sv-tinta-2); }
+.vt-letra {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-s) var(--sv-raio-corte) var(--sv-raio-s);
+  background: #fff;
+  border: 1px solid var(--sv-borda-card);
+  font-family: var(--sv-fonte-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--sv-azul-forte);
+}
+.vt-seta { flex: none; margin-left: auto; font-size: 18px; color: var(--sv-tinta-2); transition: transform .3s var(--sv-suave); }
+.vt-grupo-alternar[aria-expanded="false"] .vt-seta { transform: rotate(-90deg); }
+
+/* ─── Fichas: uma linha por pessoa, compactas ─── */
+.vt-fichas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); gap: 10px; }
+.vt-ficha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-s) var(--sv-raio-corte) var(--sv-raio-s);
+  background: rgba(255, 255, 255, .78);
+  font: inherit;
+  text-align: left;
+  color: var(--sv-tinta);
+  cursor: pointer;
+  transition: transform .25s var(--sv-suave), box-shadow .25s var(--sv-suave), background-color .2s, border-color .2s;
+}
+.vt-ficha:hover { background: #fff; transform: translateY(-1px); box-shadow: var(--sv-sombra-baixa); }
+.vt-ficha--aberta { border-color: var(--sv-azul); background: #fff; box-shadow: 0 0 0 2px rgba(36, 87, 214, .18); }
+
+.vt-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-s) var(--sv-raio-corte) var(--sv-raio-s);
+  background: linear-gradient(150deg, #4C82FA, var(--sv-azul));
+  color: #fff;
+  font-family: var(--sv-fonte-display);
+  font-size: 14px;
+  font-weight: 500;
+}
+.vt-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.vt-avatar--g { width: 64px; height: 64px; font-size: 22px; }
+
+.vt-ficha-texto { display: grid; min-width: 0; }
+.vt-ficha-nome { overflow: hidden; font-size: 14px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.vt-ficha-sub { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--sv-tinta-2); }
+.vt-ficha-sub svg { flex: none; color: var(--sv-azul); }
+.vt-ficha-abrigo { overflow: hidden; font-size: 12px; color: var(--sv-tinta-2); white-space: nowrap; text-overflow: ellipsis; }
+.vt-ficha-abrigo--sem { color: var(--sv-atencao-forte); font-weight: 600; }
+
+.vt-ver-mais { justify-self: start; }
+
+/* ─── Painel da pessoa (gaveta à direita) ─── */
+.vt-painel-pessoa { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.vt-painel-pessoa h2 {
+  font-family: var(--sv-fonte-display);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--sv-azul-forte);
+  overflow-wrap: anywhere;
+}
+.vt-painel-pessoa p { font-size: 13.5px; color: var(--sv-tinta-2); }
+.vt-painel-corpo { display: grid; align-content: start; gap: 20px; padding: 18px 22px; }
+.vt-painel-secao { display: grid; gap: 10px; }
+.vt-painel-secao > h3 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sv-tinta-2);
+}
+.vt-onde {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-s) var(--sv-raio-s) var(--sv-raio-s);
+  background: var(--sv-fundo-card);
+  font-size: 13.5px;
+  color: var(--sv-tinta-2);
+}
+.vt-onde strong { font-size: 15px; color: var(--sv-tinta); }
+.vt-painel-rodape--um { grid-template-columns: minmax(0, 1fr); }
+
+@media (max-width: 600px) {
+  .vt-grupo { padding: 12px 14px; }
+  /* Cinco abas não cabem com o número: no celular a contagem fica só abaixo */
+  .vt-faixas .sv-aba-num { display: none; }
+  .vt-fim { width: 100%; justify-content: space-between; margin-left: 0; }
+}

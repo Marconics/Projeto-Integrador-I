@@ -6,7 +6,10 @@ import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
 import { apiAdmin, formatarDataHora, formatarTempo } from '../../../services/api';
 import { STATUS_ALERTA, STATUS_NOTIFICACAO } from '../constantes';
+import { LIMITES } from '../../../utils/campos';
+import { Obrigatorio, ContadorCaracteres } from '../../../components/MarcasCampo';
 import '../alertas.css';
+import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 
 const SITUACAO_GRUPO = {
   pendente:  'na fila de envio',
@@ -109,9 +112,19 @@ function DetalhesAlerta() {
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass ativo="alertas" />
         <main className="sv-main">
-          <p style={{ padding: '40px', color: erro ? 'var(--sv-sirene)' : 'var(--sv-tinta-2)' }}>
-            {erro || 'Carregando alerta...'}
-          </p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/alertas">Alertas</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Detalhes do alerta</h1>
+            </div>
+          </header>
+          {carregando || !erro
+            ? <Esqueleto forma="detalhe" />
+            : <ErroPagina
+                titulo="Não foi possível carregar o alerta"
+                mensagem={erro}
+                onTentar={() => { setCarregando(true); setErro(''); buscarAlerta() }}
+              />}
         </main>
       </div>
     )
@@ -354,8 +367,8 @@ function DetalhesAlerta() {
 
               {painelDecisao === 'cancelar' && (
                 <div className="painel-decisao">
-                  <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
-                    Motivo do cancelamento (obrigatório)
+                  <label htmlFor="motivo-cancelamento" style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
+                    Motivo do cancelamento<Obrigatorio />
                   </label>
                   {alerta.status === 'ativo' && (
                     <p className="sv-aviso sv-aviso--atencao">
@@ -363,12 +376,14 @@ function DetalhesAlerta() {
                     </p>
                   )}
                   <textarea
+                    id="motivo-cancelamento"
                     value={motivo}
                     onChange={(e) => setMotivo(e.target.value)}
                     placeholder="Ex: Relato falso — a equipe esteve no local e não há alagamento."
                     rows={4}
-                    maxLength={300}
+                    maxLength={LIMITES.motivoAlerta}
                   />
+                  <ContadorCaracteres valor={motivo} limite={LIMITES.motivoAlerta} />
                   <button className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" disabled={enviando} onClick={handleCancelar}>
                     {enviando ? 'Cancelando...' : 'Confirmar cancelamento'}
                   </button>

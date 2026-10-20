@@ -1,11 +1,21 @@
 // --------- Imports -----------
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LuBuilding2, LuClock, LuHandHeart, LuHeart, LuMapPin, LuPhone, LuPlus, LuUser } from 'react-icons/lu';
+import { LuBan, LuBuilding2, LuCircleCheck, LuClock, LuHandHeart, LuHeart, LuHourglass, LuInbox, LuMapPin, LuPhone, LuPlus, LuUser } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
-import { API_URL, formatarTempo } from '../../../services/api';
+import { LIMITES } from '../../../utils/campos';
+import { API_URL, fetchAdmin, formatarTempo } from '../../../services/api';
 import '../../alertas/alertas.css';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
+
+// Ícone e tom de cada card do resumo
+const RESUMO = {
+  aberto:       { icone: <LuInbox />,       anim: 'pulo',  tom: 'azul' },
+  em_andamento: { icone: <LuHourglass />,   anim: 'pulso', tom: 'ciano' },
+  concluido:    { icone: <LuCircleCheck />, anim: 'pulo',  tom: 'petroleo' },
+  cancelado:    { icone: <LuBan />,         anim: 'giro',  tom: 'forte' },
+}
 
 // ─── Rótulos (mesmos valores dos enums do banco) ──────────────────────────────
 const STATUS = {
@@ -58,11 +68,13 @@ function ListarSolicitacoesAjuda() {
   const [abrigoNovaSolicitacao, setAbrigoNovaSolicitacao] = useState('')
 
   // ─── BUSCA DA API ────────────────────────────────────────────
-  useEffect(() => {
-    const buscar = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const buscar = useCallback(async () => {
+      setCarregando(true)
+      setErro('')
       try {
         const [resSolicitacoes, resAbrigos] = await Promise.all([
-          fetch(`${API_URL}/api/solicitacoes-ajuda/listar`),
+          fetchAdmin('/solicitacoes-ajuda/listar'),
           fetch(`${API_URL}/api/abrigos/listar`),
         ])
         if (!resSolicitacoes.ok || !resAbrigos.ok) throw new Error('Não foi possível carregar as solicitações.')
@@ -74,9 +86,9 @@ function ListarSolicitacoesAjuda() {
       } finally {
         setCarregando(false)
       }
-    }
-    buscar()
   }, [])
+
+  useEffect(() => { buscar() }, [buscar])
 
   // ─── DERIVAÇÕES ──────────────────────────────────────────────
   // Os filtros de categoria, urgência, abrigo e busca valem para tudo;
@@ -150,7 +162,7 @@ function ListarSolicitacoesAjuda() {
 
         <header className="sv-topo">
           <div className="sv-topo-texto">
-            <p className="sv-trilha"><a href="/pg_adm">Home</a> &gt; <span>Solicitações de ajuda</span></p>
+            <p className="sv-trilha"><a href="/pg_adm">Visão geral</a> &gt; <span>Solicitações de ajuda</span></p>
             <h1 className="sv-titulo">Solicitações de ajuda</h1>
             <p className="sv-subtitulo">Pedidos de doações, medicamentos, voluntários e reparos de todos os abrigos</p>
           </div>
@@ -158,7 +170,7 @@ function ListarSolicitacoesAjuda() {
           {/* Nova solicitação: a solicitação sempre pertence a um abrigo */}
           <div className="sv-topo-acoes">
             <div className="barra-filtros" style={{ margin: 0 }}>
-              <select value={abrigoNovaSolicitacao} onChange={e => setAbrigoNovaSolicitacao(e.target.value)}>
+              <select aria-label="Abrigo da nova solicitação" value={abrigoNovaSolicitacao} onChange={e => setAbrigoNovaSolicitacao(e.target.value)}>
                 <option value="">Escolha o abrigo...</option>
                 {abrigos.map(a => <option key={a.id} value={a.id}>{a.nome} — {a.cidade}</option>)}
               </select>
@@ -173,16 +185,26 @@ function ListarSolicitacoesAjuda() {
           </div>
         </header>
 
+        {carregando && <Esqueleto forma="lista" resumo={4} />}
+
+        {!carregando && erro && (
+          <ErroPagina titulo="Não foi possível carregar as solicitações de ajuda" mensagem={erro} onTentar={buscar} />
+        )}
+
+        {!carregando && !erro && (<>
         {/* Cards de resumo por status — clicar filtra a lista */}
-        <section className="resumo-alertas">
+        <section className="sv-resumo" aria-label="Resumo por status">
           {Object.entries(STATUS).map(([status, label]) => (
             <button
               key={status}
-              className={`resumo-alerta-card ${filtroStatus === status ? 'selecionado' : ''}`}
+              type="button"
+              className={`sv-resumo-card sv-anima${filtroStatus === status ? ' sv-resumo-card--ativo' : ''}`}
+              aria-pressed={filtroStatus === status}
               onClick={() => setFiltroStatus(filtroStatus === status ? '' : status)}
             >
-              <div className="resumo-alerta-valor">{contagem(status)}</div>
-              <div className="resumo-alerta-label"><span className={`sv-tag sv-tag--lisa sv-status ${status}`}>{label}</span></div>
+              <span className={`sv-poco sv-poco--${RESUMO[status].tom}`}><span data-anim={RESUMO[status].anim}>{RESUMO[status].icone}</span></span>
+              <span className="sv-resumo-valor">{contagem(status)}</span>
+              <span className="sv-resumo-rotulo">{label}</span>
             </button>
           ))}
         </section>
@@ -192,26 +214,28 @@ function ListarSolicitacoesAjuda() {
           <div className="barra-filtros">
             <input
               placeholder="Buscar por título, descrição ou abrigo..."
+              aria-label="Buscar"
+              maxLength={LIMITES.busca}
               value={busca}
               onChange={e => setBusca(e.target.value)}
             />
 
-            <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
+            <select aria-label="Status" value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
               <option value="">Todos os status</option>
               {Object.entries(STATUS).map(([valor, label]) => <option key={valor} value={valor}>{label}</option>)}
             </select>
 
-            <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}>
+            <select aria-label="Categoria" value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}>
               <option value="">Todas as categorias</option>
               {Object.entries(CATEGORIAS).map(([valor, label]) => <option key={valor} value={valor}>{label}</option>)}
             </select>
 
-            <select value={filtroUrgencia} onChange={e => setFiltroUrgencia(e.target.value)}>
+            <select aria-label="Urgência" value={filtroUrgencia} onChange={e => setFiltroUrgencia(e.target.value)}>
               <option value="">Todas as urgências</option>
               {Object.entries(URGENCIAS).map(([valor, label]) => <option key={valor} value={valor}>{label}</option>)}
             </select>
 
-            <select value={filtroAbrigo} onChange={e => setFiltroAbrigo(e.target.value)}>
+            <select aria-label="Abrigo" value={filtroAbrigo} onChange={e => setFiltroAbrigo(e.target.value)}>
               <option value="">Todos os abrigos</option>
               {abrigosComSolicitacoes.map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </select>
@@ -226,15 +250,14 @@ function ListarSolicitacoesAjuda() {
             </span>
           </div>
 
-          {erro && <p className="sv-aviso sv-aviso--erro" style={{ marginBottom: '12px' }}>{erro}</p>}
-
-          {carregando ? (
-            <p style={{ color: 'var(--sv-tinta-2)' }}>Carregando solicitações...</p>
-          ) : filtradas.length === 0 ? (
-            <div className="sv-vazio">
-              <LuHandHeart />
-              <p>Nenhuma solicitação encontrada.</p>
-            </div>
+          {filtradas.length === 0 ? (
+            <Vazio
+              icone={<LuHandHeart />}
+              titulo={solicitacoes.length === 0 ? 'Nenhuma solicitação de ajuda cadastrada.' : 'Nenhuma solicitação encontrada com esses filtros.'}
+              dica={solicitacoes.length === 0
+                ? 'Os pedidos de doações, medicamentos e voluntários dos abrigos aparecem aqui. Escolha um abrigo no topo para criar o primeiro.'
+                : 'Tente outra busca ou limpe os filtros.'}
+            />
           ) : visao === 'lista' ? (
             filtradas.map(s => linha(s))
           ) : (
@@ -259,6 +282,7 @@ function ListarSolicitacoesAjuda() {
             ))
           )}
         </div>
+        </>)}
 
         <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>

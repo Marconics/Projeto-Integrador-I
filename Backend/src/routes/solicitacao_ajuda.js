@@ -1,5 +1,12 @@
 import prisma from '../lib/prisma.js'
 import { selectLocalizacao, achatarLocalizacao } from '../lib/localizacao.js'
+import { LIMITES, validarTamanhos } from '../lib/validacao.js'
+
+// Tamanho máximo dos textos da solicitação
+const erroTextos = ({ titulo, descricao, observacaoFechamento }) => validarTamanhos([
+  ['Título', titulo, LIMITES.titulo], ['Descrição', descricao, LIMITES.descricao],
+  ['Observação', observacaoFechamento, LIMITES.observacao],
+])
 
 
 // Devolve cidade/estado/bairro do abrigo como texto (formato usado pelas telas)
@@ -10,10 +17,21 @@ const comAbrigoAchatado = (solicitacao) => ({
 
 export default async function solicitacaoAjudaRoutes(app) {
 
+  // Rotas do voluntário: exige o token de voluntário (o id vem dele, não do front)
+  // Antes a tela mandava "voluntarioId: 1" fixo e todo interesse ia para o voluntário 1
+  async function apenasVoluntario(request, reply) {
+    if (request.user?.tipo !== 'voluntario') {
+      return reply.status(403).send({ mensagem: 'Apenas voluntários podem marcar interesse.' })
+    }
+  }
+  const rotaVoluntario = { onRequest: [app.authenticate, apenasVoluntario] }
+  const rotaAdmin      = { onRequest: [app.authenticateAdmin] }
+
   // ─── CADASTRAR ────────────────────────────────────────────────
   // Rota POST para o ADM criar uma nova solicitação de ajuda para um abrigo
   // URL: http://localhost:3000/api/solicitacoes-ajuda/cadastrar
-  app.post('/cadastrar', async (request, reply) => {
+  // Somente administradores — quem criou vem do token (antes era "criadoPorId: 1" fixo na tela)
+  app.post('/cadastrar', rotaAdmin, async (request, reply) => {
     try {
       const {
         titulo,
@@ -21,13 +39,18 @@ export default async function solicitacaoAjudaRoutes(app) {
         categoria,      // doacao | medicamento | voluntariado | infraestrutura | outro
         urgencia,       // baixa | media | alta | critica
         abrigoId,
-        criadoPorId,    // id do Admin logado que está criando
       } = request.body
+      const criadoPorId = request.user.id   // id do Admin logado que está criando
 
-      if (!titulo || !descricao || !categoria || !abrigoId || !criadoPorId) {
+      if (!titulo || !descricao || !categoria || !abrigoId) {
         return reply.status(400).send({
-          mensagem: 'titulo, descricao, categoria, abrigoId e criadoPorId são obrigatórios.'
+          mensagem: 'titulo, descricao, categoria e abrigoId são obrigatórios.'
         })
+      }
+
+      const erroTamanho = erroTextos({ titulo, descricao })
+      if (erroTamanho) {
+        return reply.status(400).send({ mensagem: erroTamanho })
       }
 
       // Verifica se o abrigo existe
@@ -72,7 +95,8 @@ export default async function solicitacaoAjudaRoutes(app) {
   // ─── LISTAR TODAS ────────────────────────────────────────────
   // Query params opcionais: abrigoId, status, categoria, urgencia
   // URL: http://localhost:3000/api/solicitacoes-ajuda/listar
-  app.get('/listar', async (request, reply) => {
+  // Somente administradores (traz contato dos voluntários)
+  app.get('/listar', rotaAdmin, async (request, reply) => {
     try {
       const { abrigoId, status, categoria, urgencia } = request.query
 
@@ -107,7 +131,8 @@ export default async function solicitacaoAjudaRoutes(app) {
   // ─── LISTAR POR ABRIGO ───────────────────────────────────────
   // Usada na tela "Solicitações de Ajuda do Abrigo" (front)
   // URL: http://localhost:3000/api/solicitacoes-ajuda/abrigo/:id
-  app.get('/abrigo/:id', async (request, reply) => {
+  // Somente administradores
+  app.get('/abrigo/:id', rotaAdmin, async (request, reply) => {
     try {
       const { id } = request.params
 
@@ -144,6 +169,7 @@ export default async function solicitacaoAjudaRoutes(app) {
   // Usada na tela de Solicitações do módulo Voluntário — mostra só o que
   // ainda está aberto ou em andamento, com dados do abrigo pra contato.
   // URL: http://localhost:3000/api/solicitacoes-ajuda/publico
+  // Pública de propósito (só pedidos abertos + contato do abrigo, nada pessoal)
   app.get('/publico', async (request, reply) => {
     try {
       const solicitacoes = await prisma.solicitacaoAjuda.findMany({
@@ -169,21 +195,14 @@ export default async function solicitacaoAjudaRoutes(app) {
   // ─── MEUS INTERESSES (VOLUNTÁRIO) ─────────────────────────────
   // Retorna os IDs de solicitação em que o voluntário logado já marcou
   // interesse, pra tela pintar o coração preenchido.
-  // URL: http://localhost:3000/api/solicitacoes-ajuda/meus-interesses?voluntarioId=1
-  //
-  // OBS: voluntarioId vem por query param aqui porque essa rota não tem
-  // autenticação própria — assim que você plugar o JWT do voluntário
-  // (como já existe em /voluntarios/me), troque para pegar o id do token.
-  app.get('/meus-interesses', async (request, reply) => {
+  // URL: http://localhost:3000/api/solicitacoes-ajuda/meus-interesses
+  // O voluntário vem do token (cabeçalho Authorization)
+  app.get('/meus-interesses', rotaVoluntario, async (request, reply) => {
     try {
-      const { voluntarioId } = request.query
-
-      if (!voluntarioId) {
-        return reply.status(400).send({ mensagem: 'voluntarioId é obrigatório.' })
-      }
+      const voluntarioId = request.user.id
 
       const interesses = await prisma.solicitacaoAjudaInteresse.findMany({
-        where: { voluntarioId: Number(voluntarioId) },
+        where: { voluntarioId },
         select: { solicitacaoId: true }
       })
 
@@ -198,7 +217,8 @@ export default async function solicitacaoAjudaRoutes(app) {
 
   // ─── LISTAR UMA SÓ ───────────────────────────────────────────
   // URL: http://localhost:3000/api/solicitacoes-ajuda/listar/:id
-  app.get('/listar/:id', async (request, reply) => {
+  // Somente administradores (traz os voluntários interessados e seus contatos)
+  app.get('/listar/:id', rotaAdmin, async (request, reply) => {
     try {
       const { id } = request.params
 
@@ -236,7 +256,8 @@ export default async function solicitacaoAjudaRoutes(app) {
   // Edita dados da solicitação, muda status, marca voluntário responsável
   // e/ou preenche a observação de fechamento (ao concluir/cancelar).
   // URL: http://localhost:3000/api/solicitacoes-ajuda/atualizar/:id
-  app.put('/atualizar/:id', async (request, reply) => {
+  // Somente administradores
+  app.put('/atualizar/:id', rotaAdmin, async (request, reply) => {
     try {
       const { id } = request.params
       const {
@@ -255,6 +276,11 @@ export default async function solicitacaoAjudaRoutes(app) {
 
       if (!solicitacaoExistente) {
         return reply.status(404).send({ mensagem: 'Solicitação não encontrada.' })
+      }
+
+      const erroTamanho = erroTextos({ titulo, descricao, observacaoFechamento })
+      if (erroTamanho) {
+        return reply.status(400).send({ mensagem: erroTamanho })
       }
 
       if (voluntarioId) {
@@ -303,14 +329,11 @@ export default async function solicitacaoAjudaRoutes(app) {
   // não muda o status nem atribui o voluntário responsável.
   // Um voluntário não pode marcar interesse duas vezes na mesma solicitação.
   // URL: http://localhost:3000/api/solicitacoes-ajuda/interesse/:id
-  app.post('/interesse/:id', async (request, reply) => {
+  // O voluntário vem do token (cabeçalho Authorization)
+  app.post('/interesse/:id', rotaVoluntario, async (request, reply) => {
     try {
       const { id } = request.params
-      const { voluntarioId } = request.body
-
-      if (!voluntarioId) {
-        return reply.status(400).send({ mensagem: 'voluntarioId é obrigatório.' })
-      }
+      const voluntarioId = request.user.id
 
       const solicitacao = await prisma.solicitacaoAjuda.findUnique({
         where: { id_solicitacao: Number(id) }
@@ -358,22 +381,15 @@ export default async function solicitacaoAjudaRoutes(app) {
 
   // ─── REMOVER INTERESSE (VOLUNTÁRIO) ──────────────────────────
   // URL: http://localhost:3000/api/solicitacoes-ajuda/interesse/:id  (DELETE)
-  app.delete('/interesse/:id', async (request, reply) => {
+  // O voluntário vem do token (cabeçalho Authorization)
+  app.delete('/interesse/:id', rotaVoluntario, async (request, reply) => {
     try {
       const { id } = request.params
-      const { voluntarioId } = request.body
+      const voluntarioId = request.user.id
 
-      if (!voluntarioId) {
-        return reply.status(400).send({ mensagem: 'voluntarioId é obrigatório.' })
-      }
-
-      await prisma.solicitacaoAjudaInteresse.delete({
-        where: {
-          solicitacaoId_voluntarioId: {
-            solicitacaoId: Number(id),
-            voluntarioId:  Number(voluntarioId),
-          }
-        }
+      // deleteMany não dá erro se o interesse já não existia
+      await prisma.solicitacaoAjudaInteresse.deleteMany({
+        where: { solicitacaoId: Number(id), voluntarioId }
       })
 
       return reply.status(200).send({ mensagem: 'Interesse removido.' })
@@ -387,7 +403,8 @@ export default async function solicitacaoAjudaRoutes(app) {
 
   // ─── EXCLUIR ─────────────────────────────────────────────────
   // URL: http://localhost:3000/api/solicitacoes-ajuda/excluir/:id
-  app.delete('/excluir/:id', async (request, reply) => {
+  // Somente administradores
+  app.delete('/excluir/:id', rotaAdmin, async (request, reply) => {
     try {
       const { id } = request.params
 

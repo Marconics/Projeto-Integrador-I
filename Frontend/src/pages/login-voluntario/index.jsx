@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { LuLock, LuLogIn, LuMail } from 'react-icons/lu';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { API_URL } from '../../services/api';
+import { LIMITES, EXEMPLOS } from '../../utils/campos';
+// Importada (e não "src/assets/..."): o caminho de texto quebrava no build
 import logoSosVale from '../../assets/logo-sosvale.png';
 import '../../styles/sosvale-glass.css';
 
@@ -17,7 +20,7 @@ const LoginVoluntario = () => {
         setErro(""); // limpa erro anterior antes de tentar
 
         try {
-            const response = await fetch("http://localhost:3000/api/voluntarios/login", {
+            const response = await fetch(`${API_URL}/api/voluntarios/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -68,7 +71,9 @@ const LoginVoluntario = () => {
                             <input
                                 id="vol-email"
                                 type="email"
-                                placeholder="seu@email.com"
+                                placeholder={EXEMPLOS.email}
+                                maxLength={LIMITES.email}
+                                autoComplete="username"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -84,6 +89,8 @@ const LoginVoluntario = () => {
                                 id="vol-senha"
                                 type="password"
                                 placeholder="Sua senha"
+                                maxLength={LIMITES.senhaMax}
+                                autoComplete="current-password"
                                 value={senha}
                                 onChange={(e) => setSenha(e.target.value)}
                                 required
@@ -99,12 +106,10 @@ const LoginVoluntario = () => {
                     </button>
                 </form>
 
-                {/* Link para quem ainda não tem conta */}
+                {/* Link para quem ainda não tem conta (Link = <a>: dá para usar pelo teclado) */}
                 <p className="sv-publica-rodape">
                     Ainda não tem conta?{" "}
-                    <button type="button" className="sv-link" onClick={() => navigate('/cadastro-voluntario')}>
-                        Cadastre-se
-                    </button>
+                    <Link className="sv-link" to="/cadastro-voluntario">Cadastre-se</Link>
                 </p>
             </div>
         </div>

@@ -1,6 +1,8 @@
+// TELA DESCONTINUADA — era só um teste de layout, sem lógica de login.
+// Não tem rota: "/login" redireciona para a tela inicial (ver App.jsx).
 import { LuLock, LuLogIn, LuUser } from 'react-icons/lu';
-import logoSosVale from '../../assets/logo-sosvale.png';
-import '../../styles/sosvale-glass.css';
+import logoSosVale from '../../../assets/logo-sosvale.png';
+import '../../../styles/sosvale-glass.css';
 
 const Login = () => {
   return (

@@ -3,22 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { LuArrowLeft, LuExternalLink, LuLink, LuSearch, LuUnlink, LuUser, LuX } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
+import { LIMITES } from '../../../utils/campos';
+import { fetchAdmin, formatarDataDia } from '../../../services/api';
 
 // ── Utilitários ────────────────────────────────────────────────────────────
+// As datas do banco são "só dia" à meia-noite UTC: lê em UTC para não perder 1 dia
 const calcularIdade = (dataNascimento) => {
   if (!dataNascimento) return '—'
   const hoje = new Date()
   const nasc = new Date(dataNascimento)
-  let idade = hoje.getFullYear() - nasc.getFullYear()
-  const mes = hoje.getMonth() - nasc.getMonth()
-  if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) idade--
+  let idade = hoje.getFullYear() - nasc.getUTCFullYear()
+  const mes = hoje.getMonth() - nasc.getUTCMonth()
+  if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getUTCDate())) idade--
   return idade
 }
 
-const formatarData = (data) => {
-  if (!data) return '—'
-  return new Date(data).toLocaleDateString('pt-BR')
-}
+const formatarData = formatarDataDia
 // ──────────────────────────────────────────────────────────────────────────
 
 function VitimasDoAbrigo() {
@@ -31,6 +32,7 @@ function VitimasDoAbrigo() {
   const [vitimasDoAbrigo, setVitimasDoAbrigo] = useState([])
   const [todasVitimas, setTodasVitimas] = useState([])
   const [carregando, setCarregando] = useState(true)
+  const [erroCarga, setErroCarga] = useState(null) // falha ao buscar o abrigo ou as vítimas
 
   const [painelVincular, setPainelVincular] = useState(false)
   const [busca, setBusca] = useState('')
@@ -41,8 +43,10 @@ function VitimasDoAbrigo() {
   // useCallback: a função só muda quando o id do abrigo muda, então o useEffect
   // abaixo pode depender dela sem recarregar a cada render
   const carregarDados = useCallback(async () => {
+    setErroCarga(null)
     try {
-      const resAbrigo = await fetch(`http://localhost:3000/api/abrigos/listar/${id}`)
+      const resAbrigo = await fetchAdmin(`/abrigos/listar/${id}`)
+      if (!resAbrigo.ok) throw new Error(`Erro ${resAbrigo.status}`)
       const dadosAbrigo = await resAbrigo.json()
       setNomeAbrigo(dadosAbrigo.nome ?? `Abrigo #${id}`)
       setCapacidade({
@@ -54,12 +58,13 @@ function VitimasDoAbrigo() {
       setVitimasDoAbrigo(dadosAbrigo.vitimas ?? [])
 
       // Todas as vítimas sem abrigo — para o painel de vincular
-      const resTodas = await fetch('http://localhost:3000/api/vitimas/listar')
+      const resTodas = await fetchAdmin('/vitimas/listar')
       const dadosTodas = await resTodas.json()
       setTodasVitimas((dadosTodas.vitimas ?? []).filter(v => !v.abrigoId))
 
     } catch (erro) {
       console.error('Erro ao carregar dados:', erro)
+      setErroCarga('O servidor não respondeu. Verifique a conexão e tente novamente.')
     } finally {
       setCarregando(false)
     }
@@ -72,10 +77,10 @@ function VitimasDoAbrigo() {
   const vincularVitima = async (vitima) => {
     setVinculando(vitima.id)
     try {
-      const res = await fetch(`http://localhost:3000/api/vitimas/listar/${vitima.id}`)
+      const res = await fetchAdmin(`/vitimas/listar/${vitima.id}`)
       const dados = await res.json()
 
-      const resposta = await fetch(`http://localhost:3000/api/vitimas/atualizar/${vitima.id}`, {
+      const resposta = await fetchAdmin(`/vitimas/atualizar/${vitima.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,10 +117,10 @@ function VitimasDoAbrigo() {
     if (!confirm(`Desvincular "${vitima.nome}" deste abrigo?`)) return
     setVinculando(vitima.id_vitima)
     try {
-      const res = await fetch(`http://localhost:3000/api/vitimas/listar/${vitima.id_vitima}`)
+      const res = await fetchAdmin(`/vitimas/listar/${vitima.id_vitima}`)
       const dados = await res.json()
 
-      await fetch(`http://localhost:3000/api/vitimas/atualizar/${vitima.id_vitima}`, {
+      const resposta = await fetchAdmin(`/vitimas/atualizar/${vitima.id_vitima}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -128,6 +133,13 @@ function VitimasDoAbrigo() {
           abrigoId:       null,
         })
       })
+
+      // Antes a resposta não era conferida: um erro passava como sucesso
+      if (!resposta.ok) {
+        const resultado = await resposta.json().catch(() => ({}))
+        alert(resultado.mensagem ?? 'Erro ao desvincular.')
+        return
+      }
 
       await carregarDados()
     } catch (erro) {
@@ -155,13 +167,28 @@ function VitimasDoAbrigo() {
     <SidebarGlass ativo="abrigos" />
   )
 
-  if (carregando) {
+  // Carregando / erro: o "Tentar novamente" mostra o esqueleto de novo enquanto busca
+  if (carregando || erroCarga) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <Sidebar />
         <main className="sv-main">
-          <p className="sv-vazio">Carregando vítimas do abrigo...</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <button className="sv-voltar" onClick={() => navigate(`/detalhes-abrigos/${id}`)}>
+                <LuArrowLeft /> Voltar para o abrigo
+              </button>
+              <h1 className="sv-titulo">Vítimas do Abrigo</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="linhas" />
+            : <ErroPagina
+                titulo="Não foi possível carregar as vítimas do abrigo"
+                mensagem={erroCarga}
+                onTentar={() => { setCarregando(true); carregarDados() }}
+              />}
         </main>
       </div>
     )
@@ -223,16 +250,16 @@ function VitimasDoAbrigo() {
         {/* ─────────────────────────────────────────────────────────────── */}
 
         {/* ── Tabela de vítimas vinculadas ──────────────────────────────── */}
-        <div className="sv-tabela-caixa">
+        <div className="sv-tabela-caixa sv-tabela-caixa--fixa">
           {vitimasDoAbrigo.length > 0 ? (
-            <table className="sv-tabela">
+            <table className="sv-tabela sv-tabela--cards">
               <thead>
                 <tr>
-                  <th>Nome</th>
-                  <th className="sv-centro">Idade</th>
-                  <th className="sv-centro">Gênero</th>
-                  <th className="sv-centro">Data de Entrada</th>
-                  <th className="sv-centro">Ações</th>
+                  <th scope="col">Nome</th>
+                  <th scope="col" className="sv-centro">Idade</th>
+                  <th scope="col" className="sv-centro">Gênero</th>
+                  <th scope="col" className="sv-centro">Data de Entrada</th>
+                  <th scope="col" className="sv-centro">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,20 +276,20 @@ function VitimasDoAbrigo() {
                       </button>
                     </td>
 
-                    <td className="sv-centro">
+                    <td data-rotulo="Idade" className="sv-centro">
                       {calcularIdade(vitima.dataNascimento)}
                     </td>
 
-                    <td className="sv-centro">
+                    <td data-rotulo="Gênero" className="sv-centro">
                       {vitima.genero}
                     </td>
 
-                    <td className="sv-centro">
+                    <td data-rotulo="Entrada" className="sv-centro">
                       {formatarData(vitima.dataEntrada)}
                     </td>
 
                     {/* Botão desvincular */}
-                    <td className="sv-centro">
+                    <td className="sv-tabela-fim sv-centro">
                       <button
                         className="sv-btn sv-btn--perigo-vidro sv-btn--p"
                         onClick={() => desvincularVitima(vitima)}
@@ -278,15 +305,16 @@ function VitimasDoAbrigo() {
               </tbody>
             </table>
           ) : (
-            <div className="sv-vazio">
-              <LuUser />
-              <strong>
-                Nenhuma vítima vinculada
-              </strong>
-              <p className="sv-apoio">
-                Clique em "Vincular Vítima" para adicionar alguém a este abrigo.
-              </p>
-            </div>
+            <Vazio
+              icone={<LuUser />}
+              titulo="Nenhuma vítima vinculada"
+              dica="As pessoas acolhidas neste abrigo aparecem aqui. Vincule uma vítima já cadastrada para começar."
+              acao={pct < 100 && (
+                <button className="sv-btn sv-btn--primario" onClick={() => { setPainelVincular(true); setBusca('') }}>
+                  <LuLink /> Vincular Vítima
+                </button>
+              )}
+            />
           )}
         </div>
         {/* ─────────────────────────────────────────────────────────────── */}
@@ -330,6 +358,8 @@ function VitimasDoAbrigo() {
                     autoFocus
                     type="text"
                     placeholder="Buscar por nome ou CPF..."
+                    aria-label="Buscar"
+                    maxLength={LIMITES.busca}
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
                   />

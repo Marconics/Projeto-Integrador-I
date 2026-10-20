@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   LuLayoutGrid, LuMap, LuHouse, LuUsers, LuClipboardList, LuHandHeart,
-  LuSiren, LuUserCheck, LuMapPinned, LuLogOut, LuMenu, LuX, LuUser,
+  LuSiren, LuUserCheck, LuMapPinned, LuLogOut, LuMenu, LuX, LuUser, LuUserCog,
 } from 'react-icons/lu';
 import logoSosVale from '../../assets/logo-sosvale.png';
 import '../../styles/sosvale-glass.css';
@@ -23,6 +23,8 @@ const itensMenu = [
   { id: 'alertas',             label: 'Alertas',                icon: <LuSiren />,         href: '/alertas' },
   { id: 'inscritos',           label: 'Inscritos',              icon: <LuUserCheck />,     href: '/inscritos' },
   { id: 'regioes',             label: 'Regiões',                icon: <LuMapPinned />,     href: '/regioes' },
+  // Um admin logado cadastra outros (a API não deixa mais qualquer pessoa criar admin)
+  { id: 'administradores',     label: 'Administradores',        icon: <LuUserCog />,       href: '/administradores' },
 ];
 
 // Menu do VOLUNTÁRIO (mesmos itens do antigo SidebarVoluntario).

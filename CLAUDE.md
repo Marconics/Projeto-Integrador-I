@@ -48,7 +48,7 @@ npm run seed                                      # só cadastra tipos de Defici
 cd Backend && npm run banco:teste     # terminal 1: banco de teste na porta 5433, com dados de exemplo (admin adm@teste.com/123456)
 cd Backend && npm run banco:teste:vazio  # idem, mas vazio — exigido pelo teste:api
 cd Backend && npm run back:teste      # terminal 2: API em modo teste (recusa subir se a API normal estiver aberta)
-cd Backend && npm run teste:api       # terminal 3: 58 verificações da API (recusa rodar contra a API real)
+cd Backend && npm run teste:api       # terminal 3: 108 verificações da API (recusa rodar contra a API real)
 cd ChatBot && npm run teste:conversa  # simula conversas do WhatsApp (roteiro fixo; rodar depois do teste:api)
 cd ChatBot && npm run teste:interativo  # você digita as mensagens (/foto, /numero, /grupo, /fila, /sair)
 # Portas ocupadas? BANCO_TESTE_PORTA=5434 e PORT=3100 (no banco:teste/back:teste) + API_URL=http://127.0.0.1:3100 (nos testes)
@@ -72,7 +72,7 @@ cd Backend && npm run demo:conferir   # só confere: ocupação de cada abrigo �
 Veja `Backend/.env.example` e `ChatBot/.env.example`.
 - `Backend/.env`: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_KEY`, `BOT_API_KEY` (+ opcionais `ALERTA_CONFIRMACOES_MINIMAS`=3, `ALERTA_JANELA_HORAS`=6, `PORT`).
 - `ChatBot/.env`: `BOT_API_KEY` (mesmo valor do backend), opcional `API_URL`.
-- Frontend: páginas antigas têm `http://localhost:3000` fixo; as novas usam `src/services/api.js` (`VITE_API_URL`).
+- Frontend: todas as telas usam a URL de `src/services/api.js` (`API_URL` = `VITE_API_URL` ou `http://localhost:3000`).
 
 ⚠️ `ChatBot/.env` está versionado no git. Nunca exiba, copie ou comite valores de `.env`.
 
@@ -108,12 +108,13 @@ Veja `Backend/.env.example` e `ChatBot/.env.example`.
 - **Identidade:** azul (`--sv-azul`) para a ação principal, vermelho do logo (`--sv-sirene`) para marca, ações destrutivas, urgência e erro; verde e âmbar (`--sv-ok`, `--sv-atencao`) só como cor de estado. Ícones de `react-icons/lu`, sem emojis (ícone por tipo de alerta: `utils/alertas.jsx`). Fontes Lexend (títulos e números) e Figtree (texto).
 - **Listagens com filtros e cards** (Hub de Abrigos, Hub de Vítimas, Abrigos do voluntário) usam `styles/listagem.css` (classes `lg-*` dentro de `.pagina-listagem`) e `utils/listagem.jsx` (estruturas do abrigo, ocupação, busca sem acento). Siga esse padrão em novas telas de listagem, dentro do esqueleto do tema.
 - **Voluntário:** Home (`/painel-voluntario`: solicitações de ajuda abertas + últimas contribuições; `?aba=perfil` = Meu perfil) e Abrigos (`/voluntario/abrigos`: filtros e botão Vincular → `PATCH /api/voluntarios/me/abrigo`, via `services/voluntario.js`). O voluntário não vê alertas (nem no mapa).
-- **Sidebar:** use sempre `components/SidebarGlass/SidebarGlass.jsx`: `<SidebarGlass ativo="abrigos" />` nas telas do admin e `<SidebarGlass modulo="voluntario" ativo="abrigos" />` nas do voluntário. Para mudar um item do menu, mude só a lista dentro do componente (`itensMenu` / `itensMenuVoluntario`). O "Sair" do admin vai para `ROTA_LOGIN` (`/login-adm`); o do voluntário volta para `/`. O Mapa serve os dois módulos (`/mapa` e `/voluntario/mapa`, prop `modulo`).
+- **Sidebar:** use sempre `components/SidebarGlass/SidebarGlass.jsx`: `<SidebarGlass ativo="abrigos" />` nas telas do admin e `<SidebarGlass modulo="voluntario" ativo="abrigos" />` nas do voluntário. Para mudar um item do menu, mude só a lista dentro do componente (`itensMenu` / `itensMenuVoluntario`). O "Sair" do admin vai para `ROTA_LOGIN` (`/login-adm`); o do voluntário volta para `/`. O item "Administradores" leva à tela `pages/administradores` (um admin cadastra outro). O Mapa serve os dois módulos (`/mapa` e `/voluntario/mapa`, prop `modulo`).
 - **Home do admin:** `/pg_adm` abre `pages/PgAdmGlass`. A home antiga (`pages/pg_adm`), `SidebarAdm.jsx` e `SidebarVoluntario.jsx` continuam no repositório, mas sem uso — não use em telas novas.
-- Telas antigas usam `fetch` direto. Telas novas (`alertas/`, `inscritos/`, `regioes/Gerenciar-Regioes`) usam `services/api.js` (`apiAdmin`: envia `token_adm`, lança erro se a resposta não for ok, volta ao login em 401) e `components/SeletorLocalidade.jsx` (Estado → Cidade → Bairro, também usado nos formulários de abrigo). `pages/alertas/alertas.css` guarda só as peças próprias desses módulos (cards de resumo, filtros, relatos, regiões); botões, linhas, etiquetas, avisos e tabelas vêm do tema.
+- Chamadas à API: `services/api.js` tem `fetchAdmin` (igual ao `fetch`, mas com `API_URL` + `token_adm`; volta ao login em 401 — usado nas telas antigas e na home) e `apiAdmin` (também lança erro se a resposta não for ok — usado em `alertas/`, `inscritos/`, `regioes/Gerenciar-Regioes`, `administradores`); `services/voluntario.js` tem `fetchVoluntario` (`token_voluntario`). Rotas protegidas na API precisam de um desses — `fetch` cru só para rotas públicas. Estado → Cidade → Bairro: `components/SeletorLocalidade.jsx` (também usado nos formulários de abrigo). `pages/alertas/alertas.css` guarda só as peças próprias desses módulos (cards de resumo, filtros, relatos, regiões); botões, linhas, etiquetas, avisos e tabelas vêm do tema.
 - **Modais e gavetas** usam `position: fixed`: não coloque `container-type` nem `contain` no `sv-main` (isso prende o modal à área de conteúdo em vez da tela). Para ajustes por largura, use `@media`.
 - CSS antigo sem uso (não importado por nenhuma tela): `index.css` (só carregado pelo `main.jsx`), `pg_adm/style.css`, `DetalhesAbrigo.css`, `DetalhesSolicitacao.css`, `DetalhesVitima.css`, `CadastroAbrigo.css` e `vitima.css`.
-- Autenticação: tokens em `localStorage` (`token_adm`, `token_voluntario`, `voluntario`). Mapa via Leaflet + geocodificação no navegador com Nominatim.
+- **Formulários:** limites, máscaras e exemplos ficam em `utils/campos.js` (os mesmos limites da API em `Backend/src/lib/validacao.js` — mude os dois juntos). Marque os rótulos com `components/MarcasCampo.jsx` (`<Obrigatorio />`, `<Opcional />`, `<AvisoObrigatorios />`, `<ContadorCaracteres />`; estilos `sv-campo-obrigatorio`, `sv-contador`… no tema). Todo `<label>` com `htmlFor` ligado ao `id` do campo.
+- Autenticação: tokens em `localStorage` (`token_adm`, `token_voluntario`, `voluntario`). As rotas do admin e do voluntário ficam dentro de `components/RotaProtegida.jsx` no `App.jsx` (sem login válido do tipo certo, volta ao login); endereço inexistente, `/login` e `/cadastro` levam para `/`. Mapa via Leaflet + geocodificação no navegador com Nominatim.
 
 ### ChatBot (`ChatBot/`)
 - `index.js` → `controllers/message-controller.js`: ignora status e grupos (em grupos só responde `!alertas ...`, ver `grupo-controller.js`); `oi`/`menu` sempre voltam ao menu; depois despacha para os fluxos conforme `state.step` (`alerta_*`, `help_*`, `psycho_*`, `sol_*`).
@@ -129,11 +130,12 @@ Veja `Backend/.env.example` e `ChatBot/.env.example`.
 ## Problemas conhecidos (do relatório de análise)
 
 Considere-os ao mexer nas áreas afetadas; não "conserte" por conta própria fora do escopo pedido, mas avise se a mudança tocar neles.
-- **Segurança (P0):** as rotas antigas (abrigos, vítimas, voluntários, solicitações) continuam sem autenticação; só as novas (alertas, inscritos, escrita de regiões, bot) são protegidas. `/api/auth/cadastrar` aceita `cargo` do cliente.
-- **IDs fixos no front:** `VOLUNTARIO_LOGADO_ID = 1`, `criadoPorId: 1`, `adminId: 1`.
-- **Transações:** transferência/cadastro/exclusão de vítima alteram `capacidadeOcupada` fora da mesma transação do vínculo; aprovação de solicitação de abrigo cria o abrigo antes de atualizar a solicitação (não idempotente).
-- **Navegação:** links para rotas inexistentes (`/login_voluntario`, `/abrigos/:id`, `/voluntario`…). As telas `/login` e `/cadastro` são só formulário, sem lógica (o login real é `/login-adm` e `/login-voluntario`).
-- **UI otimista:** várias telas antigas mostram sucesso sem checar `response.ok`. Na home (`PgAdmGlass`) os números vêm da API, mas os filtros de município e período ainda não filtram nada.
+Já corrigidos pela planilha de testes (`Documentações/RELATORIO-CORRECOES-TESTES.md`): rotas de gestão exigem admin, cadastro de admin fechado depois do primeiro, admin/voluntário vêm do token (fim dos IDs fixos), aprovação de solicitação e exclusão/edição de vítima em transação, filtros da home, `/login` e `/cadastro` descontinuadas. Ainda pendentes:
+- **Segurança:** `GET /api/abrigos/listar` e `POST /api/solicitacoes/criar` continuam abertas de propósito (ChatBot e voluntário); a rota de criação não valida capacidade nem tamanho dos campos (item F do relatório).
+- **Transações:** o cadastro de vítima já vinculada a um abrigo ainda incrementa `capacidadeOcupada` fora da transação.
+- **Navegação:** links para rotas inexistentes (`/login_voluntario`, `/abrigos/:id`, `/voluntario`…) podem existir em telas antigas.
+- **UI otimista:** algumas telas antigas ainda mostram sucesso sem checar `response.ok`.
+- **Fotos no modo teste:** as rotas de abrigo e vítima enviam a foto direto ao Supabase (não usam `armazenamento.js`), então no `back:teste` o cadastro com foto responde "erro ao salvar a foto".
 - **Dependências:** `fastify`, `@fastify/jwt`, `@prisma/client` e `dotenv` estão em `devDependencies` do backend.
 
 Ordem de prioridade sugerida pelo relatório: segurança → integridade de dados → contratos/navegação → testes/CI.

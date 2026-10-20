@@ -4,18 +4,47 @@ import prisma from '../lib/prisma.js'
 // Importa o bcrypt para criptografar e comparar senhas
 // Nunca salvar a senha pura no banco
 import bcrypt from 'bcrypt'
+import { LIMITES, emailValido, validarTamanhos } from '../lib/validacao.js'
 
 
 // Exporta as rotas
 export default async function authRoutes(app) {
 
+  // Quem pode cadastrar administradores:
+  // • enquanto NÃO existe nenhum admin (sistema recém-instalado), qualquer um
+  //   pode criar o primeiro;
+  // • depois disso, só um admin logado cadastra outro (tela "Administradores").
+  // Antes a rota era aberta: qualquer pessoa conseguia criar um administrador.
+  async function primeiroAdminOuAdminLogado(request, reply) {
+    const totalAdmins = await prisma.admin.count()
+    if (totalAdmins === 0) return
+    return app.authenticateAdmin(request, reply)
+  }
+
   // rota de cadastro
   // POST /api/auth/cadastrar
   // Recebe nome, email, senha e cargo do frontend
-  app.post('/cadastrar', async (request, reply) => {
+  // O cargo é só um rótulo (ex: "Coordenador") — todo admin tem as mesmas permissões
+  app.post('/cadastrar', { onRequest: [primeiroAdminOuAdminLogado] }, async (request, reply) => {
 
     // Extrai os dados do corpo da requisição
-    const { nome, email, senha, cargo } = request.body
+    const { nome, email, senha, cargo } = request.body ?? {}
+
+    if (!nome?.trim() || !email?.trim() || !senha) {
+      return reply.status(400).send({ mensagem: 'Nome, e-mail e senha são obrigatórios.' })
+    }
+    if (!emailValido(email)) {
+      return reply.status(400).send({ mensagem: 'Informe um e-mail válido.' })
+    }
+    if (String(senha).length < LIMITES.senhaMin || String(senha).length > LIMITES.senhaMax) {
+      return reply.status(400).send({ mensagem: `A senha deve ter entre ${LIMITES.senhaMin} e ${LIMITES.senhaMax} caracteres.` })
+    }
+    const erroTamanho = validarTamanhos([
+      ['Nome', nome.trim(), LIMITES.nomePessoa], ['E-mail', email.trim(), LIMITES.email], ['Cargo', cargo?.trim(), LIMITES.cargo],
+    ])
+    if (erroTamanho) {
+      return reply.status(400).send({ mensagem: erroTamanho })
+    }
 
     // Verifica se já existe um admin com esse email
     const adminExistente = await prisma.admin.findUnique({
@@ -34,10 +63,10 @@ export default async function authRoutes(app) {
     // Salva o admin no banco com a senha criptografada
     const admin = await prisma.admin.create({
       data: {
-        nome,
-        email,
+        nome: nome.trim(),
+        email: email.trim(),
         senha: senhaCriptografada,
-        cargo: cargo || 'operador' // se não informar, usa operador como padrão
+        cargo: cargo?.trim() || 'operador' // se não informar, usa operador como padrão
       }
     })
 
@@ -51,7 +80,19 @@ export default async function authRoutes(app) {
   })
 
 
-  // Rota de login 
+  // Lista de administradores (tela "Administradores" do painel)
+  // GET /api/auth/listar — nunca devolve a senha
+  app.get('/listar', { onRequest: [app.authenticateAdmin] }, async (request, reply) => {
+    const admins = await prisma.admin.findMany({
+      select: { id: true, nome: true, email: true, cargo: true, createdAt: true },
+      orderBy: { nome: 'asc' }
+    })
+
+    return reply.status(200).send({ mensagem: 'Lista:', admins })
+  })
+
+
+  // Rota de login
   // POST /api/auth/login
   // Recebe email e senha, retorna o token JWT
   app.post('/login', async (request, reply) => {

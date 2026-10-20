@@ -1,9 +1,11 @@
 // ─── Imports ──────────────────────────────────────────────────────────────────
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LuChevronRight, LuHandHeart, LuPlus } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin } from '../../../services/api';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
 
 // ─── Constantes de exibição ───────────────────────────────────────────────────
 const badgeStatus = {
@@ -44,43 +46,57 @@ function SolicitacoesAjudaDoAbrigo() {
   const [solicitacoes, setSolicitacoes]   = useState([])
   const [nomeAbrigo, setNomeAbrigo]       = useState('')
   const [carregando, setCarregando]       = useState(true)
+  const [erro, setErro]                   = useState(null)
   const [filtroStatus, setFiltroStatus]   = useState('todas')
 
   // ─── Busca ──────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const buscar = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const buscar = useCallback(async () => {
+      setCarregando(true)
+      setErro(null)
       try {
         // Busca o nome do abrigo para o breadcrumb
-        const resAbrigo = await fetch(`http://localhost:3000/api/abrigos/listar/${id}`)
+        const resAbrigo = await fetchAdmin(`/abrigos/listar/${id}`)
+        if (!resAbrigo.ok) throw new Error(`Erro ${resAbrigo.status}`)
         const dadosAbrigo = await resAbrigo.json()
         setNomeAbrigo(dadosAbrigo.nome ?? '')
 
         // Busca todas as solicitações do abrigo (sem limite)
-        const resSolic = await fetch(`http://localhost:3000/api/solicitacoes-ajuda/abrigo/${id}`)
+        const resSolic = await fetchAdmin(`/solicitacoes-ajuda/abrigo/${id}`)
+        if (!resSolic.ok) throw new Error(`Erro ${resSolic.status}`)
         const dadosSolic = await resSolic.json()
         setSolicitacoes(dadosSolic.solicitacoes ?? [])
       } catch (erro) {
         console.error('Erro ao buscar dados:', erro)
+        setErro('O servidor não respondeu. Verifique a conexão e tente novamente.')
       } finally {
         setCarregando(false)
       }
-    }
-    buscar()
   }, [id])
+
+  useEffect(() => { buscar() }, [buscar])
 
   // ─── Derivações ─────────────────────────────────────────────────────────────
   const lista = filtroStatus === 'todas'
     ? solicitacoes
     : solicitacoes.filter(s => s.status === filtroStatus)
 
-  // ─── Loading ─────────────────────────────────────────────────────────────────
-  if (carregando) {
+  // ─── Carregando / erro ───────────────────────────────────────────────────────
+  if (carregando || erro) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <Sidebar />
         <main className="sv-main">
-          <p className="sv-vazio">Carregando solicitações...</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/abrigos">Abrigos</a> &gt; <span>Solicitações de Ajuda</span></p>
+              <h1 className="sv-titulo">Solicitações de Ajuda</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="linhas" />
+            : <ErroPagina titulo="Não foi possível carregar as solicitações do abrigo" mensagem={erro} onTentar={buscar} />}
         </main>
       </div>
     )
@@ -98,7 +114,7 @@ function SolicitacoesAjudaDoAbrigo() {
         <header className="sv-topo">
           <div className="sv-topo-texto">
             <p className="sv-trilha">
-              Abrigos &gt;{' '}
+              <a href="/abrigos">Abrigos</a> &gt;{' '}
               <button type="button" className="sv-link" onClick={() => navigate(`/detalhes-abrigos/${id}`)}>
                 {nomeAbrigo}
               </button>
@@ -146,10 +162,16 @@ function SolicitacoesAjudaDoAbrigo() {
 
           {/* Lista vazia */}
           {lista.length === 0 ? (
-            <div className="sv-vazio">
-              <LuHandHeart />
-              <p>Nenhuma solicitação encontrada.</p>
-            </div>
+            <Vazio
+              icone={<LuHandHeart />}
+              titulo={solicitacoes.length === 0 ? 'Este abrigo ainda não tem solicitações de ajuda.' : 'Nenhuma solicitação com este status.'}
+              dica="Os pedidos de doações, medicamentos, voluntários e reparos deste abrigo aparecem aqui."
+              acao={solicitacoes.length === 0 && (
+                <button className="sv-btn sv-btn--primario" onClick={() => navigate(`/abrigos/${id}/cadastrar-solicitacao-ajuda`)}>
+                  <LuPlus /> Nova Solicitação
+                </button>
+              )}
+            />
           ) : (
             <div className="sv-lista">
               {lista.map(s => {

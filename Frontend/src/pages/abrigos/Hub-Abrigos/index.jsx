@@ -1,24 +1,44 @@
 // Hub de Abrigos (admin) — /abrigos
-// Lista todos os abrigos com busca, filtros e ordenação (mesmo padrão da tela
-// de Abrigos do voluntário — estilos em styles/listagem.css).
-import { useState, useEffect, useMemo } from "react";
+// Lista todos os abrigos com resumo da rede, busca, filtros e ordenação.
+// Peças do tema (styles/sosvale-glass.css) + o que é só desta tela (./style.css).
+// Os auxiliares de ocupação e filtros são os mesmos da tela de Abrigos do voluntário (utils/listagem.jsx).
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { LuClipboardList, LuHandHeart, LuMapPin, LuPhone, LuPlus, LuSearch, LuTriangleAlert, LuUser, LuUsers, LuX } from 'react-icons/lu';
+import {
+  LuBedDouble, LuChevronRight, LuChurch, LuClipboardList, LuDumbbell, LuHandHeart, LuHotel, LuHouse,
+  LuLandmark, LuMapPin, LuPhone, LuPlus, LuSchool, LuSearch, LuSiren, LuSlidersHorizontal, LuTent,
+  LuTriangleAlert, LuUser, LuUsers, LuWarehouse, LuX
+} from 'react-icons/lu';
 
-import "../../../styles/listagem.css";
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import './style.css';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
+import { LIMITES } from '../../../utils/campos';
 import { API_URL } from '../../../services/api';
 import {
-  ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural
+  ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural, useCelular
 } from '../../../utils/listagem';
 
-// Status cadastrado no abrigo → rótulo e cor do selo
+// Status cadastrado no abrigo → rótulo e etiqueta (sv-tag)
 const STATUS_ABRIGO = {
-  ativo:      { label: 'Ativo',      classe: 'lg-selo--verde' },
-  manutencao: { label: 'Manutenção', classe: 'lg-selo--amarelo' },
-  desativado: { label: 'Desativado', classe: 'lg-selo--vermelho' },
+  ativo:      { label: 'Ativo',      classe: 'sv-tag--ok' },
+  manutencao: { label: 'Manutenção', classe: 'sv-tag--atencao' },
+  desativado: { label: 'Desativado', classe: 'sv-tag--neutro' },
 }
+
+// Tipo do abrigo → nome para exibir e ícone da miniatura quando não há foto
+const TIPOS = {
+  'Escola':            { label: 'Escola',             icone: <LuSchool /> },
+  'Ginásio':           { label: 'Ginásio',            icone: <LuDumbbell /> },
+  'Igreja':            { label: 'Igreja',             icone: <LuChurch /> },
+  'Hotel':             { label: 'Hotel',              icone: <LuHotel /> },
+  'Pousada':           { label: 'Pousada',            icone: <LuHotel /> },
+  'CentroCultural':    { label: 'Centro Cultural',    icone: <LuLandmark /> },
+  'CentroComunitário': { label: 'Centro Comunitário', icone: <LuWarehouse /> },
+  'Campo':             { label: 'Campo',              icone: <LuTent /> },
+}
+const tipoDe = (tipo) => TIPOS[tipo] ?? { label: tipo, icone: <LuHouse /> }
 
 const ORDENACOES = [
   { valor: 'nome',    label: 'Nome (A–Z)' },
@@ -27,22 +47,41 @@ const ORDENACOES = [
   { valor: 'pedidos', label: 'Mais pedidos de ajuda' },
 ]
 
+// Rótulos curtos das abas no celular
+const SITUACAO_CURTA = { todas: 'Todos', vagas: 'Vagas', quase: 'Quase', lotados: 'Lotados' }
+
 const FILTROS_INICIAIS = {
   busca: '', cidade: '', tipo: '', status: '', situacao: 'todas',
   estruturas: [], comPedidos: false, emAlerta: false, ordem: 'nome',
 }
 
+// Foto pequena do abrigo; sem foto (ou se ela não carregar), o ícone do tipo
+function Miniatura({ abrigo }) {
+  const [falhou, setFalhou] = useState(false)
+  if (abrigo.fotoAbrigo && !falhou) {
+    return (
+      <span className="sv-miniatura">
+        <img src={abrigo.fotoAbrigo} alt="" width="60" height="60" loading="lazy" decoding="async" onError={() => setFalhou(true)} />
+      </span>
+    )
+  }
+  return <span className="sv-miniatura sv-miniatura--reserva" aria-hidden="true">{tipoDe(abrigo.tipoAbrigo).icone}</span>
+}
+
 const ListarAbrigos = () => {
   const navigate = useNavigate()
+  const celular = useCelular() // no celular, "Mais filtros" abre numa gaveta
 
   // ─── ESTADOS ─────────────────────────────────────────────────
   const [abrigos,        setAbrigos]        = useState([])
   const [pedidosAbertos, setPedidosAbertos] = useState({})   // abrigoId → nº de solicitações abertas
   const [filtros,        setFiltros]        = useState(FILTROS_INICIAIS)
+  const [maisAberto,     setMaisAberto]     = useState(false) // "Mais filtros" (painel) / "Filtros" (gaveta no celular)
   const [carregando,     setCarregando]     = useState(true)
   const [erro,           setErro]           = useState(null)
 
   const mudarFiltro = (campo, valor) => setFiltros(f => ({ ...f, [campo]: valor }))
+  const alternarFiltro = (campo, valor) => setFiltros(f => ({ ...f, [campo]: f[campo] === valor ? FILTROS_INICIAIS[campo] : valor }))
 
   const alternarEstrutura = (campo) => setFiltros(f => ({
     ...f,
@@ -50,73 +89,197 @@ const ListarAbrigos = () => {
   }))
 
   // ─── BUSCA DE DADOS ──────────────────────────────────────────
-  useEffect(() => {
-    const carregar = async () => {
-      try {
-        const [resAbrigos, resSolicitacoes] = await Promise.all([
-          fetch(`${API_URL}/api/abrigos/listar`),
-          fetch(`${API_URL}/api/solicitacoes-ajuda/publico`),
-        ])
-        if (!resAbrigos.ok) throw new Error('Erro ao buscar abrigos')
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const carregar = useCallback(async () => {
+    setCarregando(true)
+    setErro(null)
+    try {
+      const [resAbrigos, resSolicitacoes] = await Promise.all([
+        fetch(`${API_URL}/api/abrigos/listar`),
+        fetch(`${API_URL}/api/solicitacoes-ajuda/publico`),
+      ])
+      if (!resAbrigos.ok) throw new Error('Erro ao buscar abrigos')
 
-        const dadosAbrigos = await resAbrigos.json()
-        setAbrigos(dadosAbrigos.abrigos ?? [])
+      const dadosAbrigos = await resAbrigos.json()
+      setAbrigos(dadosAbrigos.abrigos ?? [])
 
-        // Quantas solicitações de ajuda abertas cada abrigo tem
-        if (resSolicitacoes.ok) {
-          const { solicitacoes = [] } = await resSolicitacoes.json()
-          const contagem = {}
-          for (const s of solicitacoes) {
-            if (s.status === 'aberto') contagem[s.abrigoId] = (contagem[s.abrigoId] ?? 0) + 1
-          }
-          setPedidosAbertos(contagem)
+      // Quantas solicitações de ajuda abertas cada abrigo tem
+      if (resSolicitacoes.ok) {
+        const { solicitacoes = [] } = await resSolicitacoes.json()
+        const contagem = {}
+        for (const s of solicitacoes) {
+          if (s.status === 'aberto') contagem[s.abrigoId] = (contagem[s.abrigoId] ?? 0) + 1
         }
-      } catch (err) {
-        setErro(err.message)
-      } finally {
-        setCarregando(false)
+        setPedidosAbertos(contagem)
       }
+    } catch (err) {
+      console.error('Erro ao carregar os abrigos:', err)
+      setErro('O servidor não respondeu. Verifique a conexão e tente novamente.')
+    } finally {
+      setCarregando(false)
     }
-    carregar()
   }, [])
+
+  useEffect(() => { carregar() }, [carregar])
 
   // ─── OPÇÕES DOS SELECTS ──────────────────────────────────────
   const cidades = useMemo(() => [...new Set(abrigos.map(a => a.cidade))].sort(), [abrigos])
   const tipos   = useMemo(() => [...new Set(abrigos.map(a => a.tipoAbrigo).filter(Boolean))].sort(), [abrigos])
 
   // ─── FILTRAGEM E ORDENAÇÃO ───────────────────────────────────
-  const abrigosFiltrados = useMemo(() => {
+  // Todos os filtros menos a situação (as abas mostram quantos há em cada situação)
+  const abrigosBase = useMemo(() => {
     const termo = normalizar(filtros.busca.trim())
-
-    const lista = abrigos.filter(a => {
+    return abrigos.filter(a => {
       if (termo && ![a.nome, a.bairro, a.endereco, a.cidade, a.responsavel].some(t => normalizar(t).includes(termo))) return false
       if (filtros.cidade && a.cidade !== filtros.cidade) return false
       if (filtros.tipo && a.tipoAbrigo !== filtros.tipo) return false
       if (filtros.status && a.status !== filtros.status) return false
-      if (!passaSituacao(a, filtros.situacao)) return false
       if (filtros.estruturas.some(campo => !a[campo])) return false
       if (filtros.comPedidos && !pedidosAbertos[a.id]) return false
       if (filtros.emAlerta && !a.statusAlerta) return false
       return true
     })
+  }, [abrigos, filtros, pedidosAbertos])
 
+  const abrigosFiltrados = useMemo(() => {
+    const lista = abrigosBase.filter(a => passaSituacao(a, filtros.situacao))
     const ordenar = {
       nome:    (x, y) => x.nome.localeCompare(y.nome),
       vagas:   (x, y) => vagasDe(y) - vagasDe(x),
       cheios:  (x, y) => ocupacaoDe(y) - ocupacaoDe(x),
       pedidos: (x, y) => (pedidosAbertos[y.id] ?? 0) - (pedidosAbertos[x.id] ?? 0),
     }[filtros.ordem]
-
     return lista.sort(ordenar)
-  }, [abrigos, filtros, pedidosAbertos])
+  }, [abrigosBase, filtros.situacao, filtros.ordem, pedidosAbertos])
 
   const filtrosAtivos =
     Boolean(filtros.busca || filtros.cidade || filtros.tipo || filtros.status || filtros.comPedidos || filtros.emAlerta) ||
     filtros.situacao !== 'todas' || filtros.estruturas.length > 0
 
-  // Números do topo da lista (sobre todos os abrigos, sem filtro)
+  // Quantos filtros estão ligados dentro de "Mais filtros" (no celular, a cidade também fica lá)
+  const filtrosExtras =
+    [filtros.tipo, filtros.status, filtros.comPedidos, filtros.emAlerta, celular && filtros.cidade].filter(Boolean).length +
+    filtros.estruturas.length
+
+  // Filtros ligados, como etiquetas que removem o filtro ao clicar
+  const etiquetasAtivas = [
+    filtros.busca      && { id: 'busca',  label: `“${filtros.busca}”`, remover: () => mudarFiltro('busca', '') },
+    filtros.cidade     && { id: 'cidade', label: filtros.cidade, remover: () => mudarFiltro('cidade', '') },
+    filtros.tipo       && { id: 'tipo',   label: tipoDe(filtros.tipo).label, remover: () => mudarFiltro('tipo', '') },
+    filtros.status     && { id: 'status', label: STATUS_ABRIGO[filtros.status]?.label ?? filtros.status, remover: () => mudarFiltro('status', '') },
+    filtros.emAlerta   && { id: 'alerta', label: 'Em alerta', remover: () => mudarFiltro('emAlerta', false) },
+    filtros.comPedidos && { id: 'pedidos', label: 'Com pedidos de ajuda', remover: () => mudarFiltro('comPedidos', false) },
+    ...ESTRUTURAS.filter(e => filtros.estruturas.includes(e.campo))
+      .map(e => ({ id: e.campo, label: e.label, remover: () => alternarEstrutura(e.campo) })),
+  ].filter(Boolean)
+
+  // ─── RESUMO (sobre todos os abrigos, sem filtro) ─────────────
+  const ativos       = abrigos.filter(a => a.status === 'ativo')
+  const totalVagas   = ativos.reduce((soma, a) => soma + vagasDe(a), 0)
   const totalPessoas = abrigos.reduce((soma, a) => soma + a.capacidadeOcupada, 0)
-  const totalVagas   = abrigos.filter(a => a.status === 'ativo').reduce((soma, a) => soma + vagasDe(a), 0)
+  const capacidade   = abrigos.reduce((soma, a) => soma + a.capacidadeTotal, 0)
+  const lotados      = abrigos.filter(a => passaSituacao(a, 'lotados')).length
+  const quaseLotados = abrigos.filter(a => passaSituacao(a, 'quase')).length
+  const emAlerta     = abrigos.filter(a => a.statusAlerta).length
+  const totalPedidos = Object.values(pedidosAbertos).reduce((soma, n) => soma + n, 0)
+
+  // Clicar num card aplica (ou tira) o filtro correspondente
+  const resumo = [
+    {
+      id: 'vagas', icone: <LuBedDouble />, anim: 'pulo', tom: 'azul', valor: totalVagas, label: 'Vagas livres',
+      detalhe: `em ${plural(ativos.length, 'abrigo ativo', 'abrigos ativos')}`,
+      ativo: filtros.situacao === 'vagas', aoClicar: () => alternarFiltro('situacao', 'vagas'),
+    },
+    {
+      id: 'pessoas', icone: <LuUsers />, anim: 'pulo', tom: 'ciano', valor: totalPessoas, label: 'Pessoas acolhidas',
+      detalhe: `${capacidade > 0 ? Math.round((totalPessoas / capacidade) * 100) : 0}% da capacidade total`,
+      ativo: filtros.ordem === 'cheios', aoClicar: () => alternarFiltro('ordem', 'cheios'),
+    },
+    {
+      id: 'lotados', icone: <LuHouse />, anim: 'pulso', tom: lotados > 0 ? 'sirene' : 'petroleo', valor: lotados, label: 'Lotados',
+      detalhe: `+ ${plural(quaseLotados, 'quase lotado', 'quase lotados')}`, urgente: lotados > 0,
+      ativo: filtros.situacao === 'lotados', aoClicar: () => alternarFiltro('situacao', 'lotados'),
+    },
+    {
+      id: 'alerta', icone: <LuSiren />, anim: 'sirene', tom: emAlerta > 0 ? 'sirene' : 'petroleo', valor: emAlerta, label: 'Em alerta',
+      detalhe: plural(totalPedidos, 'pedido de ajuda aberto', 'pedidos de ajuda abertos'), urgente: emAlerta > 0,
+      ativo: filtros.emAlerta, aoClicar: () => mudarFiltro('emAlerta', !filtros.emAlerta),
+    },
+  ]
+
+  const indiceAba = Math.max(0, SITUACOES.findIndex(s => s.valor === filtros.situacao))
+  const contagemTexto = `${abrigosFiltrados.length === 1 ? 'abrigo encontrado' : 'abrigos encontrados'}`
+
+  // ─── PEÇAS REPETIDAS (painel e gaveta) ───────────────────────
+  const selectTipo = (id) => (
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.tipo} onChange={e => mudarFiltro('tipo', e.target.value)}>
+      <option value="">Todos os tipos</option>
+      {tipos.map(t => <option key={t} value={t}>{tipoDe(t).label}</option>)}
+    </select>
+  )
+  const selectStatus = (id) => (
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.status} onChange={e => mudarFiltro('status', e.target.value)}>
+      <option value="">Todos os status</option>
+      {Object.entries(STATUS_ABRIGO).map(([valor, s]) => <option key={valor} value={valor}>{s.label}</option>)}
+    </select>
+  )
+  const selectCidade = (id) => (
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.cidade} onChange={e => mudarFiltro('cidade', e.target.value)}>
+      <option value="">Todas as cidades</option>
+      {cidades.map(c => <option key={c} value={c}>{c}</option>)}
+    </select>
+  )
+  const selectOrdem = (id) => (
+    <select id={id} className="sv-entrada sv-filtro-select" value={filtros.ordem} onChange={e => mudarFiltro('ordem', e.target.value)}>
+      {ORDENACOES.map(o => <option key={o.valor} value={o.valor}>Ordenar: {o.label}</option>)}
+    </select>
+  )
+  const chipsSituacao = (
+    <div className="sv-filtro-grupo" role="group" aria-label="Alerta e pedidos">
+      <button type="button" className={`sv-chip${filtros.emAlerta ? ' sv-chip--ativo' : ''}`} aria-pressed={filtros.emAlerta}
+        onClick={() => mudarFiltro('emAlerta', !filtros.emAlerta)}>
+        <LuTriangleAlert /> Em alerta
+      </button>
+      <button type="button" className={`sv-chip${filtros.comPedidos ? ' sv-chip--ativo' : ''}`} aria-pressed={filtros.comPedidos}
+        onClick={() => mudarFiltro('comPedidos', !filtros.comPedidos)}>
+        <LuHandHeart /> Com pedidos de ajuda
+      </button>
+    </div>
+  )
+  const chipsEstrutura = (
+    <div className="sv-filtro-grupo" role="group" aria-label="Estrutura">
+      <span className="sv-filtro-grupo-rotulo" aria-hidden="true">Estrutura</span>
+      {ESTRUTURAS.map(e => (
+        <button key={e.campo} type="button" className={`sv-chip${filtros.estruturas.includes(e.campo) ? ' sv-chip--ativo' : ''}`}
+          aria-pressed={filtros.estruturas.includes(e.campo)} onClick={() => alternarEstrutura(e.campo)}>
+          {e.icone} {e.label}
+        </button>
+      ))}
+    </div>
+  )
+
+  const cabecalho = (
+    <header className="sv-topo">
+      <div className="sv-topo-texto">
+        <p className="sv-trilha"><a href="/pg_adm">Visão geral</a> &gt; <span>Abrigos</span></p>
+        <h1 className="sv-titulo">Abrigos</h1>
+        <p className="sv-subtitulo">
+          {carregando || erro
+            ? 'Abrigos da rede, ocupação e o que cada um precisa'
+            : `${plural(abrigos.length, 'abrigo cadastrado', 'abrigos cadastrados')} · ocupação e o que cada um precisa`}
+        </p>
+      </div>
+      <div className="sv-topo-acoes">
+        <button type="button" className="sv-btn sv-btn--vidro sv-anima" onClick={() => navigate('/listar-solicitação-abrigo')}>
+          <span data-anim="pulo"><LuClipboardList /></span> Solicitações de abrigo
+        </button>
+        <button type="button" className="sv-btn sv-btn--primario sv-anima" onClick={() => navigate('/cadastrar-abrigos')}>
+          <span data-anim="giro"><LuPlus /></span> Novo abrigo
+        </button>
+      </div>
+    </header>
+  )
 
   // ─── TELA DE CARREGANDO / ERRO ───────────────────────────────
   if (carregando || erro) {
@@ -124,10 +287,16 @@ const ListarAbrigos = () => {
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass ativo="abrigos" />
-        <main className="sv-main pagina-listagem">
-          <p className={erro ? 'lg-estado lg-estado--erro' : 'lg-estado'}>
-            {erro ? `Não foi possível carregar os abrigos: ${erro}` : 'Carregando abrigos...'}
-          </p>
+        <main className="sv-main">
+          {cabecalho}
+          {carregando ? (
+            <div className="sv-esq-pilha">
+              <Esqueleto forma="lista" resumo={4} linhas={1} />
+              <Esqueleto forma="cards" linhas={6} />
+            </div>
+          ) : (
+            <ErroPagina titulo="Não foi possível carregar os abrigos" mensagem={erro} onTentar={carregar} />
+          )}
         </main>
       </div>
     )
@@ -138,178 +307,224 @@ const ListarAbrigos = () => {
       <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
       <SidebarGlass ativo="abrigos" />
 
-      <main className="sv-main pagina-listagem">
+      <main className="sv-main">
 
-        {/* ── CABEÇALHO ── */}
-        <header className="lg-topo-linha">
-          <div>
-            <p className="sv-trilha">Abrigos &gt;</p>
-            <h1 className="sv-titulo">Hub de Abrigos</h1>
-            <p className="sv-subtitulo">
-              {plural(abrigos.length, 'abrigo cadastrado', 'abrigos cadastrados')} · {plural(totalPessoas, 'pessoa acolhida', 'pessoas acolhidas')} · {plural(totalVagas, 'vaga livre', 'vagas livres')}
-            </p>
-          </div>
-          <div className="lg-topo-acoes">
-            <button className="lg-botao-secundario" onClick={() => navigate('/listar-solicitação-abrigo')}>
-              <LuClipboardList /> Solicitações de abrigo
+        {cabecalho}
+
+        {/* ── RESUMO DA REDE ── */}
+        <section className="sv-resumo" aria-label="Resumo da rede">
+          {resumo.map(card => (
+            <button
+              key={card.id}
+              type="button"
+              className={`sv-resumo-card sv-anima${card.urgente ? ' sv-resumo-card--urgente' : ''}${card.ativo ? ' sv-resumo-card--ativo' : ''}`}
+              aria-pressed={card.ativo}
+              onClick={card.aoClicar}
+            >
+              <span className={`sv-poco sv-poco--${card.tom}${card.urgente ? ' sv-poco--aceso' : ''}`}>
+                <span data-anim={card.anim}>{card.icone}</span>
+              </span>
+              <span className="sv-resumo-valor">{card.valor}</span>
+              <span className="sv-resumo-rotulo">{card.label}</span>
+              <span className="sv-resumo-detalhe">{card.detalhe}</span>
             </button>
-            <button className="lg-botao-primario" onClick={() => navigate('/cadastrar-abrigos')}>
-              <LuPlus /> Novo abrigo
-            </button>
-          </div>
-        </header>
+          ))}
+        </section>
 
         {/* ── FILTROS ── */}
-        <section className="lg-filtros">
-          <div className="lg-filtros-linha">
-            <div className="lg-busca">
-              <LuSearch className="lg-busca-icone" />
+        <section className="sv-vidro sv-painel sv-filtro-painel" aria-label="Filtros">
+          <div className="sv-filtro-linha">
+            <label htmlFor="busca-abrigo" className="sv-oculto">Buscar abrigo</label>
+            <span className="sv-campo-icone sv-filtro-busca">
+              <LuSearch />
               <input
+                id="busca-abrigo"
+                type="search"
+                className="sv-entrada"
                 placeholder="Buscar nome, bairro, responsável..."
+                maxLength={LIMITES.busca}
                 value={filtros.busca}
                 onChange={e => mudarFiltro('busca', e.target.value)}
               />
-            </div>
-
-            <select value={filtros.cidade} onChange={e => mudarFiltro('cidade', e.target.value)} aria-label="Cidade">
-              <option value="">Todas as cidades</option>
-              {cidades.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-
-            <select value={filtros.tipo} onChange={e => mudarFiltro('tipo', e.target.value)} aria-label="Tipo de abrigo">
-              <option value="">Todos os tipos</option>
-              {tipos.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-
-            <select value={filtros.status} onChange={e => mudarFiltro('status', e.target.value)} aria-label="Status do abrigo">
-              <option value="">Todos os status</option>
-              {Object.entries(STATUS_ABRIGO).map(([valor, s]) => <option key={valor} value={valor}>{s.label}</option>)}
-            </select>
-
-            <select value={filtros.ordem} onChange={e => mudarFiltro('ordem', e.target.value)} aria-label="Ordenar por">
-              {ORDENACOES.map(o => <option key={o.valor} value={o.valor}>Ordenar: {o.label}</option>)}
-            </select>
+            </span>
+            <label htmlFor="filtro-cidade" className="sv-oculto">Cidade</label>
+            {selectCidade('filtro-cidade')}
+            <label htmlFor="filtro-ordem" className="sv-oculto">Ordenar por</label>
+            {selectOrdem('filtro-ordem')}
+            {/* No celular, o botão de filtros fica ao lado da busca */}
+            <button type="button" className="sv-btn sv-btn--vidro sv-so-celular" aria-haspopup="dialog" onClick={() => setMaisAberto(true)}>
+              <LuSlidersHorizontal /> Filtros
+              {filtrosExtras > 0 && <span className="sv-btn-num">{filtrosExtras}</span>}
+            </button>
           </div>
 
-          <div className="lg-filtros-linha">
-            <span className="lg-filtro-rotulo">Situação</span>
-            <div className="lg-chips" role="group" aria-label="Situação">
+          <div className="sv-filtro-linha sv-filtro-linha--abas">
+            <div className="sv-abas" role="tablist" aria-label="Situação" style={{ '--aba': indiceAba, '--abas': SITUACOES.length }}>
+              <span className="sv-abas-marcador" aria-hidden="true" />
               {SITUACOES.map(s => (
                 <button
                   key={s.valor}
-                  className={`lg-chip${filtros.situacao === s.valor ? ' lg-chip--ativo' : ''}`}
+                  type="button"
+                  role="tab"
+                  className="sv-aba"
+                  aria-selected={filtros.situacao === s.valor}
                   onClick={() => mudarFiltro('situacao', s.valor)}
                 >
-                  {s.label}
+                  <span className="sv-rotulo-longo">{s.label}</span>
+                  <span className="sv-rotulo-curto">{SITUACAO_CURTA[s.valor]}</span>
+                  <span className="sv-aba-num">{abrigosBase.filter(a => passaSituacao(a, s.valor)).length}</span>
                 </button>
               ))}
-              <button
-                className={`lg-chip${filtros.emAlerta ? ' lg-chip--ativo' : ''}`}
-                onClick={() => mudarFiltro('emAlerta', !filtros.emAlerta)}
-              >
-                <LuTriangleAlert /> Em alerta
-              </button>
-              <button
-                className={`lg-chip${filtros.comPedidos ? ' lg-chip--ativo' : ''}`}
-                onClick={() => mudarFiltro('comPedidos', !filtros.comPedidos)}
-              >
-                <LuHandHeart /> Com pedidos de ajuda
-              </button>
             </div>
+            <button
+              type="button"
+              className="sv-btn sv-btn--vidro sv-so-desktop"
+              aria-expanded={maisAberto && !celular}
+              aria-controls="mais-filtros"
+              onClick={() => setMaisAberto(a => !a)}
+            >
+              <LuSlidersHorizontal /> Mais filtros
+              {filtrosExtras > 0 && <span className="sv-btn-num">{filtrosExtras}</span>}
+            </button>
           </div>
 
-          <div className="lg-filtros-linha">
-            <span className="lg-filtro-rotulo">Estrutura</span>
-            <div className="lg-chips" role="group" aria-label="Estrutura">
-              {ESTRUTURAS.map(e => (
-                <button
-                  key={e.campo}
-                  className={`lg-chip${filtros.estruturas.includes(e.campo) ? ' lg-chip--ativo' : ''}`}
-                  onClick={() => alternarEstrutura(e.campo)}
-                >
-                  {e.icone} {e.label}
-                </button>
-              ))}
+          {/* Mais filtros: no desktop abre aqui mesmo, no celular abre a gaveta */}
+          {maisAberto && !celular && (
+            <div id="mais-filtros" className="sv-filtro-mais">
+              <div className="sv-filtro-linha">
+                <label htmlFor="filtro-tipo" className="sv-oculto">Tipo de abrigo</label>
+                {selectTipo('filtro-tipo')}
+                <label htmlFor="filtro-status" className="sv-oculto">Status do abrigo</label>
+                {selectStatus('filtro-status')}
+                {chipsSituacao}
+              </div>
+              {chipsEstrutura}
             </div>
+          )}
+
+          <div className="sv-filtro-ativos">
+            {etiquetasAtivas.length > 0 && <span className="sv-contagem">Filtros:</span>}
+            {etiquetasAtivas.map(e => (
+              <button key={e.id} type="button" className="sv-chip sv-chip--removivel" onClick={e.remover} aria-label={`Remover filtro ${e.label}`}>
+                {e.label} <LuX aria-hidden="true" />
+              </button>
+            ))}
+            {filtrosAtivos && (
+              <button type="button" className="sv-link" onClick={() => setFiltros(FILTROS_INICIAIS)}>
+                Limpar filtros
+              </button>
+            )}
+            <span className="sv-contagem"><strong>{abrigosFiltrados.length}</strong> {contagemTexto}</span>
           </div>
         </section>
 
-        <div className="lg-resultado">
-          <span>
-            <strong>{abrigosFiltrados.length}</strong> abrigo{abrigosFiltrados.length !== 1 ? 's' : ''} encontrado{abrigosFiltrados.length !== 1 ? 's' : ''}
-          </span>
-          {filtrosAtivos && (
-            <button className="lg-limpar" onClick={() => setFiltros(FILTROS_INICIAIS)}>
-              <LuX /> Limpar filtros
-            </button>
-          )}
-        </div>
-
         {/* ── LISTA DE ABRIGOS ── */}
         {abrigosFiltrados.length === 0 ? (
-          <p className="lg-vazio">
-            {abrigos.length === 0 ? 'Nenhum abrigo cadastrado ainda.' : 'Nenhum abrigo encontrado com esses filtros.'}
-          </p>
+          <Vazio
+            icone={<LuHouse />}
+            titulo={abrigos.length === 0 ? 'Nenhum abrigo cadastrado ainda.' : 'Nenhum abrigo encontrado com esses filtros.'}
+            dica={abrigos.length === 0
+              ? 'Os abrigos da rede aparecem aqui, com a ocupação e o que cada um precisa.'
+              : 'Tente outra busca ou limpe os filtros para ver todos os abrigos.'}
+            acao={abrigos.length === 0 ? (
+              <button type="button" className="sv-btn sv-btn--primario" onClick={() => navigate('/cadastrar-abrigos')}>
+                <LuPlus /> Cadastrar abrigo
+              </button>
+            ) : (
+              <button type="button" className="sv-btn sv-btn--vidro" onClick={() => setFiltros(FILTROS_INICIAIS)}>
+                <LuX /> Limpar filtros
+              </button>
+            )}
+          />
         ) : (
-          <section className="lg-grade">
-            {abrigosFiltrados.map(abrigo => {
+          <section className="ha-grade" aria-label="Abrigos">
+            {abrigosFiltrados.map((abrigo, i) => {
               const pct = ocupacaoDe(abrigo)
               const vagas = vagasDe(abrigo)
               const pedidos = pedidosAbertos[abrigo.id] ?? 0
               const estruturas = ESTRUTURAS.filter(e => abrigo[e.campo])
-              const status = STATUS_ABRIGO[abrigo.status] ?? { label: abrigo.status, classe: 'lg-selo--cinza' }
+              const status = STATUS_ABRIGO[abrigo.status] ?? { label: abrigo.status, classe: 'sv-tag--neutro' }
 
               return (
-                <article key={abrigo.id} className="lg-card">
-                  <div className="lg-card-topo">
-                    <span className="lg-tipo">{abrigo.tipoAbrigo}</span>
-                    <div className="lg-selos">
-                      {abrigo.statusAlerta && <span className="lg-selo lg-selo--vermelho"><LuTriangleAlert /> Em alerta</span>}
-                      <span className={`lg-selo ${status.classe}`}>{status.label}</span>
+                <article
+                  key={abrigo.id}
+                  className={`ha-card${abrigo.status === 'desativado' ? ' ha-card--apagado' : ''}`}
+                  style={{ animationDelay: `${Math.min(i, 12) * 50}ms` }}
+                >
+                  {abrigo.statusAlerta && (
+                    <div className="ha-card-alerta"><LuSiren aria-hidden="true" /> Em alerta no bairro</div>
+                  )}
+
+                  <div className="ha-card-topo">
+                    <Miniatura abrigo={abrigo} />
+                    <div className="ha-card-cabeca">
+                      <div className="ha-card-linha">
+                        <span className="ha-tipo">{tipoDe(abrigo.tipoAbrigo).label}</span>
+                        <span className="sv-etiquetas">
+                          {pct >= 100 && <span className="sv-tag sv-tag--lisa sv-tag--sirene">Lotado</span>}
+                          {pct >= 80 && pct < 100 && <span className="sv-tag sv-tag--lisa sv-tag--atencao">Quase lotado</span>}
+                          <span className={`sv-tag sv-tag--lisa ${status.classe}`}>{status.label}</span>
+                        </span>
+                      </div>
+                      <h2 className="ha-card-nome">{abrigo.nome}</h2>
                     </div>
                   </div>
 
-                  <h3 className="lg-card-nome" title={abrigo.nome}>{abrigo.nome}</h3>
-                  <p className="lg-card-local">
-                    <LuMapPin /> {abrigo.bairro ? `${abrigo.bairro}, ` : ''}{abrigo.cidade}/{abrigo.estado}
-                  </p>
-                  <p className="lg-card-endereco" title={abrigo.endereco}>{abrigo.endereco}</p>
-
-                  <div className="lg-ocupacao">
-                    <div className="lg-ocupacao-texto">
-                      <span>{vagas > 0 ? `${vagas} vaga${vagas !== 1 ? 's' : ''} livre${vagas !== 1 ? 's' : ''}` : 'Sem vagas'}</span>
-                      <strong style={{ color: corOcupacao(pct) }}>{abrigo.capacidadeOcupada}/{abrigo.capacidadeTotal} · {pct}%</strong>
-                    </div>
-                    <div className="lg-barra"><div style={{ width: `${pct}%`, background: corOcupacao(pct) }} /></div>
+                  <div className="ha-local">
+                    <p><LuMapPin aria-hidden="true" /> {abrigo.bairro ? `${abrigo.bairro}, ` : ''}{abrigo.cidade}/{abrigo.estado}</p>
+                    <p className="ha-endereco">{abrigo.endereco}</p>
                   </div>
 
-                  <div className="lg-card-infos">
-                    <div className="lg-estruturas">
-                      {estruturas.length === 0
-                        ? <span className="lg-sem-estrutura">Sem estrutura informada</span>
-                        : estruturas.map(e => <span key={e.campo} title={e.label}>{e.icone}</span>)}
+                  {/* Ocupação em destaque */}
+                  <div className="ha-ocupacao">
+                    <div className="ha-ocupacao-linha">
+                      {vagas > 0
+                        ? <span className="ha-vagas"><strong>{vagas}</strong> {vagas !== 1 ? 'vagas livres' : 'vaga livre'}</span>
+                        : <span className="ha-sem-vagas">Sem vagas</span>}
+                      <span className="ha-ocupacao-num" style={{ color: corOcupacao(pct) }}>
+                        {abrigo.capacidadeOcupada}/{abrigo.capacidadeTotal} · {pct}%
+                      </span>
                     </div>
+                    <div className="sv-barra" role="img" aria-label={`Ocupação de ${pct}%`}>
+                      <span style={{ width: `${pct}%`, background: corOcupacao(pct) }} />
+                    </div>
+                  </div>
+
+                  {/* Estrutura e pedidos de ajuda */}
+                  <div className="ha-card-extras">
+                    {estruturas.length === 0
+                      ? <span className="ha-sem-estrutura">Sem estrutura informada</span>
+                      : (
+                        <span className="ha-selos">
+                          {estruturas.map(e => (
+                            <span key={e.campo} className="ha-selo" title={e.label} role="img" aria-label={e.label}>{e.icone}</span>
+                          ))}
+                        </span>
+                      )}
                     {pedidos > 0 && (
                       <button
-                        className="lg-pedidos"
+                        type="button"
+                        className="ha-pedidos"
                         title="Ver as solicitações de ajuda deste abrigo"
                         onClick={() => navigate(`/abrigos/${abrigo.id}/solicitacoes-ajuda`)}
                       >
-                        <LuHandHeart /> {pedidos} pedido{pedidos !== 1 ? 's' : ''}
+                        <LuHandHeart aria-hidden="true" /> {plural(pedidos, 'pedido', 'pedidos')} <LuChevronRight aria-hidden="true" />
                       </button>
                     )}
                   </div>
 
-                  <p className="lg-card-telefone">
-                    <LuUser /> {abrigo.responsavel || 'Responsável não informado'}
-                    {abrigo.telefone && <> · <LuPhone /> {abrigo.telefone}</>}
+                  <div className="ha-divisor" />
+
+                  <p className="ha-contato">
+                    <LuUser aria-hidden="true" /> {abrigo.responsavel || 'Responsável não informado'}
+                    {abrigo.telefone && <><span aria-hidden="true">·</span><LuPhone aria-hidden="true" /> {abrigo.telefone}</>}
                   </p>
 
-                  <div className="lg-card-acoes">
-                    <button className="lg-botao-secundario" onClick={() => navigate(`/abrigos/${abrigo.id}/vitimas`)}>
+                  <div className="ha-acoes">
+                    <button type="button" className="sv-btn sv-btn--vidro" onClick={() => navigate(`/abrigos/${abrigo.id}/vitimas`)}>
                       <LuUsers /> Vítimas
                     </button>
-                    <button className="lg-botao-card" onClick={() => navigate(`/detalhes-abrigos/${abrigo.id}`)}>
+                    <button type="button" className="sv-btn sv-btn--primario" onClick={() => navigate(`/detalhes-abrigos/${abrigo.id}`)}>
                       Ver detalhes
                     </button>
                   </div>
@@ -324,6 +539,43 @@ const ListarAbrigos = () => {
           <p>Versão 1.0.0</p>
         </footer>
       </main>
+
+      {/* ── GAVETA DE FILTROS (celular) ── */}
+      {maisAberto && celular && (
+        <>
+          <div className="sv-gaveta-fundo" onClick={() => setMaisAberto(false)} aria-hidden="true" />
+          <div
+            className="sv-gaveta sv-gaveta--baixo"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="gaveta-filtros-titulo"
+            onKeyDown={e => { if (e.key === 'Escape') setMaisAberto(false) }}
+          >
+            <div className="sv-gaveta-topo">
+              <h2 id="gaveta-filtros-titulo" className="sv-painel-titulo">Filtros</h2>
+              <button type="button" className="sv-btn sv-btn--quadrado sv-btn--vidro" aria-label="Fechar filtros" autoFocus onClick={() => setMaisAberto(false)}>
+                <LuX />
+              </button>
+            </div>
+            <div className="sv-gaveta-corpo">
+              <div className="sv-gaveta-campos">
+                <label htmlFor="gaveta-cidade">Cidade{selectCidade('gaveta-cidade')}</label>
+                <label htmlFor="gaveta-ordem">Ordenar por{selectOrdem('gaveta-ordem')}</label>
+                <label htmlFor="gaveta-tipo">Tipo{selectTipo('gaveta-tipo')}</label>
+                <label htmlFor="gaveta-status">Status{selectStatus('gaveta-status')}</label>
+              </div>
+              {chipsSituacao}
+              {chipsEstrutura}
+            </div>
+            <div className="sv-gaveta-rodape">
+              <button type="button" className="sv-btn sv-btn--discreto" onClick={() => setFiltros(FILTROS_INICIAIS)}>Limpar</button>
+              <button type="button" className="sv-btn sv-btn--primario" onClick={() => setMaisAberto(false)}>
+                Ver {plural(abrigosFiltrados.length, 'abrigo', 'abrigos')}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -2,13 +2,15 @@
 // O voluntário encontra um abrigo (busca, filtros e ordenação) e se vincula
 // a ele para ajudar. Só aparecem abrigos ativos.
 import '../../../styles/listagem.css'
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuCheck, LuHandHeart, LuHouse, LuMapPin, LuPhone, LuSearch, LuX } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { LIMITES } from '../../../utils/campos';
 import { API_URL } from '../../../services/api';
 import { alterarVinculoAbrigo } from '../../../services/voluntario';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
 import {
   ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar
 } from '../../../utils/listagem';
@@ -46,13 +48,10 @@ function AbrigosVoluntario() {
   }))
 
   // ─── BUSCA DE DADOS ──────────────────────────────────────────
-  useEffect(() => {
-    if (!token) {
-      navigate('/login-voluntario')
-      return
-    }
-
-    const carregar = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const carregar = useCallback(async () => {
+      setCarregando(true)
+      setErro(null)
       try {
         const [resAbrigos, resSolicitacoes, resVoluntario] = await Promise.all([
           fetch(`${API_URL}/api/abrigos/listar?status=ativo`),
@@ -88,9 +87,15 @@ function AbrigosVoluntario() {
       } finally {
         setCarregando(false)
       }
+  }, [navigate, token])
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login-voluntario')
+      return
     }
     carregar()
-  }, [navigate, token])
+  }, [navigate, token, carregar])
 
   // ─── VINCULAR / DESVINCULAR ──────────────────────────────────
   async function alterarVinculo(abrigoId) {
@@ -148,9 +153,18 @@ function AbrigosVoluntario() {
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass modulo="voluntario" ativo="abrigos" />
         <main className="sv-main pagina-listagem">
-          <p className={erro ? 'lg-estado lg-estado--erro' : 'lg-estado'}>
-            {erro ? `Não foi possível carregar os abrigos: ${erro}` : 'Carregando abrigos...'}
-          </p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <h1 className="sv-titulo">Abrigos</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="cards" linhas={6} />
+            : <ErroPagina
+                titulo="Não foi possível carregar os abrigos"
+                mensagem={`${erro}. Verifique a conexão e tente novamente.`}
+                onTentar={carregar}
+              />}
         </main>
       </div>
     )
@@ -211,6 +225,8 @@ function AbrigosVoluntario() {
               <LuSearch className="lg-busca-icone" />
               <input
                 placeholder="Buscar por nome, bairro ou endereço..."
+                aria-label="Buscar"
+                maxLength={LIMITES.busca}
                 value={filtros.busca}
                 onChange={e => mudarFiltro('busca', e.target.value)}
               />
@@ -281,9 +297,18 @@ function AbrigosVoluntario() {
 
         {/* ── LISTA DE ABRIGOS ── */}
         {abrigosFiltrados.length === 0 ? (
-          <p className="lg-vazio">
-            {abrigos.length === 0 ? 'Nenhum abrigo ativo cadastrado.' : 'Nenhum abrigo encontrado com esses filtros.'}
-          </p>
+          <Vazio
+            icone={<LuHouse />}
+            titulo={abrigos.length === 0 ? 'Nenhum abrigo ativo cadastrado.' : 'Nenhum abrigo encontrado com esses filtros.'}
+            dica={abrigos.length === 0
+              ? 'Os abrigos ativos da rede aparecem aqui para você escolher onde ajudar.'
+              : 'Tente outra busca ou limpe os filtros para ver todos os abrigos.'}
+            acao={filtrosAtivos && (
+              <button className="sv-btn sv-btn--vidro" onClick={() => setFiltros(FILTROS_INICIAIS)}>
+                <LuX /> Limpar filtros
+              </button>
+            )}
+          />
         ) : (
           <section className="lg-grade">
             {abrigosFiltrados.map(abrigo => {

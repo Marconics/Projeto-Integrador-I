@@ -8,9 +8,9 @@ import {
 import SidebarGlass from '../../components/SidebarGlass/SidebarGlass';
 import '../../styles/sosvale-glass.css';
 import './style.css';
-
-// Endereço base da API (antes ficava repetido em cada fetch)
-const API = 'http://localhost:3000/api';
+// fetchAdmin: URL da API (VITE_API_URL) + token do admin. As três rotas
+// abaixo exigem login de administrador; sem o token a API responde 401.
+import { fetchAdmin } from '../../services/api';
 
 // Categorias das solicitações de ajuda (mesmos valores do enum do banco)
 const categoriasAjuda = {
@@ -52,22 +52,16 @@ const ehUrgente = (s) => s.urgencia === 'critica' || s.urgencia === 'alta'
 
 // Se esta falhar, o painel mostra a tela de erro
 async function buscarSolicitacoes() {
-  const resposta = await fetch(`${API}/solicitacoes/listar`)
+  const resposta = await fetchAdmin('/solicitacoes/listar')
   if (!resposta.ok) throw new Error('Erro ao buscar solicitações')
   const dados = await resposta.json()
   return dados.solicitacoes ?? []
 }
 
-// Alertas exigem login de admin. Sem token ou com erro devolve null,
-// e o card mostra "—" em vez de derrubar o painel inteiro
+// Se der erro devolve null, e o card mostra "—" em vez de derrubar o painel inteiro
 async function buscarAlertas() {
-  let token = null
-  try { token = localStorage.getItem('token_adm') } catch { /* navegador bloqueou o storage */ }
-  if (!token) return null
   try {
-    const resposta = await fetch(`${API}/alertas/listar`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const resposta = await fetchAdmin('/alertas/listar')
     if (!resposta.ok) return null
     const dados = await resposta.json()
     return dados.alertas ?? []
@@ -79,7 +73,7 @@ async function buscarAlertas() {
 
 async function buscarAjuda() {
   try {
-    const resposta = await fetch(`${API}/solicitacoes-ajuda/listar`)
+    const resposta = await fetchAdmin('/solicitacoes-ajuda/listar')
     if (!resposta.ok) return []
     const dados = await resposta.json()
     return dados.solicitacoes ?? []
@@ -127,19 +121,39 @@ const PgAdmGlass = () => {
 
   useEffect(() => { carregarDados() }, [carregarDados])
 
+  // ─── FILTROS DO TOPO (Município e Período) ────────────────────────
+  // Valem para o destaque, os cards, as atividades e o gráfico.
+  // O sino do topo continua avisando TODAS as pendentes, sem filtro.
+  const cidadeFiltro = municipio === 'Todos os Municípios' ? null : municipio
+  const diasPeriodo = { 'Últimos 30 dias': 30, 'Últimos 7 dias': 7, 'Hoje': 0 }[periodo] ?? 30
+  const inicioPeriodo = new Date()
+  inicioPeriodo.setHours(0, 0, 0, 0)
+  inicioPeriodo.setDate(inicioPeriodo.getDate() - diasPeriodo)
+
+  const dentroDoFiltro = (cidade, data) =>
+    (!cidadeFiltro || cidade === cidadeFiltro) && new Date(data) >= inicioPeriodo
+
+  const solicitacoesFiltradas = solicitacoes.filter(s => dentroDoFiltro(s.cidade, s.createdAt))
+  const ajudaFiltrada = ajuda.filter(s => dentroDoFiltro(s.abrigo?.cidade, s.createdAt))
+  const alertasFiltrados = alertas ? alertas.filter(a => dentroDoFiltro(a.cidade, a.createdAt)) : null
+
   // ─── DERIVAÇÕES DOS DADOS (estado derivado, calculado a cada render) ─
 
-  const totalSolicitacoesAbrigo = solicitacoes.length
-  const pendentesSolicitacoesAbrigo = solicitacoes.filter(s => s.status === 'pendente').length
+  // Solicitações de abrigo no período (todas as situações) e as ainda pendentes (= "novas")
+  const totalSolicitacoesAbrigo = solicitacoesFiltradas.length
+  const pendentesSolicitacoesAbrigo = solicitacoesFiltradas.filter(s => s.status === 'pendente').length
+
+  // Sino do topo: todas as pendentes, sem filtro
+  const totalPendentesAbrigo = solicitacoes.filter(s => s.status === 'pendente').length
 
   // Solicitações de ajuda ainda não resolvidas (aberto ou em andamento)
-  const ajudaEmAberto = ajuda.filter(s => ['aberto', 'em_andamento'].includes(s.status))
+  const ajudaEmAberto = ajudaFiltrada.filter(s => ['aberto', 'em_andamento'].includes(s.status))
   const ajudaDaCategoria = (categoria) => ajudaEmAberto.filter(s => s.categoria === categoria)
   const criticas = (lista) => lista.filter(ehUrgente).length
   const urgentesAjuda = criticas(ajudaEmAberto)
 
-  const alertasAbertos = alertas ? alertas.filter(a => ['em_verificacao', 'ativo'].includes(a.status)) : []
-  const alertasEmVerificacao = alertas ? alertas.filter(a => a.status === 'em_verificacao').length : 0
+  const alertasAbertos = alertasFiltrados ? alertasFiltrados.filter(a => ['em_verificacao', 'ativo'].includes(a.status)) : []
+  const alertasEmVerificacao = alertasFiltrados ? alertasFiltrados.filter(a => a.status === 'em_verificacao').length : 0
 
   // Destaque da tela: tudo que pede ação agora
   const pendencias = pendentesSolicitacoesAbrigo + urgentesAjuda + alertasEmVerificacao
@@ -160,10 +174,11 @@ const PgAdmGlass = () => {
   const statCards = [
     {
       id: 'abrigo',
-      label: 'Solicitações de abrigo',
-      value: totalSolicitacoesAbrigo,
-      unread: pendentesSolicitacoesAbrigo,
-      unreadLabel: 'pendentes',
+      label: 'Novas solicitações de abrigo',
+      // Só as pendentes (antes contava todas, inclusive aprovadas e recusadas)
+      value: pendentesSolicitacoesAbrigo,
+      unread: totalSolicitacoesAbrigo,
+      unreadLabel: 'no total',
       href: '/listar-solicitação-abrigo',
       icon: <LuClipboardList />, anim: 'pulo', tom: 'azul',
     },
@@ -210,7 +225,7 @@ const PgAdmGlass = () => {
   // Junta abrigo, ajuda e alertas numa lista só, do mais novo pro mais antigo.
   // "tag" mostra o estado de cada item (pendente, crítica, em verificação...)
   const activitiesData = [
-    ...solicitacoes.map(s => ({
+    ...solicitacoesFiltradas.map(s => ({
       id:    `abrigo-${s.id_solicitacao}`,
       title: `Abrigo solicitado: ${s.nome}`,
       place: [s.bairro, s.cidade].filter(Boolean).join(', '),  // bairro é opcional
@@ -221,7 +236,7 @@ const PgAdmGlass = () => {
       href:  `/visualizar-solicitação-abrigo/${s.id_solicitacao}`,
       botao: 'Ver solicitação',
     })),
-    ...ajuda.map(s => ({
+    ...ajudaFiltrada.map(s => ({
       id:    `ajuda-${s.id_solicitacao}`,
       title: `Ajuda: ${s.titulo}`,
       place: [s.abrigo?.nome, s.abrigo?.cidade].filter(Boolean).join(', '),
@@ -234,7 +249,7 @@ const PgAdmGlass = () => {
       href:  `/visualizar-solicitacao-ajuda/${s.id_solicitacao}`,
       botao: 'Ver pedido',
     })),
-    ...(alertas ?? []).map(a => ({
+    ...(alertasFiltrados ?? []).map(a => ({
       id:    `alerta-${a.id_alerta}`,
       title: `Alerta: ${a.tipoLabel}`,
       place: [a.bairro, a.cidade].filter(Boolean).join(', '),
@@ -300,12 +315,12 @@ const PgAdmGlass = () => {
             <a
               href="/listar-solicitação-abrigo"
               className="sv-btn sv-btn--icone sv-anima pga-sino"
-              aria-label={`${pendentesSolicitacoesAbrigo} solicitações de abrigo pendentes`}
+              aria-label={`${totalPendentesAbrigo} solicitações de abrigo pendentes`}
               title="Solicitações de abrigo pendentes"
             >
               <span data-anim="toque"><LuBell /></span>
-              {!carregando && pendentesSolicitacoesAbrigo > 0 && (
-                <span className="pga-sino-badge">{pendentesSolicitacoesAbrigo}</span>
+              {!carregando && totalPendentesAbrigo > 0 && (
+                <span className="pga-sino-badge">{totalPendentesAbrigo}</span>
               )}
             </a>
           </div>

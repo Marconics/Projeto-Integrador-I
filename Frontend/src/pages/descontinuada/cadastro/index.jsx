@@ -1,7 +1,9 @@
 
+// TELA DESCONTINUADA — era só um teste de layout, sem lógica de cadastro.
+// Não tem rota: "/cadastro" redireciona para a tela inicial (ver App.jsx).
 import { LuEye, LuLock, LuMail, LuUser, LuUserPlus, LuUsers } from 'react-icons/lu';
-import logoSosVale from '../../assets/logo-sosvale.png';
-import '../../styles/sosvale-glass.css';
+import logoSosVale from '../../../assets/logo-sosvale.png';
+import '../../../styles/sosvale-glass.css';
 
 const Cadastro = () => {
   return (

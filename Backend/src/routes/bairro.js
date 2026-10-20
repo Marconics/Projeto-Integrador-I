@@ -1,5 +1,8 @@
 import prisma from '../lib/prisma.js'
 import { consultarCep, normalizarTexto, obterOuCriarBairroPorCep } from '../lib/localizacao.js'
+import { LIMITES } from '../lib/validacao.js'
+
+const NOME_LONGO = `O nome do bairro deve ter no máximo ${LIMITES.nomeLocal} caracteres.`
 
 
 const NIVEIS_RISCO = ['baixo', 'medio', 'alto', 'critico']
@@ -164,6 +167,7 @@ export default async function bairroRoutes(app) {
     const { nome, cidadeId, populacaoEstimada, areaKm2, nivelRisco } = request.body ?? {}
 
     if (!nome?.trim()) return reply.status(400).send({ mensagem: 'Informe o nome do bairro.' })
+    if (nome.trim().length > LIMITES.nomeLocal) return reply.status(400).send({ mensagem: NOME_LONGO })
     if (!cidadeId)     return reply.status(400).send({ mensagem: 'Selecione a cidade.' })
 
     const dados = {
@@ -214,6 +218,7 @@ export default async function bairroRoutes(app) {
     }
 
     if (dados.nome === '') return reply.status(400).send({ mensagem: 'Informe o nome do bairro.' })
+    if (dados.nome?.length > LIMITES.nomeLocal) return reply.status(400).send({ mensagem: NOME_LONGO })
 
     const erroCampos = validarCampos(dados)
     if (erroCampos) return reply.status(400).send({ mensagem: erroCampos })
