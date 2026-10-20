@@ -1681,3 +1681,81 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
 @media (max-width: 600px) {
   .sv-form-rodape > .sv-btn { flex: 1 1 100%; }
 }
+
+/* ─── Número pequeno dentro de um botão ("Mais filtros 2") ────────── */
+.sv-btn-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--sv-raio-pilula);
+  background: var(--sv-azul);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sv-btn--vidro:hover .sv-btn-num { background: #fff; color: var(--sv-azul); }
+
+/* ─── Miniatura: foto pequena ou, sem foto, um ícone de reserva ─────
+   <span class="sv-miniatura"><img src="..." alt="" loading="lazy"></span>
+   <span class="sv-miniatura sv-miniatura--reserva"><Icone/></span>   */
+.sv-miniatura {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-m) var(--sv-raio-corte) var(--sv-raio-m);
+  background: var(--sv-fundo-suave);
+  box-shadow: 0 6px 14px -8px rgba(15, 35, 65, .45);
+}
+.sv-miniatura img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sv-miniatura--reserva {
+  border: 1px solid var(--sv-borda-card);
+  background: linear-gradient(150deg, #FFFFFF, #E3ECFB);
+  color: var(--sv-azul);
+  font-size: 26px;
+}
+@media (max-width: 600px) {
+  .sv-miniatura { width: 52px; height: 52px; }
+  .sv-miniatura--reserva { font-size: 23px; }
+}
+
+/* ─── Gaveta que sobe da parte de baixo (filtros no celular) ────────
+   <div class="sv-gaveta-fundo" />
+   <div class="sv-gaveta sv-gaveta--baixo" role="dialog">
+     <div class="sv-gaveta-topo">...</div>
+     <div class="sv-gaveta-corpo">...</div>
+     <div class="sv-gaveta-rodape">[Limpar] [Ver resultados]</div>
+   </div>                                                              */
+.sv-gaveta--baixo {
+  top: auto;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-height: min(88vh, 720px);
+  border-left: 0;
+  border-top: 3px solid var(--sv-sirene);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-xl) 0 0;
+  background: linear-gradient(170deg, rgba(246, 248, 252, .98), rgba(234, 240, 250, .98));
+  box-shadow: 0 -18px 40px -16px rgba(7, 34, 70, .5);
+  animation: sv-sobe .35s var(--sv-suave);
+}
+.sv-gaveta--baixo .sv-gaveta-corpo { display: grid; align-content: start; gap: 18px; padding: 16px 22px; }
+.sv-gaveta-rodape {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--sv-linha);
+  background: rgba(255, 255, 255, .7);
+}
+.sv-gaveta-rodape .sv-btn { min-height: 46px; }
+@keyframes sv-sobe {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
