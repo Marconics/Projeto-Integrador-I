@@ -1,4 +1,4 @@
-// Teste de ponta a ponta da API (58 verificações)
+// Teste de ponta a ponta da API
 //
 // Pré-requisitos, cada um num terminal, na pasta Backend:
 //   1. npm run banco:teste   → banco em memória (comece SEMPRE com ele recém-aberto)
@@ -254,6 +254,115 @@ checar('voluntário se desvincula', r.status === 200 && r.dados.abrigo === null,
 token = tokenAdmin
 r = await req('PATCH', '/voluntarios/me/abrigo', { abrigoId: abrigoParaVincular.id })
 checar('admin não usa a rota do voluntário → 403', r.status === 403, r)
+
+// ── Correções da planilha de testes (login nas rotas, validações, integridade)
+// Sem login: rotas de gestão fecham; as usadas pelo bot/voluntário continuam abertas
+token = ''
+r = await req('POST', '/auth/cadastrar', { nome: 'Intruso', email: 'intruso@x.com', senha: '123456' })
+checar('cadastrar admin sem login (já existe admin) → 401', r.status === 401, r)
+r = await req('GET', '/vitimas/listar')
+checar('listar vítimas sem login → 401', r.status === 401, r)
+r = await req('GET', '/voluntarios/listar')
+checar('listar voluntários sem login → 401', r.status === 401, r)
+r = await req('GET', '/solicitacoes/listar')
+checar('listar solicitações de abrigo sem login → 401', r.status === 401, r)
+r = await req('GET', `/abrigos/listar/${abrigoId}`)
+checar('detalhe do abrigo (com vítimas) sem login → 401', r.status === 401, r)
+r = await req('GET', '/abrigos/listar?status=ativo')
+checar('listar abrigos continua público (bot)', r.status === 200 && r.dados.abrigos.length > 0, r)
+r = await req('GET', '/solicitacoes-ajuda/publico')
+checar('solicitações de ajuda públicas continuam abertas', r.status === 200, r)
+
+token = tokenAdmin
+r = await req('POST', '/auth/cadastrar', { nome: 'Admin 2', email: 'adm2@teste.com', senha: '123456', cargo: 'Defesa Civil' })
+checar('admin logado cadastra outro admin', r.status === 201, r)
+r = await req('GET', '/auth/listar')
+checar('listar admins (sem senha)', r.status === 200 && r.dados.admins.length === 2 && !('senha' in r.dados.admins[0]), r)
+r = await req('POST', '/auth/cadastrar', { nome: 'Admin 3', email: 'adm3@teste.com', senha: '123' })
+checar('senha de admin curta → 400', r.status === 400, r)
+r = await req('POST', '/voluntarios/cadastrar', { nome: 'Vol 2', email: 'email-sem-arroba', senha: '123456', dataNascimento: '2000-01-01', genero: 'outro' })
+checar('voluntário com e-mail inválido → 400', r.status === 400, r)
+r = await req('POST', '/voluntarios/cadastrar', { nome: 'Vol 2', email: 'vol2@x.com', senha: '123', dataNascimento: '2000-01-01', genero: 'outro' })
+checar('voluntário com senha curta → 400', r.status === 400, r)
+r = await req('POST', '/solicitacoes-ajuda/cadastrar', { titulo: 'T'.repeat(121), descricao: 'x', categoria: 'doacao', abrigoId })
+checar('título de solicitação com mais de 120 caracteres → 400', r.status === 400, r)
+
+// Abrigo: capacidade negativa ou ocupada > total
+r = await req('POST', '/abrigos/cadastrar', { nome: 'Escola N', cep: '12000-000', cidadeId: taubate.id_cidade, endereco: 'Rua N', tipoAbrigo: 'Escola', capacidadeTotal: -5 })
+checar('abrigo com capacidade negativa → 400', r.status === 400, r)
+r = await req('PUT', `/abrigos/atualizar/${abrigoId}`, { capacidadeTotal: 10, capacidadeOcupada: 11 })
+checar('ocupada maior que total → 400', r.status === 400, r)
+r = await req('PUT', `/abrigos/atualizar/${abrigoId}`, { capacidadeTotal: 100000 })
+checar('capacidade acima de 99.999 → 400', r.status === 400, r)
+r = await req('PUT', `/abrigos/atualizar/${abrigoId}`, { cep: '1234' })
+checar('CEP incompleto → 400', r.status === 400, r)
+r = await req('PUT', `/abrigos/atualizar/${abrigoId}`, { telefone: 'abc' })
+checar('telefone do abrigo com letras → 400', r.status === 400, r)
+
+// Vítimas: data, telefone vazio, tamanhos
+const vitima = (extra) => req('POST', '/vitimas/cadastrar', { nome: 'Vitima Teste', cpf: '111.444.777-35', genero: 'Outro', dataNascimento: '2000-02-01', ...extra })
+r = await vitima({ dataNascimento: 'abc' })
+checar('data de nascimento inválida → 400', r.status === 400, r)
+r = await vitima({ dataNascimento: '2999-01-01' })
+checar('data de nascimento no futuro → 400', r.status === 400, r)
+r = await vitima({ dataNascimento: '' })
+checar('data de nascimento vazia → 400', r.status === 400, r)
+r = await vitima({ cpf: '1'.repeat(20) })
+checar('CPF comprido demais → 400', r.status === 400, r)
+r = await vitima({ cpf: '222.555.888-46', telefone: '', abrigoId })
+checar('1ª vítima sem telefone', r.status === 201 && r.dados.telefone === null && r.dados.dataNascimento === '2000-02-01', r)
+const vitimaComAbrigo = r.dados.id
+r = await vitima({ cpf: '333.666.999-57', telefone: '' })
+checar('2ª vítima sem telefone (antes: erro 500)', r.status === 201, r)
+r = await vitima({ cpf: '123.456.789-00' })
+checar('CPF com dígito verificador errado → 400', r.status === 400, r)
+r = await vitima({ cpf: '111.444.777-35', telefone: '(12) 3456' })
+checar('telefone incompleto → 400', r.status === 400, r)
+r = await vitima({ nome: 'X'.repeat(101) })
+checar('nome com mais de 100 caracteres → 400', r.status === 400, r)
+r = await req('PUT', `/vitimas/atualizar/${vitimaComAbrigo}`, { telefone: '(12) 99999-8888' })
+checar('editar vítima com telefone válido', r.status === 200 && r.dados.telefone === '(12) 99999-8888', r)
+r = await req('GET', `/vitimas/listar/${vitimaComAbrigo}`)
+checar('data volta como AAAA-MM-DD, sem perder 1 dia', r.dados.dataNascimento === '2000-02-01', r.dados.dataNascimento)
+r = await req('PUT', `/vitimas/atualizar/${vitimaComAbrigo}`, { nome: 'Vitima Teste', dataNascimento: '01/02/2000', genero: 'Outro' })
+checar('editar com a data antiga DD/MM/AAAA mantém o dia', r.status === 200 && r.dados.dataNascimento === '2000-02-01', r)
+r = await req('GET', `/abrigos/listar/${abrigoId}`)
+const ocupadaAntes = r.dados.capacidadeOcupada
+r = await req('DELETE', `/vitimas/excluir/${vitimaComAbrigo}`)
+r = await req('GET', `/abrigos/listar/${abrigoId}`)
+checar('excluir vítima libera a vaga do abrigo', r.dados.capacidadeOcupada === ocupadaAntes - 1, { antes: ocupadaAntes, depois: r.dados.capacidadeOcupada })
+
+// Solicitação de abrigo: admin vem do token e aprovar 2x não duplica o abrigo
+r = await req('GET', '/solicitacoes/listar?status=pendente')
+const pendente = r.dados.solicitacoes[0]
+r = await req('GET', '/abrigos/listar')
+const totalAbrigosAntes = r.dados.abrigos.length
+const aprovacoes = await Promise.all([1, 2].map(() => req('PATCH', `/solicitacoes/analisar/${pendente.id_solicitacao}`, { status: 'aprovado' })))
+checar('aprovar 2x ao mesmo tempo → só uma aprova', aprovacoes.filter(a => a.status === 200).length === 1, aprovacoes.map(a => a.status))
+r = await req('GET', '/abrigos/listar')
+checar('aprovar 2x cria um abrigo só', r.dados.abrigos.length === totalAbrigosAntes + 1, r.dados.abrigos.length)
+r = await req('GET', `/solicitacoes/listar/${pendente.id_solicitacao}`)
+checar('analisadoPor = admin do token', r.dados.analisadoPor?.email === 'adm@teste.com', r.dados.analisadoPor)
+
+// Solicitação de ajuda: criador vem do token; abrigo com solicitação não pode ser excluído
+r = await req('POST', '/solicitacoes-ajuda/cadastrar', { titulo: 'Água', descricao: 'Galões', categoria: 'doacao', abrigoId, criadoPorId: 999 })
+checar('solicitação de ajuda usa o admin do token', r.status === 201 && r.dados.solicitacao.criadoPorId !== 999, r)
+const pedidoAjuda = r.dados.solicitacao.id_solicitacao
+r = await req('DELETE', `/abrigos/excluir/${abrigoId}`)
+checar('excluir abrigo com solicitação de ajuda → 409', r.status === 409, r)
+
+// Interesse do voluntário: o id vem do token
+r = await req('POST', '/voluntarios/login', { email: 'vol@x.com', senha: '123456' })
+token = r.dados.token
+r = await req('POST', `/solicitacoes-ajuda/interesse/${pedidoAjuda}`)
+checar('voluntário marca interesse (id do token)', r.status === 201, r)
+r = await req('GET', '/solicitacoes-ajuda/meus-interesses')
+checar('meus interesses', r.status === 200 && r.dados.interesses.some(i => i.solicitacaoId === pedidoAjuda), r)
+r = await req('DELETE', `/solicitacoes-ajuda/interesse/${pedidoAjuda}`)
+checar('voluntário remove interesse', r.status === 200, r)
+token = tokenAdmin
+r = await req('POST', `/solicitacoes-ajuda/interesse/${pedidoAjuda}`)
+checar('admin não marca interesse → 403', r.status === 403, r)
 
 console.log(falhas === 0 ? '\nTODOS OS TESTES PASSARAM' : `\n${falhas} TESTE(S) FALHARAM`)
 process.exit(falhas ? 1 : 0)

@@ -6,6 +6,8 @@ import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
 import SeletorLocalidade from '../../../components/SeletorLocalidade';
 import { apiAdmin, formatarDataHora, formatarTempo, formatarTelefone } from '../../../services/api';
+import { LIMITES, EXEMPLOS } from '../../../utils/campos';
+import { Obrigatorio } from '../../../components/MarcasCampo';
 import { STATUS_ALERTA } from '../../alertas/constantes';
 import '../../alertas/alertas.css';
 
@@ -166,13 +168,14 @@ function DetalhesInscrito() {
             <h3 className="sv-secao-titulo">Dados pessoais</h3>
 
             <div className="sv-campo">
-              <label><LuIdCard /> Nome</label>
-              <input value={nome} onChange={e => setNome(e.target.value)} required minLength={2} />
+              <label htmlFor="nome-inscrito"><LuIdCard /> Nome<Obrigatorio /></label>
+              <input id="nome-inscrito" value={nome} onChange={e => setNome(e.target.value)} required minLength={2} maxLength={LIMITES.nomePessoa} />
             </div>
 
             <div className="sv-campo">
-              <label><LuMail /> E-mail</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+              <label htmlFor="email-inscrito"><LuMail /> E-mail<Obrigatorio /></label>
+              <input id="email-inscrito" type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                maxLength={LIMITES.email} placeholder={EXEMPLOS.email} />
             </div>
 
             {/* Telefone e WhatsApp só leitura: vêm do WhatsApp da pessoa e são o que

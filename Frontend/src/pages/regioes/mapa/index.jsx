@@ -8,6 +8,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { LIMITES } from '../../../utils/campos';
 import { API_URL, formatarTempo } from '../../../services/api';
 import { geocodificar } from '../../../services/localizacao';
 import "./mapa.css";
@@ -144,7 +145,9 @@ function Mapa({ modulo = 'admin' }) {
   // Alertas ativos: busca agora e a cada 1 minuto
   const buscarAlertas = useCallback(async () => {
     if (!mostraAlertas) return
-    const token = localStorage.getItem('token_adm')
+    // No módulo do voluntário o login é o token_voluntario (antes só lia o do admin
+    // e o voluntário nunca via os alertas). A rota /mapa/alertas aceita os dois.
+    const token = localStorage.getItem(ehVoluntario ? 'token_voluntario' : 'token_adm')
     if (!token) {
       setAvisoAlertas('Faça login para ver os alertas ativos.')
       return
@@ -162,7 +165,7 @@ function Mapa({ modulo = 'admin' }) {
     }
     // posicionarAlertas usa os abrigos já carregados
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mostraAlertas, abrigos])
+  }, [mostraAlertas, abrigos, ehVoluntario])
 
   useEffect(() => {
     if (carregando || !mostraAlertas) return
@@ -397,6 +400,8 @@ function Mapa({ modulo = 'admin' }) {
             <LuSearch className="mapa-busca-icone" />
             <input
               placeholder={mostraAlertas ? 'Buscar abrigo, bairro, cidade ou tipo de alerta...' : 'Buscar abrigo, bairro ou cidade...'}
+              aria-label="Buscar"
+              maxLength={LIMITES.busca}
               value={busca}
               onChange={handleBusca}
               onBlur={() => setTimeout(() => setSugestoes([]), 200)}

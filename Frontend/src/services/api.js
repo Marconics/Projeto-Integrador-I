@@ -40,6 +40,36 @@ export async function apiAdmin(caminho, { metodo = 'GET', corpo } = {}) {
   return dados
 }
 
+// Igual ao fetch, mas já com a URL da API e o token do admin no cabeçalho.
+// Devolve a mesma Response do fetch — a tela continua tratando resposta.ok
+// e resposta.json() do jeito que já fazia.
+// Ex: fetchAdmin('/vitimas/listar')  |  fetchAdmin('/abrigos/excluir/3', { method: 'DELETE' })
+let sessaoExpirada = false
+export async function fetchAdmin(caminho, opcoes = {}) {
+  const token = localStorage.getItem('token_adm')
+
+  const resposta = await fetch(`${API_URL}/api${caminho}`, {
+    ...opcoes,
+    headers: {
+      ...opcoes.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  // Login expirou: avisa uma vez só (a tela pode ter feito várias chamadas) e volta ao login
+  if (resposta.status === 401) {
+    if (!sessaoExpirada) {
+      sessaoExpirada = true
+      localStorage.removeItem('token_adm')
+      alert('Sua sessão expirou. Faça login novamente.')
+      window.location.href = '/login-adm'
+    }
+    throw new Error('Sessão expirada')
+  }
+
+  return resposta
+}
+
 // Converte "2026-06-24T03:55:54.000Z" em "Há 15 min", "Há 2h", etc.
 export function formatarTempo(dataISO) {
   const diffMin = Math.floor((Date.now() - new Date(dataISO)) / 1000 / 60)
@@ -60,6 +90,21 @@ export function formatarTelefone(telefone) {
   if (!d) return null
   const m = d.match(/^55(\d{2})(\d{4,5})(\d{4})$/)
   return m ? `+55 (${m[1]}) ${m[2]}-${m[3]}` : d
+}
+
+// Datas "só dia" do banco (nascimento, entrada no abrigo) → "DD/MM/AAAA"
+// Aceita "2000-02-01" ou "2000-02-01T00:00:00.000Z". Usa UTC: no fuso local
+// (-3h) a meia-noite UTC cai no dia anterior e a data aparecia com 1 dia a menos.
+export function formatarDataDia(data) {
+  if (!data) return '—'
+  return new Date(data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+}
+
+// Data de hoje no formato do <input type="date"> — usada no "max" da data de nascimento
+export function hojeISO() {
+  const hoje = new Date()
+  hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset())
+  return hoje.toISOString().slice(0, 10)
 }
 
 export function formatarDataHora(dataISO) {

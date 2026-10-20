@@ -6,6 +6,8 @@ import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
 import { apiAdmin, formatarDataHora, formatarTempo } from '../../../services/api';
 import { STATUS_ALERTA, STATUS_NOTIFICACAO } from '../constantes';
+import { LIMITES } from '../../../utils/campos';
+import { Obrigatorio, ContadorCaracteres } from '../../../components/MarcasCampo';
 import '../alertas.css';
 
 const SITUACAO_GRUPO = {
@@ -354,8 +356,8 @@ function DetalhesAlerta() {
 
               {painelDecisao === 'cancelar' && (
                 <div className="painel-decisao">
-                  <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
-                    Motivo do cancelamento (obrigatório)
+                  <label htmlFor="motivo-cancelamento" style={{ fontSize: '14px', fontWeight: '600', color: 'var(--sv-tinta)' }}>
+                    Motivo do cancelamento<Obrigatorio />
                   </label>
                   {alerta.status === 'ativo' && (
                     <p className="sv-aviso sv-aviso--atencao">
@@ -363,12 +365,14 @@ function DetalhesAlerta() {
                     </p>
                   )}
                   <textarea
+                    id="motivo-cancelamento"
                     value={motivo}
                     onChange={(e) => setMotivo(e.target.value)}
                     placeholder="Ex: Relato falso — a equipe esteve no local e não há alagamento."
                     rows={4}
-                    maxLength={300}
+                    maxLength={LIMITES.motivoAlerta}
                   />
+                  <ContadorCaracteres valor={motivo} limite={LIMITES.motivoAlerta} />
                   <button className="sv-btn sv-btn--perigo-vidro sv-btn--bloco" disabled={enviando} onClick={handleCancelar}>
                     {enviando ? 'Cancelando...' : 'Confirmar cancelamento'}
                   </button>

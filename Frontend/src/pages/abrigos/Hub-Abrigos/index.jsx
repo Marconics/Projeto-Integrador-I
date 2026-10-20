@@ -8,6 +8,7 @@ import { LuClipboardList, LuHandHeart, LuMapPin, LuPhone, LuPlus, LuSearch, LuTr
 import "../../../styles/listagem.css";
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { LIMITES } from '../../../utils/campos';
 import { API_URL } from '../../../services/api';
 import {
   ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural
@@ -166,6 +167,8 @@ const ListarAbrigos = () => {
               <LuSearch className="lg-busca-icone" />
               <input
                 placeholder="Buscar nome, bairro, responsável..."
+                aria-label="Buscar"
+                maxLength={LIMITES.busca}
                 value={filtros.busca}
                 onChange={e => mudarFiltro('busca', e.target.value)}
               />

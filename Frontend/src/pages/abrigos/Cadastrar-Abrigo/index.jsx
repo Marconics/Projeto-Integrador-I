@@ -5,6 +5,11 @@ import MensagemFeedback from "../../../components/MensagemFeedback";
 import { preencherPorCep, geocodificar } from "../../../services/localizacao";
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin } from '../../../services/api';
+import { LIMITES, EXEMPLOS, aoDigitar, somenteNome, somenteNumeros, mascaraCep, mascaraTelefone, erroDosCampos } from '../../../utils/campos';
+import { Obrigatorio, Opcional, AvisoObrigatorios } from '../../../components/MarcasCampo';
+// Importada (e não "/src/assets/logo.png"): o caminho de texto quebrava no build
+import logo from '../../../assets/logo.png';
 
 const CadastrarAbrigo = () => {
   const [mensagem, setMensagem] = useState('');
@@ -123,8 +128,11 @@ const CadastrarAbrigo = () => {
   // Handle Imagens
   const handleImagem = (e) => {
     const arquivo = e.target.files[0]
+    // Cancelou a janela de seleção: não há arquivo
+    if (!arquivo) return
     const limiteMB = 2
     if (arquivo.size > limiteMB * 1024 * 1024) {
+      setErroEnvio(true)
       setMensagem(`A imagem deve ter no máximo ${limiteMB}MB.`)
       return
     }
@@ -140,15 +148,23 @@ const CadastrarAbrigo = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // Confere telefone e CEP antes de enviar
+    const erroCampos = erroDosCampos({ telefone: e.target.telefone.value, cep })
+    if (erroCampos) {
+      setErroEnvio(true)
+      setMensagem(erroCampos)
+      return
+    }
+
     const dados = {
       status: e.target.status.value,
-      nome: e.target.nome.value,
+      nome: e.target.nome.value.trim(),
       cep,
       cidadeId: localidade.cidadeId,
       bairroId: localidade.bairroId,
       endereco: endereco.trim().replace(/,s*$/, ''),
       telefone: e.target.telefone.value,
-      responsavel: e.target.responsavel.value,
+      responsavel: e.target.responsavel.value.trim(),
       tipoAbrigo: e.target.tipoAbrigo.value,
       capacidadeTotal: Number(e.target.capacidadeTotal.value),
       capacidadeOcupada: Number(e.target.capacidadeOcupada.value) || 0,
@@ -169,15 +185,21 @@ const CadastrarAbrigo = () => {
       if (erroCapacidade) return
     }
 
-    const resposta = await fetch('http://localhost:3000/api/abrigos/cadastrar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dados)
-    })
+    try {
+      const resposta = await fetchAdmin('/abrigos/cadastrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      })
 
-    const resultado = await resposta.json()
-    setErroEnvio(!resposta.ok)
-    setMensagem(resultado.mensagem)
+      const resultado = await resposta.json().catch(() => ({}))
+      setErroEnvio(!resposta.ok)
+      setMensagem(resultado.mensagem ?? (resposta.ok ? 'Abrigo cadastrado!' : `Erro ${resposta.status} ao cadastrar.`))
+    } catch (erro) {
+      console.error('Erro ao cadastrar abrigo:', erro)
+      setErroEnvio(true)
+      setMensagem('Erro ao conectar com o servidor. Tente novamente.')
+    }
   }
 
   return (
@@ -199,7 +221,7 @@ const CadastrarAbrigo = () => {
             <p className="sv-subtitulo"> Cadastre um novo abrigo</p>
           </div>
           <div className="top-icons">
-            <img src="/src/assets/logo.png" width="80px" alt="Logo" />
+            <img src={logo} width="80px" alt="Logo S.O.S Vale" />
           </div>
         </header>
 
@@ -207,8 +229,10 @@ const CadastrarAbrigo = () => {
 
           <div className="sv-form-coluna">
 
+            <AvisoObrigatorios />
+
             <div className="sv-campo">
-              <label htmlFor="status">Status</label>
+              <label htmlFor="status">Status<Obrigatorio /></label>
               <select
                 id="status"
                 value={status}
@@ -221,20 +245,24 @@ const CadastrarAbrigo = () => {
             </div>
 
             <div className="sv-campo">
-              <label><LuBuilding2 /> Nome do Abrigo</label>
-              <input type="text" name="nome" placeholder="Ex: Escola Municipal Centro" required />
+              <label htmlFor="nome-abrigo"><LuBuilding2 /> Nome do Abrigo<Obrigatorio /></label>
+              <input type="text" id="nome-abrigo" name="nome" placeholder="Ex: Escola Municipal Centro"
+                maxLength={LIMITES.nomeLocal} minLength={3} required />
             </div>
 
             {/* CEP primeiro: ao completar, preenche estado, cidade, bairro e rua */}
             <div className="sv-campo">
-              <label><LuMapPinned /> CEP</label>
+              <label htmlFor="cep-abrigo"><LuMapPinned /> CEP<Obrigatorio /></label>
+              {/* Só números; o hífen é colocado sozinho */}
               <input
                 type="text"
+                id="cep-abrigo"
                 name="cep"
-                placeholder="Ex: 12090-590"
+                inputMode="numeric"
+                placeholder={EXEMPLOS.cep}
                 value={cep}
-                onChange={(e) => handleCep(e.target.value)}
-                maxLength={9}
+                onChange={(e) => handleCep(mascaraCep(e.target.value))}
+                maxLength={LIMITES.cep}
                 required
               />
               <MensagemFeedback feedback={feedbackCep} />
@@ -250,10 +278,12 @@ const CadastrarAbrigo = () => {
 
             {/* Endereço: ao sair do campo, a localização é buscada de novo com o número */}
             <div className="sv-campo">
-              <label><LuMapPin /> Endereço</label>
+              <label htmlFor="endereco-abrigo"><LuMapPin /> Endereço<Obrigatorio /></label>
               <input
                 type="text"
+                id="endereco-abrigo"
                 name="endereco"
+                maxLength={LIMITES.endereco}
                 placeholder="Ex: Rua das Flores, 123"
                 value={endereco}
                 onChange={(e) => setEndereco(e.target.value)}
@@ -271,18 +301,21 @@ const CadastrarAbrigo = () => {
             </div>
 
             <div className="sv-campo">
-              <label><LuPhone /> Telefone</label>
-              <input type="text" name="telefone" placeholder="(12) 99999-9999" required />
+              <label htmlFor="telefone-abrigo"><LuPhone /> Telefone<Obrigatorio /></label>
+              <input type="tel" id="telefone-abrigo" name="telefone" inputMode="numeric" placeholder={EXEMPLOS.telefone}
+                maxLength={LIMITES.telefone} required onChange={aoDigitar(mascaraTelefone)} />
             </div>
 
             <div className="sv-campo">
-              <label><LuUser /> Responsável</label>
-              <input type="text" name="responsavel" placeholder="Nome do responsável" required />
+              <label htmlFor="responsavel-abrigo"><LuUser /> Responsável<Obrigatorio /></label>
+              <input type="text" id="responsavel-abrigo" name="responsavel" placeholder="Nome do responsável"
+                maxLength={LIMITES.nomePessoa} minLength={2} required onChange={aoDigitar(somenteNome)} />
             </div>
 
             <div className="sv-campo">
-              <label><LuBuilding2 /> Tipo de Abrigo</label>
-              <select className="sv-entrada" name="tipoAbrigo" required>
+              <label htmlFor="tipo-abrigo"><LuBuilding2 /> Tipo de Abrigo<Obrigatorio /></label>
+              {/* defaultValue="" mostra "Selecione o tipo" (antes já vinha "Escola" marcada) */}
+              <select className="sv-entrada" id="tipo-abrigo" name="tipoAbrigo" defaultValue="" required>
                 <option value="" disabled>Selecione o tipo</option>
                 <option value="Escola">Escola</option>
                 <option value="Ginásio">Ginásio</option>
@@ -296,13 +329,18 @@ const CadastrarAbrigo = () => {
             </div>
 
             <div className="sv-campo">
-              <label><LuArrowLeftRight /> Capacidade Total</label>
+              <label htmlFor="capacidade-total"><LuArrowLeftRight /> Capacidade Total<Obrigatorio /></label>
+              {/* type="text" + só números: o type="number" aceitava "e", "+" e "-" */}
               <input
-                type="number"
+                type="text"
+                id="capacidade-total"
                 name="capacidadeTotal"
+                inputMode="numeric"
                 placeholder="Ex: 100"
+                maxLength={LIMITES.capacidadeDigitos}
                 required
                 onChange={(e) => {
+                  e.target.value = somenteNumeros(e.target.value, LIMITES.capacidadeDigitos)
                   const total = parseInt(e.target.value) || 0
                   setCapacidadeTotal(total)
                   validarCapacidade(capacidadeOcupada, total)
@@ -311,13 +349,17 @@ const CadastrarAbrigo = () => {
             </div>
 
             <div className="sv-campo">
-              <label><LuArrowLeftRight /> Capacidade Ocupada</label>
+              <label htmlFor="capacidade-ocupada"><LuArrowLeftRight /> Capacidade Ocupada<Opcional /></label>
               <input
-                type="number"
+                type="text"
+                id="capacidade-ocupada"
                 name="capacidadeOcupada"
+                inputMode="numeric"
+                maxLength={LIMITES.capacidadeDigitos}
                 className={`sv-entrada ${erroCapacidade ? 'sv-entrada--erro' : ''}`}
-                placeholder="Ex: 0"
+                placeholder="Ex: 0 (vazio = 0)"
                 onChange={(e) => {
+                  e.target.value = somenteNumeros(e.target.value, LIMITES.capacidadeDigitos)
                   const ocupada = parseInt(e.target.value) || 0
                   setCapacidadeOcupada(ocupada)
                   validarCapacidade(ocupada, capacidadeTotal)
@@ -334,7 +376,7 @@ const CadastrarAbrigo = () => {
             {/* Checkboxes de infraestrutura */}
             <div className="sv-form-secao">
               <h3 className="sv-secao-titulo">
-                Infraestrutura
+                Infraestrutura<Opcional />
               </h3>
 
               <label className="sv-opcao">
@@ -379,7 +421,7 @@ const CadastrarAbrigo = () => {
           <div className="sv-form-coluna">
 
             <h3 className="sv-secao-titulo">
-              Imagem do Abrigo
+              Imagem do Abrigo<Opcional />
             </h3>
 
             <div className="sv-upload">
@@ -392,9 +434,9 @@ const CadastrarAbrigo = () => {
                 </div>
               ) : (
                 <label className="sv-upload-area">
-                  <input type="file" accept="image/*" onChange={handleImagem} style={{ display: 'none' }} />
+                  <input type="file" accept="image/jpeg,image/png" onChange={handleImagem} style={{ display: 'none' }} />
                   <LuUpload className="sv-upload-icone" />
-                  <p>Foto principal do abrigo</p>
+                  <p>Foto principal do abrigo (JPG ou PNG, até 2 MB)</p>
                   <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
                 </label>
               )}

@@ -1,5 +1,8 @@
 import prisma from '../lib/prisma.js'
 import { normalizarTexto } from '../lib/localizacao.js'
+import { LIMITES } from '../lib/validacao.js'
+
+const NOME_LONGO = `O nome da cidade deve ter no máximo ${LIMITES.nomeLocal} caracteres.`
 
 
 // Formata a cidade para as respostas: estado em texto + contadores
@@ -87,6 +90,7 @@ export default async function cidadeRoutes(app) {
     const { nome, estadoId, grupoWhatsappId, grupoWhatsappLink } = request.body ?? {}
 
     if (!nome?.trim()) return reply.status(400).send({ mensagem: 'Informe o nome da cidade.' })
+    if (nome.trim().length > LIMITES.nomeLocal) return reply.status(400).send({ mensagem: NOME_LONGO })
     if (!estadoId)     return reply.status(400).send({ mensagem: 'Selecione o estado.' })
 
     const erroGrupo = validarGrupo(grupoWhatsappId)
@@ -133,6 +137,7 @@ export default async function cidadeRoutes(app) {
 
     if (nome !== undefined) {
       if (!nome.trim()) return reply.status(400).send({ mensagem: 'Informe o nome da cidade.' })
+      if (nome.trim().length > LIMITES.nomeLocal) return reply.status(400).send({ mensagem: NOME_LONGO })
 
       const existentes = await prisma.cidade.findMany({
         where: { estadoId: cidade.estadoId, NOT: { id_cidade: id } }

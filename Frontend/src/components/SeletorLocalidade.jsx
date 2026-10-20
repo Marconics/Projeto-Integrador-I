@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { LuMapPinned } from 'react-icons/lu';
 import { API_URL } from '../services/api';
+import { Obrigatorio, Opcional } from './MarcasCampo';
 
 // Busca uma rota pública da API (estados, cidades e bairros não exigem login)
 async function buscarJson(caminho) {
@@ -26,6 +27,11 @@ function SeletorLocalidade({
   obrigatorio = true
 }) {
   const [estados, setEstados] = useState([])
+  // ids únicos para ligar cada <label> ao seu <select> (pode haver mais de um seletor na tela)
+  const idBase = useId()
+
+  // Marca * / (opcional) só quando dá para editar
+  const marca = (exigido) => disabled ? null : (exigido ? <Obrigatorio /> : <Opcional />)
   const [estadoEscolhido, setEstadoEscolhido] = useState(null)
 
   // Listas guardadas por id para não buscar de novo a cada troca
@@ -99,8 +105,8 @@ function SeletorLocalidade({
   return (
     <>
       <div className="sv-campo">
-        <label><LuMapPinned /> Estado</label>
-        <select className="sv-entrada" value={estadoId} disabled={disabled} onChange={handleEstado} required={obrigatorio}>
+        <label htmlFor={`${idBase}-estado`}><LuMapPinned /> Estado{marca(obrigatorio)}</label>
+        <select id={`${idBase}-estado`} className="sv-entrada" value={estadoId} disabled={disabled} onChange={handleEstado} required={obrigatorio}>
           <option value="" disabled>Selecione o estado</option>
           {estados.map(est => (
             <option key={est.id_estado} value={est.id_estado}>{est.nome} ({est.sigla})</option>
@@ -114,8 +120,9 @@ function SeletorLocalidade({
       </div>
 
       <div className="sv-campo">
-        <label><LuMapPinned /> Cidade</label>
+        <label htmlFor={`${idBase}-cidade`}><LuMapPinned /> Cidade{marca(obrigatorio)}</label>
         <select
+          id={`${idBase}-cidade`}
           className="sv-entrada"
           value={cidadeId ?? ''}
           disabled={disabled || !estadoId}
@@ -131,8 +138,9 @@ function SeletorLocalidade({
 
       {mostrarBairro && (
         <div className="sv-campo">
-          <label><LuMapPinned /> Bairro</label>
+          <label htmlFor={`${idBase}-bairro`}><LuMapPinned /> Bairro{marca(obrigatorio && bairroObrigatorio)}</label>
           <select
+            id={`${idBase}-bairro`}
             className="sv-entrada"
             value={bairroId ?? ''}
             disabled={disabled || !cidadeId}

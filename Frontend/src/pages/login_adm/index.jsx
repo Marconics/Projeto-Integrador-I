@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { LuLock, LuLogIn, LuMail } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../../services/api';
+import { LIMITES, EXEMPLOS } from '../../utils/campos';
+// Importada (e não "src/assets/..."): o caminho de texto quebrava no build
 import logoSosVale from '../../assets/logo-sosvale.png';
 import '../../styles/sosvale-glass.css';
 
@@ -10,13 +13,15 @@ const LoginAdm = () => {
 
     const [email, setEmail] = useState("");
     const [senha, setSenha] = useState("");
+    const [erro, setErro] = useState("");
 
-    // Rodando quando o admin clica em Entrar (LÓGICA INTACTA)
+    // Rodando quando o admin clica em Entrar
     const fazerLogin = async (e) => {
         e.preventDefault(); // impede a página de recarregar
+        setErro(""); // limpa erro anterior antes de tentar
 
         try {
-            const response = await fetch("http://localhost:3000/api/auth/login", {
+            const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -34,9 +39,13 @@ const LoginAdm = () => {
 
                 // Redireciona para a página do administrador
                 navigate('/pg_adm');
+            } else {
+                // Antes nada aparecia com e-mail ou senha errados
+                setErro(data.mensagem || "Erro ao fazer login.");
             }
         } catch (error) {
             console.error("Erro ao conectar com a API:", error);
+            setErro("Erro ao conectar com o servidor. Tente novamente.");
         }
     }
 
@@ -59,7 +68,9 @@ const LoginAdm = () => {
                             <input
                                 id="adm-email"
                                 type="email"
-                                placeholder="seu@email.com"
+                                placeholder={EXEMPLOS.email}
+                                maxLength={LIMITES.email}
+                                autoComplete="username"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -74,12 +85,18 @@ const LoginAdm = () => {
                                 id="adm-senha"
                                 type="password"
                                 placeholder="Sua senha"
+                                maxLength={LIMITES.senhaMax}
+                                autoComplete="current-password"
                                 value={senha}
                                 onChange={(e) => setSenha(e.target.value)}
                                 required
                             />
                         </span>
                     </div>
+
+                    {/* Exibe mensagem de erro se o login falhar */}
+                    {erro && <p className="sv-aviso sv-aviso--erro" role="alert">{erro}</p>}
+
                     <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">
                         <LuLogIn /> Entrar
                     </button>

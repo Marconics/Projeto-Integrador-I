@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { LuEye, LuHouse, LuMail, LuPhone, LuTriangleAlert, LuUsers } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { LIMITES } from '../../../utils/campos';
 import { apiAdmin, formatarTelefone } from '../../../services/api';
 import '../../alertas/alertas.css';
 
@@ -82,6 +83,8 @@ function ListarInscritos() {
           <div className="barra-filtros">
             <input
               placeholder="Buscar por nome, e-mail ou telefone..."
+              aria-label="Buscar"
+              maxLength={LIMITES.busca}
               value={busca}
               onChange={e => setBusca(e.target.value)}
             />

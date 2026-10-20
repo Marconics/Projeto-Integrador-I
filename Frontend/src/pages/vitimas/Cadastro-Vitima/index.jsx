@@ -2,11 +2,16 @@ import { useState } from "react";
 import { LuCalendar, LuIdCard, LuPhone, LuUpload, LuUser, LuUserRound } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin, hojeISO } from '../../../services/api';
+import { LIMITES, EXEMPLOS, aoDigitar, somenteNome, mascaraCpf, mascaraTelefone, erroDosCampos } from '../../../utils/campos';
+import { Obrigatorio, Opcional, AvisoObrigatorios } from '../../../components/MarcasCampo';
 
 
 const CadastroVitima = () => {
   // Estado para guardar a mensagem de sucesso ou erro
   const [mensagem, setMensagem] = useState('')
+  // true quando a mensagem é de erro (aparece em vermelho, não em verde)
+  const [erroEnvio, setErroEnvio] = useState(false)
   // Estado para guardar a imagem em Base64
   const [fotoVitima, setfotoVitima] = useState(null)
   
@@ -15,10 +20,13 @@ const CadastroVitima = () => {
   // Função que roda quando o usuário seleciona uma imagem
   const handleImagem = (e) => {
     const arquivo = e.target.files[0]
+    // Cancelou a janela de seleção: não há arquivo
+    if (!arquivo) return
 
     // Verifica o tamanho — 2MB = 2 * 1024 * 1024 bytes
     const limiteMB = 2
     if (arquivo.size > limiteMB * 1024 * 1024) {
+       setErroEnvio(true)
        setMensagem(`A imagem deve ter no máximo ${limiteMB}MB.`)
        return // para a execução
     }
@@ -37,26 +45,42 @@ const CadastroVitima = () => {
     // Impede a página de recarregar
     e.preventDefault()
 
+    // Confere CPF (dígitos verificadores) e telefone antes de enviar
+    const erroCampos = erroDosCampos({ cpf: e.target.cpf.value, telefone: e.target.telefone.value })
+    if (erroCampos) {
+      setErroEnvio(true)
+      setMensagem(erroCampos)
+      return
+    }
+
     // Monta o objeto com os dados do formulário
     const dados = {
-      nome: e.target.nome.value,
+      nome: e.target.nome.value.trim(),
       cpf: e.target.cpf.value,
-      telefone: e.target.telefone.value,
+      // Telefone é único no banco: vazio vai como null (antes "" dava erro na 2ª vítima sem telefone)
+      telefone: e.target.telefone.value.trim() || null,
       dataNascimento: e.target.dataNascimento.value,
       genero: e.target.genero.value,
       fotoVitima: fotoVitima // Base64 da imagem
     }
 
     // Envia os dados para a API
-    const resposta = await fetch('http://localhost:3000/api/vitimas/cadastrar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dados) // converte objeto para JSON
-    })
+    try {
+      const resposta = await fetchAdmin('/vitimas/cadastrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados) // converte objeto para JSON
+      })
 
-    // Pega a resposta da API e atualiza a mensagem
-    const resultado = await resposta.json()
-    setMensagem(resultado.mensagem)
+      // Pega a resposta da API e atualiza a mensagem
+      const resultado = await resposta.json().catch(() => ({}))
+      setErroEnvio(!resposta.ok)
+      setMensagem(resultado.mensagem ?? (resposta.ok ? 'Vítima cadastrada!' : `Erro ${resposta.status} ao cadastrar.`))
+    } catch (erro) {
+      console.error('Erro ao cadastrar vítima:', erro)
+      setErroEnvio(true)
+      setMensagem('Erro ao conectar com o servidor. Tente novamente.')
+    }
   }
 
   return (
@@ -92,32 +116,43 @@ const CadastroVitima = () => {
         {/* Coluna esquerda: campos de texto */}
         <div className="sv-form-coluna">
 
+          <AvisoObrigatorios />
+
+          {/* Nome: só letras (números são removidos ao digitar) */}
           <div className="sv-campo">
-            <label><LuUser /> Nome Completo</label>
-            <input type="text" name="nome" placeholder="Ex: João da Silva" required />
+            <label htmlFor="nome"><LuUser /> Nome Completo<Obrigatorio /></label>
+            <input type="text" id="nome" name="nome" placeholder="Ex: Maria da Silva"
+              maxLength={LIMITES.nomePessoa} minLength={2} autoComplete="off" required
+              onChange={aoDigitar(somenteNome)} />
+          </div>
+
+          {/* CPF e telefone: só números, a pontuação é colocada sozinha */}
+          <div className="sv-campo">
+            <label htmlFor="cpf"><LuIdCard /> CPF<Obrigatorio /></label>
+            <input type="text" id="cpf" name="cpf" placeholder={EXEMPLOS.cpf} inputMode="numeric"
+              maxLength={LIMITES.cpf} autoComplete="off" required
+              onChange={aoDigitar(mascaraCpf)} />
           </div>
 
           <div className="sv-campo">
-            <label><LuIdCard /> CPF</label>
-            <input type="text" name="cpf" placeholder="000.000.000-00" required />
+            <label htmlFor="telefone"><LuPhone /> Telefone<Opcional /></label>
+            <input type="tel" id="telefone" name="telefone" placeholder={EXEMPLOS.telefone} inputMode="numeric"
+              maxLength={LIMITES.telefone} autoComplete="off"
+              onChange={aoDigitar(mascaraTelefone)} />
           </div>
 
           <div className="sv-campo">
-            <label><LuPhone /> Telefone</label>
-            <input type="text" name="telefone" placeholder="(12) 99999-9999" />
+            <label htmlFor="dataNascimento"><LuCalendar /> Data de Nascimento<Obrigatorio /></label>
+            <input type="date" id="dataNascimento" name="dataNascimento" min="1900-01-01" max={hojeISO()} required />
           </div>
 
           <div className="sv-campo">
-            <label><LuCalendar /> Data de Nascimento</label>
-            <input type="date" name="dataNascimento" />
-          </div>
-
-          <div className="sv-campo">
-            <label><LuUserRound /> Gênero</label>
+            <label htmlFor="genero"><LuUserRound /> Gênero<Obrigatorio /></label>
             <select
              className="sv-entrada"
              id="genero"
-             name="genero">
+             name="genero"
+             required>
               <option value="">Selecione o gênero</option>
               <option value="Masculino">Masculino</option>
               <option value="Feminino">Feminino</option>
@@ -131,7 +166,7 @@ const CadastroVitima = () => {
         <div className="sv-form-coluna">
 
           <h3 className="sv-secao-titulo">
-            Foto de Perfil
+            Foto de Perfil<Opcional />
           </h3>
 
           {/* Preview da foto */}
@@ -149,9 +184,9 @@ const CadastroVitima = () => {
               </div>
             ) : (
               <label className="sv-upload-area">
-                <input type="file" accept="image/*" onChange={handleImagem} style={{ display: 'none' }} />
+                <input type="file" accept="image/jpeg,image/png" onChange={handleImagem} style={{ display: 'none' }} />
                 <LuUpload className="sv-upload-icone" />
-                <p>Foto de perfil da vítima</p>
+                <p>Foto de perfil da vítima (JPG ou PNG, até 2 MB)</p>
                 <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo</span>
               </label>
             )}
@@ -163,7 +198,7 @@ const CadastroVitima = () => {
               Cadastrar Vítima
             </button>
             {mensagem && (
-              <p style={{ color: 'var(--sv-ok)', fontSize: '14px', textAlign: 'center' }}>
+              <p role={erroEnvio ? 'alert' : 'status'} style={{ color: erroEnvio ? 'var(--sv-sirene-forte)' : 'var(--sv-ok)', fontSize: '14px', textAlign: 'center' }}>
                 {mensagem}
               </p>
             )}

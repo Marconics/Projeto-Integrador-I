@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { LuCheck, LuHandHeart, LuHouse, LuMapPin, LuPhone, LuSearch, LuX } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { LIMITES } from '../../../utils/campos';
 import { API_URL } from '../../../services/api';
 import { alterarVinculoAbrigo } from '../../../services/voluntario';
 import {
@@ -211,6 +212,8 @@ function AbrigosVoluntario() {
               <LuSearch className="lg-busca-icone" />
               <input
                 placeholder="Buscar por nome, bairro ou endereço..."
+                aria-label="Buscar"
+                maxLength={LIMITES.busca}
                 value={filtros.busca}
                 onChange={e => mudarFiltro('busca', e.target.value)}
               />

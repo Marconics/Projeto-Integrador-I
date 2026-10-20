@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { LuBuilding2, LuClock, LuHandHeart, LuHeart, LuMapPin, LuPhone, LuPlus, LuUser } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
-import { API_URL, formatarTempo } from '../../../services/api';
+import { LIMITES } from '../../../utils/campos';
+import { API_URL, fetchAdmin, formatarTempo } from '../../../services/api';
 import '../../alertas/alertas.css';
 
 // ─── Rótulos (mesmos valores dos enums do banco) ──────────────────────────────
@@ -62,7 +63,7 @@ function ListarSolicitacoesAjuda() {
     const buscar = async () => {
       try {
         const [resSolicitacoes, resAbrigos] = await Promise.all([
-          fetch(`${API_URL}/api/solicitacoes-ajuda/listar`),
+          fetchAdmin('/solicitacoes-ajuda/listar'),
           fetch(`${API_URL}/api/abrigos/listar`),
         ])
         if (!resSolicitacoes.ok || !resAbrigos.ok) throw new Error('Não foi possível carregar as solicitações.')
@@ -192,6 +193,8 @@ function ListarSolicitacoesAjuda() {
           <div className="barra-filtros">
             <input
               placeholder="Buscar por título, descrição ou abrigo..."
+              aria-label="Buscar"
+              maxLength={LIMITES.busca}
               value={busca}
               onChange={e => setBusca(e.target.value)}
             />

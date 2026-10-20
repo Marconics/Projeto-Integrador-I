@@ -8,7 +8,8 @@ import { LuAccessibility, LuHouse, LuPlus, LuSearch, LuX } from 'react-icons/lu'
 import "../../../styles/listagem.css";
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
-import { API_URL } from '../../../services/api';
+import { LIMITES } from '../../../utils/campos';
+import { fetchAdmin } from '../../../services/api';
 import { normalizar, plural } from '../../../utils/listagem';
 
 const GENEROS = [
@@ -73,7 +74,7 @@ const ListarVitimas = () => {
   useEffect(() => {
     const carregar = async () => {
       try {
-        const resposta = await fetch(`${API_URL}/api/vitimas/listar`)
+        const resposta = await fetchAdmin('/vitimas/listar')
         if (!resposta.ok) throw new Error('Erro ao buscar vítimas')
         const dados = await resposta.json()
         setVitimas(dados.vitimas ?? [])
@@ -185,6 +186,8 @@ const ListarVitimas = () => {
               <LuSearch className="lg-busca-icone" />
               <input
                 placeholder="Buscar por nome, CPF ou telefone..."
+                aria-label="Buscar"
+                maxLength={LIMITES.busca}
                 value={filtros.busca}
                 onChange={e => mudarFiltro('busca', e.target.value)}
               />

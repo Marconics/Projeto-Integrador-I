@@ -4,6 +4,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { LuSend } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin } from '../../../services/api';
+import { LIMITES } from '../../../utils/campos';
+import { Obrigatorio, AvisoObrigatorios, ContadorCaracteres } from '../../../components/MarcasCampo';
 
 // ─── Sidebar reutilizável ─────────────────────────────────────────────────────
 const Sidebar = () => (
@@ -37,19 +40,17 @@ function CadastrarSolicitacaoAjuda() {
 
     setEnviando(true)
     try {
-      // O criadoPorId deve vir do contexto de autenticação da sua aplicação.
-      // Aqui está como placeholder — substitua pelo id real do admin logado.
-      // Ex: const { admin } = useAuth()  →  criadoPorId: admin.id
+      // Quem criou (criadoPorId) não vai mais daqui: a API pega o admin logado
+      // pelo token (antes era "criadoPorId: 1" fixo)
       const body = {
         titulo:      titulo.trim(),
         descricao:   descricao.trim(),
         categoria,
         urgencia,
         abrigoId:    Number(id),
-        criadoPorId: 1, // ← substituir pelo id do admin logado
       }
 
-      const resposta = await fetch('http://localhost:3000/api/solicitacoes-ajuda/cadastrar', {
+      const resposta = await fetchAdmin('/solicitacoes-ajuda/cadastrar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -100,30 +101,34 @@ function CadastrarSolicitacaoAjuda() {
         <form onSubmit={handleSalvar} className="sv-form-estreito">
           <div className="sv-vidro sv-painel sv-form">
 
+            <AvisoObrigatorios />
+
             {/* Título */}
             <div className="sv-campo">
-              <label htmlFor="ajuda-titulo">Título da solicitação *</label>
+              <label htmlFor="ajuda-titulo">Título da solicitação<Obrigatorio /></label>
               <input
                 id="ajuda-titulo"
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
                 placeholder="Ex: Precisamos de cobertores para 50 pessoas"
-                maxLength={120}
+                maxLength={LIMITES.titulo}
+                required
               />
-              <span className="sv-campo-ajuda" style={{ textAlign: 'right' }}>
-                {titulo.length}/120
-              </span>
+              <ContadorCaracteres valor={titulo} limite={LIMITES.titulo} />
             </div>
 
             {/* Descrição */}
             <div className="sv-campo">
-              <label htmlFor="ajuda-descricao">Descrição detalhada *</label>
+              <label htmlFor="ajuda-descricao">Descrição detalhada<Obrigatorio /></label>
               <textarea
                 id="ajuda-descricao"
                 value={descricao}
                 onChange={e => setDescricao(e.target.value)}
                 placeholder="Descreva o que é necessário, quantidade, prazo ou qualquer detalhe relevante..."
+                maxLength={LIMITES.descricao}
+                required
               />
+              <ContadorCaracteres valor={descricao} limite={LIMITES.descricao} />
             </div>
 
             {/* Linha: categoria + urgência lado a lado */}
@@ -131,8 +136,8 @@ function CadastrarSolicitacaoAjuda() {
 
               {/* Categoria */}
               <div className="sv-campo">
-                <label htmlFor="ajuda-categoria">Categoria</label>
-                <select id="ajuda-categoria" value={categoria} onChange={e => setCategoria(e.target.value)}>
+                <label htmlFor="ajuda-categoria">Categoria<Obrigatorio /></label>
+                <select id="ajuda-categoria" required value={categoria} onChange={e => setCategoria(e.target.value)}>
                   <option value="doacao">Doação (roupas, alimentos, etc.)</option>
                   <option value="medicamento">Medicamento</option>
                   <option value="voluntariado">Voluntariado</option>
@@ -143,8 +148,8 @@ function CadastrarSolicitacaoAjuda() {
 
               {/* Urgência */}
               <div className="sv-campo">
-                <label htmlFor="ajuda-urgencia">Urgência</label>
-                <select id="ajuda-urgencia" value={urgencia} onChange={e => setUrgencia(e.target.value)}>
+                <label htmlFor="ajuda-urgencia">Urgência<Obrigatorio /></label>
+                <select id="ajuda-urgencia" required value={urgencia} onChange={e => setUrgencia(e.target.value)}>
                   <option value="baixa">Baixa</option>
                   <option value="media">Média</option>
                   <option value="alta">Alta</option>

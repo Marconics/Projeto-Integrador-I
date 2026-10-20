@@ -4,6 +4,8 @@ import { LuCircleCheck, LuMapPinned, LuMessageCircle, LuPencil, LuPlus, LuSave, 
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
 import { apiAdmin } from '../../../services/api';
+import { LIMITES, EXEMPLOS, somenteNumeros, somenteDecimal, mascaraCep } from '../../../utils/campos';
+import { Obrigatorio, Opcional } from '../../../components/MarcasCampo';
 import { NIVEIS_RISCO } from '../../alertas/constantes';
 import '../../alertas/alertas.css';
 
@@ -262,6 +264,7 @@ function GerenciarRegioes() {
             <form onSubmit={handleCadastrarCidade} className="painel-decisao">
               <select
                 className="sv-entrada"
+                aria-label="Estado da nova cidade"
                 value={novaCidade.estadoId}
                 onChange={e => setNovaCidade({ ...novaCidade, estadoId: e.target.value })}
                 required
@@ -271,7 +274,10 @@ function GerenciarRegioes() {
               </select>
               <input
                 className="sv-entrada"
-                placeholder="Nome da cidade"
+                aria-label="Nome da nova cidade"
+                placeholder="Nome da cidade *"
+                maxLength={LIMITES.nomeLocal}
+                minLength={2}
                 value={novaCidade.nome}
                 onChange={e => setNovaCidade({ ...novaCidade, nome: e.target.value })}
                 required
@@ -290,12 +296,13 @@ function GerenciarRegioes() {
 
                 <div className="formulario-linha formulario-linha--cidade">
                   <label>
-                    Nome
-                    <input value={nomeCidade} onChange={e => setNomeCidade(e.target.value)} />
+                    <span>Nome<Obrigatorio /></span>
+                    <input value={nomeCidade} maxLength={LIMITES.nomeLocal} required onChange={e => setNomeCidade(e.target.value)} />
                   </label>
                   <label>
-                    <span><LuMessageCircle /> Grupo de alertas (ID do grupo)</span>
+                    <span><LuMessageCircle /> Grupo de alertas (ID do grupo)<Opcional /></span>
                     <input
+                      maxLength={LIMITES.grupoId}
                       value={grupoCidade}
                       onChange={e => setGrupoCidade(e.target.value)}
                       placeholder="Ex: 120363012345678901@g.us"
@@ -308,8 +315,10 @@ function GerenciarRegioes() {
                 {/* Link de convite: o bot envia para quem quiser entrar no grupo (menu Alertas) */}
                 <div className="formulario-linha formulario-linha--uma">
                   <label>
-                    <span><LuMessageCircle /> Link de convite do grupo (enviado pelo bot a quem quiser entrar)</span>
+                    <span><LuMessageCircle /> Link de convite do grupo (enviado pelo bot a quem quiser entrar)<Opcional /></span>
                     <input
+                      type="url"
+                      maxLength={LIMITES.link}
                       value={linkGrupoCidade}
                       onChange={e => setLinkGrupoCidade(e.target.value)}
                       placeholder="Ex: https://chat.whatsapp.com/AbCdEf123456"
@@ -329,9 +338,12 @@ function GerenciarRegioes() {
                 {/* Busca por CEP para preencher o nome do bairro */}
                 <div className="barra-filtros">
                   <input
-                    placeholder="Preencher pelo CEP (ex: 12070-610)"
+                    aria-label="CEP para preencher o bairro"
+                    placeholder={`Preencher pelo CEP (${EXEMPLOS.cep.toLowerCase()})`}
+                    inputMode="numeric"
+                    maxLength={LIMITES.cep}
                     value={cep}
-                    onChange={e => setCep(e.target.value)}
+                    onChange={e => setCep(mascaraCep(e.target.value))}
                     style={{ maxWidth: '260px' }}
                   />
                   <button type="button" className="sv-btn sv-btn--vidro" onClick={handleBuscarCep} disabled={cep.replace(/\D/g, '').length !== 8}>
@@ -346,22 +358,27 @@ function GerenciarRegioes() {
 
                 <form className="formulario-linha" onSubmit={handleCadastrarBairro}>
                   <label>
-                    Novo bairro
-                    <input value={novoBairro.nome} onChange={e => setNovoBairro({ ...novoBairro, nome: e.target.value })} placeholder="Nome do bairro" required />
+                    <span>Novo bairro<Obrigatorio /></span>
+                    <input value={novoBairro.nome} onChange={e => setNovoBairro({ ...novoBairro, nome: e.target.value })} placeholder="Nome do bairro"
+                      maxLength={LIMITES.nomeLocal} minLength={2} required />
                   </label>
                   <label>
-                    Risco
+                    <span>Risco<Obrigatorio /></span>
                     <select value={novoBairro.nivelRisco} onChange={e => setNovoBairro({ ...novoBairro, nivelRisco: e.target.value })}>
                       {NIVEIS_RISCO.map(n => <option key={n.valor} value={n.valor}>{n.label}</option>)}
                     </select>
                   </label>
                   <label>
-                    População
-                    <input type="number" min="0" value={novoBairro.populacaoEstimada} onChange={e => setNovoBairro({ ...novoBairro, populacaoEstimada: e.target.value })} placeholder="Opcional" />
+                    <span>População<Opcional /></span>
+                    {/* Só números (o type="number" aceitava "e", "+" e "-") */}
+                    <input inputMode="numeric" maxLength={LIMITES.populacaoDigitos} value={novoBairro.populacaoEstimada} placeholder="Ex: 5000"
+                      onChange={e => setNovoBairro({ ...novoBairro, populacaoEstimada: somenteNumeros(e.target.value, LIMITES.populacaoDigitos) })} />
                   </label>
                   <label>
-                    Área (km²)
-                    <input type="number" min="0" step="0.01" value={novoBairro.areaKm2} onChange={e => setNovoBairro({ ...novoBairro, areaKm2: e.target.value })} placeholder="Opcional" />
+                    <span>Área (km²)<Opcional /></span>
+                    {/* Número com até 2 casas decimais; aceita vírgula */}
+                    <input inputMode="decimal" value={novoBairro.areaKm2} placeholder="Ex: 2,5"
+                      onChange={e => setNovoBairro({ ...novoBairro, areaKm2: somenteDecimal(e.target.value) })} />
                   </label>
                   <button type="submit" className="sv-btn sv-btn--primario"><LuPlus /> Adicionar</button>
                 </form>
@@ -387,14 +404,14 @@ function GerenciarRegioes() {
                       )}
                       {bairros.map(b => editandoBairroId === b.id_bairro ? (
                         <tr key={b.id_bairro}>
-                          <td><input value={bairroEditado.nome} onChange={e => setBairroEditado({ ...bairroEditado, nome: e.target.value })} /></td>
+                          <td><input aria-label="Nome do bairro" value={bairroEditado.nome} maxLength={LIMITES.nomeLocal} required onChange={e => setBairroEditado({ ...bairroEditado, nome: e.target.value })} /></td>
                           <td>
                             <select value={bairroEditado.nivelRisco} onChange={e => setBairroEditado({ ...bairroEditado, nivelRisco: e.target.value })}>
                               {NIVEIS_RISCO.map(n => <option key={n.valor} value={n.valor}>{n.label}</option>)}
                             </select>
                           </td>
-                          <td><input type="number" min="0" value={bairroEditado.populacaoEstimada} onChange={e => setBairroEditado({ ...bairroEditado, populacaoEstimada: e.target.value })} /></td>
-                          <td><input type="number" min="0" step="0.01" value={bairroEditado.areaKm2} onChange={e => setBairroEditado({ ...bairroEditado, areaKm2: e.target.value })} /></td>
+                          <td><input aria-label="População" inputMode="numeric" maxLength={LIMITES.populacaoDigitos} value={bairroEditado.populacaoEstimada} onChange={e => setBairroEditado({ ...bairroEditado, populacaoEstimada: somenteNumeros(e.target.value, LIMITES.populacaoDigitos) })} /></td>
+                          <td><input aria-label="Área em km²" inputMode="decimal" value={bairroEditado.areaKm2} onChange={e => setBairroEditado({ ...bairroEditado, areaKm2: somenteDecimal(e.target.value) })} /></td>
                           <td>{b.totalMoradores + b.totalInteressados}</td>
                           <td>{b.totalAbrigos}</td>
                           <td>{b.alertasAbertos}</td>

@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { LuIdCard, LuLock, LuMail, LuPhone, LuUser, LuUserPlus } from 'react-icons/lu';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { API_URL, hojeISO } from '../../services/api';
+import { LIMITES, EXEMPLOS, somenteNome, mascaraCpf, mascaraTelefone, erroDosCampos } from '../../utils/campos';
+import { Obrigatorio, Opcional, AvisoObrigatorios } from '../../components/MarcasCampo';
+// Importada (e não "src/assets/..."): o caminho de texto quebrava no build
 import logoSosVale from '../../assets/logo-sosvale.png';
 import '../../styles/sosvale-glass.css';
 
@@ -21,17 +25,25 @@ const CadastroVoluntario = () => {
     const fazerCadastro = async (e) => {
         e.preventDefault(); // impede a página de recarregar
         setErro("");
+
+        // Confere CPF (dígitos verificadores) e telefone antes de enviar
+        const erroCampos = erroDosCampos({ cpf, telefone });
+        if (erroCampos) {
+            setErro(erroCampos);
+            return;
+        }
+
         setCarregando(true);
 
         try {
-            const response = await fetch("http://localhost:3000/api/voluntarios/cadastrar", {
+            const response = await fetch(`${API_URL}/api/voluntarios/cadastrar`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    nome,
-                    email,
+                    nome:           nome.trim(),
+                    email:          email.trim(),
                     senha,
                     telefone:       telefone       || null, // opcional — manda null se vazio
                     cpf:            cpf            || null, // opcional — manda null se vazio
@@ -71,17 +83,20 @@ const CadastroVoluntario = () => {
                 </div>
 
                 <form onSubmit={fazerCadastro} className="sv-form">
+                    <AvisoObrigatorios />
                     {/* Nome — obrigatório */}
                     <div className="sv-campo">
-                        <label htmlFor="cv-nome">Nome completo</label>
+                        <label htmlFor="cv-nome">Nome completo<Obrigatorio /></label>
                         <span className="sv-campo-icone">
                             <LuUser />
                             <input
                                 id="cv-nome"
                                 type="text"
                                 placeholder="Seu nome completo"
+                                maxLength={LIMITES.nomePessoa}
+                                minLength={2}
                                 value={nome}
-                                onChange={(e) => setNome(e.target.value)}
+                                onChange={(e) => setNome(somenteNome(e.target.value))}
                                 required
                             />
                         </span>
@@ -90,13 +105,14 @@ const CadastroVoluntario = () => {
                     <div className="sv-form-grade">
                         {/* E-mail — obrigatório e único no banco */}
                         <div className="sv-campo">
-                            <label htmlFor="cv-email">E-mail</label>
+                            <label htmlFor="cv-email">E-mail<Obrigatorio /></label>
                             <span className="sv-campo-icone">
                                 <LuMail />
                                 <input
                                     id="cv-email"
                                     type="email"
-                                    placeholder="seu@email.com"
+                                    placeholder={EXEMPLOS.email}
+                                    maxLength={LIMITES.email}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
@@ -106,13 +122,16 @@ const CadastroVoluntario = () => {
 
                         {/* Senha — obrigatório, criptografada no backend com bcrypt */}
                         <div className="sv-campo">
-                            <label htmlFor="cv-senha">Senha</label>
+                            <label htmlFor="cv-senha">Senha<Obrigatorio /></label>
                             <span className="sv-campo-icone">
                                 <LuLock />
                                 <input
                                     id="cv-senha"
                                     type="password"
-                                    placeholder="Crie uma senha"
+                                    placeholder={`De ${LIMITES.senhaMin} a ${LIMITES.senhaMax} caracteres`}
+                                    minLength={LIMITES.senhaMin}
+                                    maxLength={LIMITES.senhaMax}
+                                    autoComplete="new-password"
                                     value={senha}
                                     onChange={(e) => setSenha(e.target.value)}
                                     required
@@ -122,40 +141,46 @@ const CadastroVoluntario = () => {
 
                         {/* Telefone — opcional no banco (VarChar 15) */}
                         <div className="sv-campo">
-                            <label htmlFor="cv-telefone">Telefone <span className="sv-campo-ajuda">(opcional)</span></label>
+                            <label htmlFor="cv-telefone">Telefone<Opcional /></label>
                             <span className="sv-campo-icone">
                                 <LuPhone />
                                 <input
                                     id="cv-telefone"
                                     type="tel"
-                                    placeholder="(11) 99999-9999"
+                                    maxLength={LIMITES.telefone}
+                                    inputMode="numeric"
+                                    placeholder={EXEMPLOS.telefone}
                                     value={telefone}
-                                    onChange={(e) => setTelefone(e.target.value)}
+                                    onChange={(e) => setTelefone(mascaraTelefone(e.target.value))}
                                 />
                             </span>
                         </div>
 
                         {/* CPF — opcional no banco (VarChar 14) */}
                         <div className="sv-campo">
-                            <label htmlFor="cv-cpf">CPF <span className="sv-campo-ajuda">(opcional)</span></label>
+                            <label htmlFor="cv-cpf">CPF<Opcional /></label>
                             <span className="sv-campo-icone">
                                 <LuIdCard />
                                 <input
                                     id="cv-cpf"
                                     type="text"
-                                    placeholder="000.000.000-00"
+                                    maxLength={LIMITES.cpf}
+                                    inputMode="numeric"
+                                    placeholder={EXEMPLOS.cpf}
                                     value={cpf}
-                                    onChange={(e) => setCpf(e.target.value)}
+                                    onChange={(e) => setCpf(mascaraCpf(e.target.value))}
                                 />
                             </span>
                         </div>
 
                         {/* Data de nascimento — obrigatório no schema */}
                         <div className="sv-campo">
-                            <label htmlFor="cv-nascimento">Data de nascimento</label>
+                            <label htmlFor="cv-nascimento">Data de nascimento<Obrigatorio /></label>
                             <input
                                 id="cv-nascimento"
                                 type="date"
+                                min="1900-01-01"
+                                max={hojeISO()}
                                 value={dataNascimento}
                                 onChange={(e) => setDataNascimento(e.target.value)}
                                 required
@@ -164,7 +189,7 @@ const CadastroVoluntario = () => {
 
                         {/* Gênero — obrigatório no schema */}
                         <div className="sv-campo">
-                            <label htmlFor="cv-genero">Gênero</label>
+                            <label htmlFor="cv-genero">Gênero<Obrigatorio /></label>
                             <select
                                 id="cv-genero"
                                 value={genero}
@@ -189,12 +214,10 @@ const CadastroVoluntario = () => {
                     </button>
                 </form>
 
-                {/* Link para quem já tem conta */}
+                {/* Link para quem já tem conta (Link = <a>: dá para usar pelo teclado) */}
                 <p className="sv-publica-rodape">
                     Já tem uma conta?{" "}
-                    <button type="button" className="sv-link" onClick={() => navigate('/login-voluntario')}>
-                        Faça login
-                    </button>
+                    <Link className="sv-link" to="/login-voluntario">Faça login</Link>
                 </p>
             </div>
         </div>

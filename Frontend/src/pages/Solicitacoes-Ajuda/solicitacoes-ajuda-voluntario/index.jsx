@@ -4,6 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { LuBuilding2, LuHandHeart, LuHeart, LuPhone, LuX } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { API_URL } from '../../../services/api';
+import { fetchVoluntario } from '../../../services/voluntario';
 
 // ─── Badges e labels ──────────────────────────────────────────────────────────
 const badgeUrgencia = {
@@ -23,8 +25,8 @@ const categoriaLabel = {
 
 const CATEGORIAS = ['todas', 'doacao', 'medicamento', 'voluntariado', 'infraestrutura', 'outro']
 
-// TODO: substituir pelo id real do voluntário logado (contexto de auth / JWT)
-const VOLUNTARIO_LOGADO_ID = 1
+// O voluntário logado é identificado pelo token (token_voluntario), não por um id
+// fixo na tela — antes era "VOLUNTARIO_LOGADO_ID = 1" e todo interesse ia para o voluntário 1
 
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -48,14 +50,12 @@ function SolicitacoesAjudaVoluntario() {
     const buscar = async () => {
       try {
         // Rota pública — já filtra status aberto/em_andamento no backend
-        const res = await fetch('http://localhost:3000/api/solicitacoes-ajuda/publico')
+        const res = await fetch(`${API_URL}/api/solicitacoes-ajuda/publico`)
         const dados = await res.json()
         setSolicitacoes(dados.solicitacoes ?? [])
 
         // Busca os interesses já marcados pelo voluntário logado
-        const resInt = await fetch(
-          `http://localhost:3000/api/solicitacoes-ajuda/meus-interesses?voluntarioId=${VOLUNTARIO_LOGADO_ID}`
-        )
+        const resInt = await fetchVoluntario('/solicitacoes-ajuda/meus-interesses')
         const dadosInt = await resInt.json()
         const ids = new Set((dadosInt.interesses ?? []).map(i => i.solicitacaoId))
         setInteresses(ids)
@@ -82,10 +82,9 @@ function SolicitacoesAjudaVoluntario() {
 
     try {
       // Rota do backend é /interesse/:id (id da solicitação vem depois de "interesse")
-      const resposta = await fetch(`http://localhost:3000/api/solicitacoes-ajuda/interesse/${solicitacaoId}`, {
+      // Sem corpo: a API sabe quem é o voluntário pelo token
+      const resposta = await fetchVoluntario(`/solicitacoes-ajuda/interesse/${solicitacaoId}`, {
         method: jaTemInteresse ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voluntarioId: VOLUNTARIO_LOGADO_ID }),
       })
 
       if (!resposta.ok) {

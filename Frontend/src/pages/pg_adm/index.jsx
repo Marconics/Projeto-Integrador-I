@@ -5,6 +5,7 @@ import { FaBoxOpen, FaMapPin, FaRegBell, FaUser, FaHome, FaDonate, FaChevronDown
 import { GoAlertFill } from "react-icons/go";
 import { FaHeart, FaGear, FaClipboardList, FaTriangleExclamation, FaClock, FaLocationDot, FaMap, FaPeopleGroup, FaCommentDots } from "react-icons/fa6";
 import SidebarAdm from '../../components/SidebarAdm';
+import { fetchAdmin } from '../../services/api';
 
 // Categorias das solicitações de ajuda (mesmos valores do enum do banco)
 const categoriasAjuda = {
@@ -53,7 +54,7 @@ const PgAdm = () => {
   useEffect(() => {
     async function buscarSolicitacoes() {
       try {
-        const resposta = await fetch('http://localhost:3000/api/solicitacoes/listar')
+        const resposta = await fetchAdmin('/solicitacoes/listar')
 
         // Se o servidor retornou erro (ex: 500), lança uma exceção manualmente
         if (!resposta.ok) throw new Error('Erro ao buscar solicitações')
@@ -70,15 +71,10 @@ const PgAdm = () => {
       }
     }
 
-    // Alertas exigem login de admin — se não houver token ou der erro,
-    // o card mostra "—" em vez de derrubar o dashboard
+    // Se der erro, o card mostra "—" em vez de derrubar o dashboard
     async function buscarAlertas() {
-      const token = localStorage.getItem('token_adm')
-      if (!token) return
       try {
-        const resposta = await fetch('http://localhost:3000/api/alertas/listar', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const resposta = await fetchAdmin('/alertas/listar')
         if (!resposta.ok) return
         const dados = await resposta.json()
         setAlertas(dados.alertas)
@@ -89,7 +85,7 @@ const PgAdm = () => {
 
     async function buscarAjuda() {
       try {
-        const resposta = await fetch('http://localhost:3000/api/solicitacoes-ajuda/listar')
+        const resposta = await fetchAdmin('/solicitacoes-ajuda/listar')
         if (!resposta.ok) return
         const dados = await resposta.json()
         setAjuda(dados.solicitacoes)
@@ -103,18 +99,37 @@ const PgAdm = () => {
     buscarAjuda()
   }, []) // ← o [] garante que roda só uma vez (se fosse [periodo], rodaria toda vez que periodo mudasse)
 
+  // ─── FILTROS DO TOPO (Município e Período) ───────────────────
+  // Antes os dois selects mudavam o estado mas nenhum cálculo usava o valor.
+  // Agora valem para os cards, as atividades e o gráfico.
+  const cidadeFiltro = municipio === 'Todos os Municípios' ? null : municipio
+  const diasPeriodo = { 'Últimos 30 dias': 30, 'Últimos 7 dias': 7, 'Hoje': 0 }[periodo] ?? 30
+  const inicioPeriodo = new Date()
+  inicioPeriodo.setHours(0, 0, 0, 0)
+  inicioPeriodo.setDate(inicioPeriodo.getDate() - diasPeriodo)
+
+  const dentroDoFiltro = (cidade, data) =>
+    (!cidadeFiltro || cidade === cidadeFiltro) && new Date(data) >= inicioPeriodo
+
+  const solicitacoesFiltradas = solicitacoes.filter(s => dentroDoFiltro(s.cidade, s.createdAt))
+  const ajudaFiltrada = ajuda.filter(s => dentroDoFiltro(s.abrigo?.cidade, s.createdAt))
+  const alertasFiltrados = alertas ? alertas.filter(a => dentroDoFiltro(a.cidade, a.createdAt)) : null
+
   // ─── DERIVAÇÕES DOS DADOS ────────────────────────────────────
   // Contamos direto do array que veio da API, sem guardar em estado separado
   // Isso é chamado de "estado derivado" — calculamos na hora do render
 
-  // Quantas solicitações de abrigo existem no total
-  const totalSolicitacoesAbrigo = solicitacoes.length
+  // Quantas solicitações de abrigo existem no período (todas as situações)
+  const totalSolicitacoesAbrigo = solicitacoesFiltradas.length
 
-  // Quantas ainda estão pendentes (= "não lidas" para o card)
-  const pendentesSolicitacoesAbrigo = solicitacoes.filter(s => s.status === 'pendente').length
+  // Quantas ainda estão pendentes (= "novas" para o card)
+  const pendentesSolicitacoesAbrigo = solicitacoesFiltradas.filter(s => s.status === 'pendente').length
+
+  // O sininho do topo avisa TODAS as pendentes, sem filtro
+  const totalPendentesAbrigo = solicitacoes.filter(s => s.status === 'pendente').length
 
   // Solicitações de ajuda ainda não resolvidas (aberto ou em andamento)
-  const ajudaEmAberto = ajuda.filter(s => ['aberto', 'em_andamento'].includes(s.status))
+  const ajudaEmAberto = ajudaFiltrada.filter(s => ['aberto', 'em_andamento'].includes(s.status))
   const ajudaDaCategoria = (categoria) => ajudaEmAberto.filter(s => s.categoria === categoria)
   const criticas = (lista) => lista.filter(s => s.urgencia === 'critica' || s.urgencia === 'alta').length
 
@@ -130,8 +145,10 @@ const PgAdm = () => {
     {
       id: 'abrigo',
       label: 'Novas solicitações de abrigo',
-      value: totalSolicitacoesAbrigo,       // ← vem da API
-      unread: pendentesSolicitacoesAbrigo,  // ← vem da API
+      // Só as pendentes (antes contava todas, inclusive aprovadas e recusadas)
+      value: pendentesSolicitacoesAbrigo,
+      unread: totalSolicitacoesAbrigo,
+      unreadLabel: 'no total',
       icon: <FaClipboardList />,
       accent: 'blue'
     },
@@ -159,8 +176,8 @@ const PgAdm = () => {
       id: 'Alertas',
       label: 'Alertas abertos',
       // abertos = em verificação + ativos (vem da API)
-      value: alertas ? alertas.filter(a => ['em_verificacao', 'ativo'].includes(a.status)).length : '—',
-      unread: alertas ? alertas.filter(a => a.status === 'em_verificacao').length : '—',
+      value: alertasFiltrados ? alertasFiltrados.filter(a => ['em_verificacao', 'ativo'].includes(a.status)).length : '—',
+      unread: alertasFiltrados ? alertasFiltrados.filter(a => a.status === 'em_verificacao').length : '—',
       unreadLabel: 'em verificação',
       href: '/alertas',
       icon: <FaRegBell />,
@@ -184,7 +201,7 @@ const PgAdm = () => {
   // Junta solicitações de abrigo, solicitações de ajuda e alertas numa só lista,
   // cada item com o link para a sua própria tela
   const activitiesData = [
-    ...solicitacoes.map(s => ({
+    ...solicitacoesFiltradas.map(s => ({
       id:     `abrigo-${s.id_solicitacao}`,
       title:  `Abrigo solicitado: ${s.nome}`,
       place:  [s.bairro, s.cidade].filter(Boolean).join(', '),  // ← bairro é opcional
@@ -194,7 +211,7 @@ const PgAdm = () => {
       href:   `/visualizar-solicitação-abrigo/${s.id_solicitacao}`,
       botao:  'Ver solicitação',
     })),
-    ...ajuda.map(s => ({
+    ...ajudaFiltrada.map(s => ({
       id:     `ajuda-${s.id_solicitacao}`,
       title:  `Ajuda: ${s.titulo}`,
       place:  [s.abrigo?.nome, s.abrigo?.cidade].filter(Boolean).join(' — '),
@@ -204,7 +221,7 @@ const PgAdm = () => {
       href:   `/visualizar-solicitacao-ajuda/${s.id_solicitacao}`,
       botao:  'Ver pedido',
     })),
-    ...(alertas ?? []).map(a => ({
+    ...(alertasFiltrados ?? []).map(a => ({
       id:     `alerta-${a.id_alerta}`,
       title:  `Alerta: ${a.tipoLabel}`,
       place:  `${a.bairro}, ${a.cidade}`,
@@ -255,7 +272,7 @@ const PgAdm = () => {
             >
               <FaRegBell />
               {/* Badge dinâmico: total de pendentes em todas as categorias */}
-              <span className="notif-badge">{pendentesSolicitacoesAbrigo}</span>
+              <span className="notif-badge">{totalPendentesAbrigo}</span>
             </button>
             <div className="filter-select">
               <FaLocationDot className="filter-select-icon" />

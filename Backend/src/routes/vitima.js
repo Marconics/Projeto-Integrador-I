@@ -2,22 +2,52 @@
 import prisma from '../lib/prisma.js'
 import supabase from '../supabase.js'
 import { selectLocalizacao, achatarLocalizacao } from '../lib/localizacao.js'
+import { LIMITE_CORPO_COM_FOTO, LIMITES, validarNascimento, dataParaTexto, textoOuNull, validarTamanhos, validarFormatos } from '../lib/validacao.js'
+
+
+// Erro de valor duplicado no banco (P2002) — o telefone da vítima é único
+function erroDuplicado(erro) {
+  return erro?.code === 'P2002'
+    ? 'Já existe uma vítima cadastrada com este telefone.'
+    : null
+}
 
 
 // Exporta a função que define as rotas de vítima
 export default async function vitimaRoutes(app) {
 
+  // Todas as rotas de vítima exigem login de administrador:
+  // elas trazem CPF, telefone e data de nascimento (dados pessoais — LGPD)
+  app.addHook('onRequest', app.authenticateAdmin)
+
   //----- Cadastrar -----
   //Rota POST para cadastrar uma nova vítima
   //URL http://localhost:3000/api/vitimas/cadastrar
-  app.post('/cadastrar', async (request, reply) => {
+  app.post('/cadastrar', { bodyLimit: LIMITE_CORPO_COM_FOTO }, async (request, reply) => {
 
     // Extrai os dados do corpo da requisição
-    const { nome, cpf, telefone, dataNascimento, genero, fotoVitima, abrigoId } = request.body
-    const dataFormatada = new Date(dataNascimento)
+    const { nome, dataNascimento, genero, fotoVitima, abrigoId } = request.body
+    // Campo vazio vira null — o telefone é único no banco, e "" repetido dava erro
+    const cpf      = textoOuNull(request.body.cpf)
+    const telefone = textoOuNull(request.body.telefone)
+
+    if (!nome?.trim() || !genero?.trim()) {
+      return reply.status(400).send({ mensagem: 'Nome e gênero são obrigatórios.' })
+    }
+
+    const nascimento = validarNascimento(dataNascimento)
+    if (nascimento.erro) {
+      return reply.status(400).send({ mensagem: nascimento.erro })
+    }
+
+    const erroTamanho = validarTamanhos([['Nome', nome, LIMITES.nomePessoa], ['CPF', cpf, LIMITES.cpf], ['Telefone', telefone, LIMITES.telefone]])
+      ?? validarFormatos({ cpf, telefone })
+    if (erroTamanho) {
+      return reply.status(400).send({ mensagem: erroTamanho })
+    }
 
     // Verifica se já existe uma vítima com o mesmo CPF
-    const vitimaExistente = await prisma.vitima.findFirst({
+    const vitimaExistente = cpf && await prisma.vitima.findFirst({
       where: { cpf }
     })
 
@@ -49,7 +79,7 @@ export default async function vitimaRoutes(app) {
           nome,
           cpf,
           telefone,
-          dataNascimento: dataFormatada,
+          dataNascimento: nascimento.data,
           genero,
           fotoVitima: null,
           abrigoId:   abrigoId ? Number(abrigoId) : null,
@@ -104,14 +134,17 @@ export default async function vitimaRoutes(app) {
         nome: vitima.nome,
         cpf: vitima.cpf,
         telefone: vitima.telefone,
-        // Formata a data para exibição no padrão brasileiro
-        dataNascimento: vitima.dataNascimento?.toLocaleDateString('pt-BR'),
+        // AAAA-MM-DD em UTC (o formato local perdia 1 dia por causa do fuso)
+        dataNascimento: dataParaTexto(vitima.dataNascimento),
         genero: vitima.genero,
         fotoVitima: vitima.fotoVitima,
         abrigoId: vitima.abrigoId,
       })
 
     } catch (erro) {
+      if (erroDuplicado(erro)) {
+        return reply.status(400).send({ mensagem: erroDuplicado(erro) })
+      }
       console.error('ERRO DETALHADO:', erro)
       return reply.status(500).send({ mensagem: erro.message })
     }
@@ -184,11 +217,12 @@ export default async function vitimaRoutes(app) {
     }
 
     // O Prisma já retorna todos os campos automaticamente com o findUnique
-    // Formata a data para exibição no padrão brasileiro antes de retornar
+    // A data vai como AAAA-MM-DD (UTC): é o formato do <input type="date"> e não
+    // perde 1 dia por causa do fuso (a tela formata para DD/MM/AAAA ao exibir)
     return reply.status(200).send({
       ...vitima,
       abrigo: achatarLocalizacao(vitima.abrigo),
-      dataNascimento: vitima.dataNascimento?.toLocaleDateString('pt-BR')
+      dataNascimento: dataParaTexto(vitima.dataNascimento)
     })
   })
 
@@ -196,12 +230,15 @@ export default async function vitimaRoutes(app) {
   //----- Atualizar -----
   //Rota PUT para atualizar os dados de uma vítima
   //URL http://localhost:3000/api/vitimas/atualizar/:id
-  app.put('/atualizar/:id', async (request, reply) => {
+  app.put('/atualizar/:id', { bodyLimit: LIMITE_CORPO_COM_FOTO }, async (request, reply) => {
     try {
 
       // Extrai o ID da URL e os dados do corpo
       const { id } = request.params
-      const { nome, cpf, telefone, dataNascimento, genero, fotoVitima, abrigoId } = request.body
+      const { nome, dataNascimento, genero, fotoVitima, abrigoId } = request.body
+      // Campo vazio vira null (undefined = não veio, mantém o atual)
+      const cpf      = textoOuNull(request.body.cpf)
+      const telefone = textoOuNull(request.body.telefone)
 
       // Verifica se a vítima existe
       const vitimaExistente = await prisma.vitima.findUnique({
@@ -211,6 +248,31 @@ export default async function vitimaRoutes(app) {
       // Se não existir, retorna erro 404
       if (!vitimaExistente) {
         return reply.status(404).send({ mensagem: 'Vítima não encontrada.' })
+      }
+
+      // Validações antes de mexer em foto, abrigo ou banco
+      if (nome !== undefined && !nome?.trim()) {
+        return reply.status(400).send({ mensagem: 'O nome é obrigatório.' })
+      }
+      if (genero !== undefined && !genero?.trim()) {
+        return reply.status(400).send({ mensagem: 'O gênero é obrigatório.' })
+      }
+
+      // Aceita AAAA-MM-DD ou DD/MM/AAAA; se não veio, mantém a data atual
+      let novaDataNascimento = undefined
+      if (dataNascimento !== undefined) {
+        const nascimento = validarNascimento(dataNascimento)
+        if (nascimento.erro) {
+          return reply.status(400).send({ mensagem: nascimento.erro })
+        }
+        novaDataNascimento = nascimento.data
+      }
+
+      // CPF/telefone só são conferidos se mudaram (cadastros antigos continuam editáveis)
+      const erroTamanho = validarTamanhos([['Nome', nome, LIMITES.nomePessoa], ['CPF', cpf, LIMITES.cpf], ['Telefone', telefone, LIMITES.telefone]])
+        ?? validarFormatos({ cpf, telefone }, vitimaExistente)
+      if (erroTamanho) {
+        return reply.status(400).send({ mensagem: erroTamanho })
       }
 
       // Define a URL da foto que vai ser salva no banco
@@ -284,11 +346,12 @@ export default async function vitimaRoutes(app) {
       // Por padrão mantém a dataEntrada atual
       let dataEntradaFinal = vitimaExistente.dataEntrada
 
-      if (abrigoMudou) {
-        // Roda tudo dentro de uma transação para garantir consistência:
-        // se qualquer etapa falhar (ex: abrigo lotado), nenhuma alteração é salva no banco
-        await prisma.$transaction(async (tx) => {
+      // Roda tudo dentro de uma transação para garantir consistência:
+      // se qualquer etapa falhar (ex: abrigo lotado, telefone repetido),
+      // nenhuma alteração é salva — nem a ocupação dos abrigos
+      const vitimaAtualizado = await prisma.$transaction(async (tx) => {
 
+        if (abrigoMudou) {
           // 1. Decrementa o abrigo antigo (se a vítima estava em algum)
           if (abrigoIdAntigo) {
             await tx.abrigo.update({
@@ -324,31 +387,22 @@ export default async function vitimaRoutes(app) {
             // Vítima saiu do abrigo sem ir para outro — limpa a dataEntrada
             dataEntradaFinal = null
           }
-        })
-      }
-      // ──────────────────────────────────────────────────────────────────────
-
-      // Converte a string de data para objeto Date antes de salvar no banco
-      // O backend retorna a data formatada como DD/MM/YYYY para o frontend
-      // mas o new Date() não entende esse formato — por isso converte manualmente:
-      // "01/02/2000" → split('/') → ['01','02','2000'] → reverse → ['2000','02','01'] → join('-') → "2000-02-01"
-      // Se a data já vier no formato ISO (YYYY-MM-DD), o new Date() funciona normalmente
-      const dataConvertida = dataNascimento.includes('/')
-        ? new Date(dataNascimento.split('/').reverse().join('-'))
-        : new Date(dataNascimento)
-
-      const vitimaAtualizado = await prisma.vitima.update({
-        where: { id_vitima: Number(id) },
-        data: {
-          nome,
-          cpf,
-          telefone,
-          dataNascimento: dataConvertida,
-          genero,
-          fotoVitima:  fotoUrl,
-          abrigoId:    abrigoIdNovo,
-          dataEntrada: dataEntradaFinal, // ← agora é salva/limpa corretamente
         }
+        // ────────────────────────────────────────────────────────────────────
+
+        return tx.vitima.update({
+          where: { id_vitima: Number(id) },
+          data: {
+            nome,
+            cpf,
+            telefone,
+            dataNascimento: novaDataNascimento,
+            genero,
+            fotoVitima:  fotoUrl,
+            abrigoId:    abrigoIdNovo,
+            dataEntrada: dataEntradaFinal, // ← agora é salva/limpa corretamente
+          }
+        })
       })
 
       return reply.status(200).send({
@@ -357,7 +411,7 @@ export default async function vitimaRoutes(app) {
         nome:           vitimaAtualizado.nome,
         cpf:            vitimaAtualizado.cpf,
         telefone:       vitimaAtualizado.telefone,
-        dataNascimento: vitimaAtualizado.dataNascimento?.toLocaleDateString('pt-BR'),
+        dataNascimento: dataParaTexto(vitimaAtualizado.dataNascimento),
         genero:         vitimaAtualizado.genero,
         fotoVitima:     vitimaAtualizado.fotoVitima,
         abrigoId:       vitimaAtualizado.abrigoId,
@@ -365,6 +419,9 @@ export default async function vitimaRoutes(app) {
       })
 
     } catch (erro) {
+      if (erroDuplicado(erro)) {
+        return reply.status(400).send({ mensagem: erroDuplicado(erro) })
+      }
       console.error('ERRO DETALHADO:', erro)
       // Erro de negócio (lotado, abrigo não encontrado) → 409; outros → 500
       const status = erro.message.includes('lotado') || erro.message.includes('não encontrado') ? 409 : 500
@@ -389,15 +446,29 @@ export default async function vitimaRoutes(app) {
     }
 
     try {
-      // Se a vítima estava em um abrigo, decrementa a capacidade ocupada antes de deletar
-      if (vitimaExistente.abrigoId) {
-        await prisma.abrigo.update({
-          where: { id_abrigo: vitimaExistente.abrigoId },
-          data:  { capacidadeOcupada: { decrement: 1 } }
+      // Tudo numa transação: ou exclui a vítima E libera a vaga no abrigo, ou nada.
+      // Antes a vaga era liberada primeiro e, se o delete falhasse (vítima com
+      // deficiência cadastrada → chave estrangeira), a ocupação ficava errada.
+      await prisma.$transaction(async (tx) => {
+        // Remove as ligações com deficiências (só pertencem a esta vítima)
+        await tx.vitimaDeficiencia.deleteMany({
+          where: { id_vitima: Number(id) }
         })
-      }
 
-      // Se o vitima tiver foto, remove do Storage antes de deletar o registro
+        await tx.vitima.delete({
+          where: { id_vitima: Number(id) }
+        })
+
+        // Se a vítima estava em um abrigo, libera a vaga
+        if (vitimaExistente.abrigoId) {
+          await tx.abrigo.update({
+            where: { id_abrigo: vitimaExistente.abrigoId },
+            data:  { capacidadeOcupada: { decrement: 1 } }
+          })
+        }
+      })
+
+      // Só apaga a foto do Storage depois que o registro foi excluído de verdade
       // O nome do arquivo é extraído da URL salva no banco, já que agora o nome tem timestamp
       // Exemplo: "https://...supabase.co/.../vitima-24-1718323200000.jpg" → "vitima-24-1718323200000.jpg"
       if (vitimaExistente.fotoVitima) {
@@ -406,10 +477,6 @@ export default async function vitimaRoutes(app) {
           .from('fotos-vitima')
           .remove([nomeArquivo])
       }
-
-      await prisma.vitima.delete({
-        where: { id_vitima: Number(id) }
-      })
 
       return reply.status(200).send({ mensagem: 'vitima excluído com sucesso!' })
 

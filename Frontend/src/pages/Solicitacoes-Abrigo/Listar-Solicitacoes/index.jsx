@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { LuChevronRight, LuClipboardList } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin } from '../../../services/api';
 
 function ListaSolicitacoesAbrigo() {
 
@@ -18,7 +19,7 @@ function ListaSolicitacoesAbrigo() {
   useEffect(() => {
     const buscarSolicitacoes = async () => {
       try {
-        const resposta = await fetch('http://localhost:3000/api/solicitacoes/listar')
+        const resposta = await fetchAdmin('/solicitacoes/listar')
         const dados = await resposta.json()
         setSolicitacoes(dados.solicitacoes)
       } catch (erro) {

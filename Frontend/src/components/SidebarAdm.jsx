@@ -1,5 +1,5 @@
 import {
-  FaHome, FaBoxOpen, FaUser, FaMap, FaUsers, FaMapMarkedAlt, FaHandHoldingHeart, FaClipboardList
+  FaHome, FaBoxOpen, FaUser, FaMap, FaUsers, FaMapMarkedAlt, FaHandHoldingHeart, FaClipboardList, FaUserShield
 } from 'react-icons/fa';
 import { GoAlertFill } from 'react-icons/go';
 import { FiLogOut } from 'react-icons/fi';
@@ -18,6 +18,7 @@ const itens = [
   { id: 'alertas',             href: '/alertas',                   label: 'Alertas',                icone: <GoAlertFill className="icon" /> },
   { id: 'inscritos',           href: '/inscritos',                 label: 'Inscritos',              icone: <FaUsers className="icon" /> },
   { id: 'regioes',             href: '/regioes',                   label: 'Regiões',                icone: <FaMapMarkedAlt className="icon" /> },
+  { id: 'administradores',     href: '/administradores',           label: 'Administradores',        icone: <FaUserShield className="icon" /> },
 ]
 
 function SidebarAdm({ ativo }) {

@@ -38,7 +38,8 @@ return (
                     <h2>Sou Munícipe</h2>
                     <p>Sou um cidadão e quero me informar.</p>
                 </div>
-                <a href="#" className="sv-btn sv-btn--primario">Entrar</a>
+                {/* O módulo do munícipe ainda não existe (hoje o cidadão usa o bot do WhatsApp) */}
+                <button className="sv-btn sv-btn--primario" disabled title="Módulo do munícipe em desenvolvimento">Em breve</button>
             </div>
         </div>
     </div>

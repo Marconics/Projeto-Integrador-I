@@ -646,6 +646,17 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
 .sv-campo-ajuda { font-size: 12.5px; color: var(--sv-tinta-3); }
 .sv-campo-erro { font-size: 12.5px; font-weight: 500; color: var(--sv-sirene); }
 
+/* Marcas dos formulários (components/MarcasCampo.jsx)
+   <label>Nome<Obrigatorio /></label>   → "Nome *"
+   <label>Cargo<Opcional /></label>     → "Cargo (opcional)"
+   <AvisoObrigatorios />                → "* Campos obrigatórios"
+   <ContadorCaracteres />               → "12/120" (âmbar perto do limite) */
+.sv-campo-obrigatorio { color: var(--sv-sirene); font-weight: 700; }
+.sv-campo-opcional { color: var(--sv-tinta-3); font-weight: 400; font-size: .9em; }
+.sv-aviso-obrigatorios { margin: 0; font-size: 12.5px; color: var(--sv-tinta-3); }
+.sv-contador { display: block; margin-top: -2px; font-size: 12px; color: var(--sv-tinta-3); text-align: right; font-variant-numeric: tabular-nums; }
+.sv-contador--perto { color: var(--sv-atencao-forte); font-weight: 600; }
+
 /* Campo com ícone à esquerda (busca, login) */
 .sv-campo-icone { position: relative; display: block; min-width: 0; }
 .sv-campo-icone > svg {

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { LuChevronRight, LuHandHeart, LuPlus } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { fetchAdmin } from '../../../services/api';
 
 // ─── Constantes de exibição ───────────────────────────────────────────────────
 const badgeStatus = {
@@ -51,12 +52,12 @@ function SolicitacoesAjudaDoAbrigo() {
     const buscar = async () => {
       try {
         // Busca o nome do abrigo para o breadcrumb
-        const resAbrigo = await fetch(`http://localhost:3000/api/abrigos/listar/${id}`)
+        const resAbrigo = await fetchAdmin(`/abrigos/listar/${id}`)
         const dadosAbrigo = await resAbrigo.json()
         setNomeAbrigo(dadosAbrigo.nome ?? '')
 
         // Busca todas as solicitações do abrigo (sem limite)
-        const resSolic = await fetch(`http://localhost:3000/api/solicitacoes-ajuda/abrigo/${id}`)
+        const resSolic = await fetchAdmin(`/solicitacoes-ajuda/abrigo/${id}`)
         const dadosSolic = await resSolic.json()
         setSolicitacoes(dadosSolic.solicitacoes ?? [])
       } catch (erro) {
