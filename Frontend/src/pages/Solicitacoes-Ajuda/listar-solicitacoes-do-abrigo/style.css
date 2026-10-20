@@ -1,0 +1,83 @@
+/* Pedidos de ajuda do abrigo — peças só desta tela.
+   Resumo, abas, selects, chips, etiquetas e avisos vêm do tema (styles/sosvale-glass.css). */
+
+.pa-selects { display: flex; flex-wrap: nowrap; gap: 10px; }
+.pa-selects .sv-filtro-select { flex: 0 0 210px; }
+
+.pa-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+  gap: 18px;
+}
+
+.pa-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 18px 20px 18px 24px;
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l);
+  box-shadow: var(--sv-sombra-media);
+  overflow: hidden;
+  animation: pa-entra .45s var(--sv-suave) both;
+}
+/* Faixa lateral com a cor da urgência */
+.pa-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--sv-linha);
+}
+.pa-card--critica::before { background: var(--sv-sirene); }
+.pa-card--alta::before    { background: var(--sv-atencao); }
+.pa-card--media::before   { background: var(--sv-azul); }
+.pa-card--encerrado { opacity: .75; }
+@keyframes pa-entra {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.pa-card-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pa-card-topo .sv-tag:last-child { margin-left: auto; }
+.pa-categoria {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sv-tinta-2);
+}
+
+.pa-titulo {
+  font-family: var(--sv-fonte-display);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--sv-azul-forte);
+  overflow-wrap: anywhere;
+}
+.pa-descricao {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--sv-tinta-2);
+  overflow-wrap: anywhere;
+}
+
+.pa-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--sv-tinta-2); }
+.pa-meta > span { display: inline-flex; align-items: center; gap: 5px; }
+.pa-interessados { font-weight: 700; color: var(--sv-azul-forte); }
+
+.pa-acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 4px; }
+
+@media (max-width: 600px) {
+  .pa-card { padding: 16px 16px 16px 20px; }
+  .pa-acoes .sv-btn { flex: 1 1 140px; }
+  .pa-selects { width: 100%; flex-wrap: wrap; }
+  .pa-selects .sv-filtro-select { flex: 1 1 160px; }
+}

@@ -1,23 +1,24 @@
 // Hub de Abrigos (admin) — /abrigos
 // Lista todos os abrigos com resumo da rede, busca, filtros e ordenação.
 // Peças do tema (styles/sosvale-glass.css) + o que é só desta tela (./style.css).
-// Os auxiliares de ocupação e filtros são os mesmos da tela de Abrigos do voluntário (utils/listagem.jsx).
+// Os auxiliares de ocupação, filtros e tipos são os mesmos da tela de Abrigos do voluntário (utils/listagem.jsx),
+// que também usa os cards desta tela (./style.css).
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  LuBedDouble, LuChevronRight, LuChurch, LuClipboardList, LuDumbbell, LuHandHeart, LuHotel, LuHouse,
-  LuLandmark, LuMapPin, LuPhone, LuPlus, LuSchool, LuSearch, LuSiren, LuSlidersHorizontal, LuTent,
-  LuTriangleAlert, LuUser, LuUsers, LuWarehouse, LuX
+  LuBedDouble, LuChevronRight, LuClipboardList, LuHandHeart, LuHouse, LuMapPin, LuPhone, LuPlus,
+  LuSearch, LuSiren, LuSlidersHorizontal, LuTriangleAlert, LuUser, LuUsers, LuX
 } from 'react-icons/lu';
 
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import Miniatura from '../../../components/MiniaturaAbrigo';
 import '../../../styles/sosvale-glass.css';
 import './style.css';
 import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
 import { LIMITES } from '../../../utils/campos';
 import { API_URL } from '../../../services/api';
 import {
-  ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural, useCelular
+  ESTRUTURAS, SITUACOES, ocupacaoDe, vagasDe, corOcupacao, passaSituacao, normalizar, plural, useCelular, tipoDe
 } from '../../../utils/listagem';
 
 // Status cadastrado no abrigo → rótulo e etiqueta (sv-tag)
@@ -26,19 +27,6 @@ const STATUS_ABRIGO = {
   manutencao: { label: 'Manutenção', classe: 'sv-tag--atencao' },
   desativado: { label: 'Desativado', classe: 'sv-tag--neutro' },
 }
-
-// Tipo do abrigo → nome para exibir e ícone da miniatura quando não há foto
-const TIPOS = {
-  'Escola':            { label: 'Escola',             icone: <LuSchool /> },
-  'Ginásio':           { label: 'Ginásio',            icone: <LuDumbbell /> },
-  'Igreja':            { label: 'Igreja',             icone: <LuChurch /> },
-  'Hotel':             { label: 'Hotel',              icone: <LuHotel /> },
-  'Pousada':           { label: 'Pousada',            icone: <LuHotel /> },
-  'CentroCultural':    { label: 'Centro Cultural',    icone: <LuLandmark /> },
-  'CentroComunitário': { label: 'Centro Comunitário', icone: <LuWarehouse /> },
-  'Campo':             { label: 'Campo',              icone: <LuTent /> },
-}
-const tipoDe = (tipo) => TIPOS[tipo] ?? { label: tipo, icone: <LuHouse /> }
 
 const ORDENACOES = [
   { valor: 'nome',    label: 'Nome (A–Z)' },
@@ -53,19 +41,6 @@ const SITUACAO_CURTA = { todas: 'Todos', vagas: 'Vagas', quase: 'Quase', lotados
 const FILTROS_INICIAIS = {
   busca: '', cidade: '', tipo: '', status: '', situacao: 'todas',
   estruturas: [], comPedidos: false, emAlerta: false, ordem: 'nome',
-}
-
-// Foto pequena do abrigo; sem foto (ou se ela não carregar), o ícone do tipo
-function Miniatura({ abrigo }) {
-  const [falhou, setFalhou] = useState(false)
-  if (abrigo.fotoAbrigo && !falhou) {
-    return (
-      <span className="sv-miniatura">
-        <img src={abrigo.fotoAbrigo} alt="" width="60" height="60" loading="lazy" decoding="async" onError={() => setFalhou(true)} />
-      </span>
-    )
-  }
-  return <span className="sv-miniatura sv-miniatura--reserva" aria-hidden="true">{tipoDe(abrigo.tipoAbrigo).icone}</span>
 }
 
 const ListarAbrigos = () => {

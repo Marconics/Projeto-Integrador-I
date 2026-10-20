@@ -2,6 +2,8 @@ import prisma from '../lib/prisma.js'
 import supabase from '../supabase.js'
 import { selectLocalizacao, achatarLocalizacao, validarCidadeBairro } from '../lib/localizacao.js'
 import { LIMITE_CORPO_COM_FOTO, LIMITES } from '../lib/validacao.js'
+import { veioDoBot, criarConvite, normalizarCelular } from '../lib/responsaveis.js'
+import { adicionarVoluntario } from '../lib/voluntariosWhatsapp.js'
 
 
 export default async function solicitacaoAbrigoRoutes(app) {
@@ -14,8 +16,13 @@ export default async function solicitacaoAbrigoRoutes(app) {
       nome, cep, endereco, cidadeId, bairroId, telefone, responsavel,
       tipoAbrigo, capacidadeTotal, possuiAtendimentoMedico, possuiEnfermagem,
       possuiPets, possuiAcessibilidade, possuiCozinha, fotoAbrigo,
-      solicitanteNome, solicitanteEmail, solicitanteTelefone
+      solicitanteNome, solicitanteEmail, solicitanteTelefone,
+      solicitanteWhatsappId, solicitanteEhResponsavel, aceitaAvisosWhatsapp, querVoluntariar
     } = request.body
+
+    // O WhatsApp de quem pediu só é aceito quando vem do bot (com a chave dele):
+    // a rota é pública e qualquer um poderia mandar o número de outra pessoa
+    const doBot = veioDoBot(request)
 
     // A cidade é obrigatória; o bairro, se vier, precisa ser da mesma cidade
     const erroLocalizacao = await validarCidadeBairro(prisma, cidadeId, bairroId)
@@ -39,6 +46,12 @@ export default async function solicitacaoAbrigoRoutes(app) {
         fotoAbrigo: null,
         solicitanteNome, solicitanteEmail,
         solicitanteTelefone: solicitanteTelefone ?? null,
+        solicitanteWhatsappId:    doBot && solicitanteWhatsappId ? String(solicitanteWhatsappId) : null,
+        solicitanteEhResponsavel: doBot && solicitanteEhResponsavel === true,
+        // Avisos de responsável só para quem disse que é o responsável;
+        // voluntariar só para quem disse que não é
+        aceitaAvisosWhatsapp:     doBot && solicitanteEhResponsavel === true && aceitaAvisosWhatsapp === true,
+        querVoluntariar:          doBot && solicitanteEhResponsavel !== true && querVoluntariar === true,
         status: 'pendente',
       }
     })
@@ -170,6 +183,13 @@ export default async function solicitacaoAbrigoRoutes(app) {
         return reply.status(400).send({ mensagem: 'Essa solicitação já foi analisada.' })
       }
 
+      // O que fazer com o WhatsApp de quem pediu (respostas dadas no bot)
+      const doBot = Boolean(solicitacao.solicitanteWhatsappId)
+      const convidarSolicitante = status === 'aprovado' && doBot &&
+        solicitacao.solicitanteEhResponsavel && solicitacao.aceitaAvisosWhatsapp
+      const incluirVoluntario = status === 'aprovado' && doBot &&
+        !solicitacao.solicitanteEhResponsavel && solicitacao.querVoluntariar
+
       // Tudo numa transação: marcar como analisada, criar o abrigo e ligar os dois.
       // Antes o abrigo era criado primeiro e fora de transação: se a atualização
       // da solicitação falhasse, ela continuava "pendente" e aprovar de novo
@@ -214,6 +234,33 @@ export default async function solicitacaoAbrigoRoutes(app) {
               status:                  'ativo',
             }
           })
+
+          // Quem pediu pelo bot e NÃO é o responsável, mas quis ajudar, entra na lista
+          // de voluntários do abrigo no WhatsApp (recebe os pedidos de ajuda)
+          if (incluirVoluntario) {
+            await adicionarVoluntario(tx, {
+              abrigo: abrigoCriado,
+              nome: solicitacao.solicitanteNome,
+              whatsappId: solicitacao.solicitanteWhatsappId,
+              telefone: solicitacao.solicitanteTelefone,
+              solicitacaoId: solicitacao.id_solicitacao,
+            })
+          }
+
+          // Quem pediu pelo bot, disse que é o responsável e aceitou receber avisos
+          // ganha o convite de responsável no mesmo WhatsApp (ainda responde ACEITAR)
+          if (convidarSolicitante) {
+            await criarConvite(tx, {
+              abrigo: abrigoCriado,
+              nome: solicitacao.solicitanteNome,
+              celular: normalizarCelular(solicitacao.solicitanteTelefone),
+              whatsappId: solicitacao.solicitanteWhatsappId,
+              forma: 'mensagem',
+              origem: 'solicitacao',
+              metodoConferencia: 'solicitacao_aprovada',
+              criadoPorId: adminId,
+            })
+          }
         }
 
         // Liga a solicitação ao abrigo criado (null se recusada)
@@ -229,10 +276,16 @@ export default async function solicitacaoAbrigoRoutes(app) {
         return reply.status(400).send({ mensagem: 'Essa solicitação já foi analisada.' })
       }
 
+      const extra = convidarSolicitante
+        ? ' O bot vai perguntar a quem pediu (o responsável) se quer receber os avisos do abrigo.'
+        : incluirVoluntario
+          ? ' Quem pediu entrou na lista de voluntários do abrigo e vai receber os pedidos de ajuda pelo WhatsApp.'
+          : ''
+
       return reply.status(200).send({
-        mensagem: status === 'aprovado'
-          ? 'Solicitação aprovada e abrigo criado com sucesso!'
-          : 'Solicitação recusada.',
+        mensagem: status === 'aprovado' ? `Solicitação aprovada e abrigo criado com sucesso!${extra}` : 'Solicitação recusada.',
+        conviteEnviado: convidarSolicitante,
+        voluntarioIncluido: incluirVoluntario,
         solicitacao: resultado.solicitacaoAtualizada,
         abrigoCriado: resultado.abrigoCriado // null se recusado
       })

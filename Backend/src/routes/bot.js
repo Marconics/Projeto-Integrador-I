@@ -12,11 +12,20 @@ import {
   registrarRelato, ErroAlerta, TIPOS_ALERTA, GRAVIDADES, MAX_TENTATIVAS_NOTIFICACAO,
   formatarAlerta, includeListagemAlerta
 } from '../lib/alertas.js'
+import {
+  whereConviteValido, mesmoTelefone, hashCodigo, aceitarConvite, mensagemBoasVindas
+} from '../lib/responsaveis.js'
+import { mensagemSaiu } from '../lib/voluntariosWhatsapp.js'
 
 
 // Se o bot cair no meio de um envio, a notificação fica "enviando".
 // Depois desse tempo ela volta para a fila.
 const MINUTOS_PARA_REENVIAR = 5
+
+// Códigos errados no "vincular 123456", por WhatsApp (em memória: zera se a API reiniciar)
+const tentativasCodigo = new Map()
+const MAX_FALHAS_CODIGO = 5
+const JANELA_FALHAS_MS = 60 * 60 * 1000
 
 export default async function botRoutes(app) {
 
@@ -307,14 +316,22 @@ export default async function botRoutes(app) {
   // O bot chama periodicamente. As notificações devolvidas ficam "enviando"
   // para não serem pegas de novo enquanto o bot envia.
   // URL: POST /api/bot/notificacoes/reservar
-  // Body: { limite? }  (padrão 10, máximo 50)
+  // Body: { limite?, tipoDestino? }  (limite padrão 10, máximo 50)
+  // tipoDestino ('inscrito' | 'grupo' | 'responsavel' | 'voluntario') reserva só um tipo — o bot
+  // não usa; o teste:api usa para não consumir os alertas que o teste:conversa envia
   app.post('/notificacoes/reservar', async (request, reply) => {
     const limite = Math.min(Number(request.body?.limite) || 10, 50)
+    const { tipoDestino } = request.body ?? {}
     const travadasAntesDe = new Date(Date.now() - MINUTOS_PARA_REENVIAR * 60 * 1000)
+
+    if (tipoDestino && !['inscrito', 'grupo', 'responsavel', 'voluntario'].includes(tipoDestino)) {
+      return reply.status(400).send({ mensagem: 'tipoDestino inválido.' })
+    }
 
     const notificacoes = await prisma.$transaction(async (tx) => {
       const candidatas = await tx.notificacao.findMany({
         where: {
+          ...(tipoDestino ? { tipoDestino } : {}),
           OR: [
             { status: 'pendente' },
             { status: 'enviando', updatedAt: { lt: travadasAntesDe } },
@@ -372,6 +389,110 @@ export default async function botRoutes(app) {
     })
 
     return reply.status(200).send({ mensagem: 'Resultado registrado.' })
+  })
+
+
+  // ═══════════════════════ RESPONSÁVEIS DO ABRIGO ═══════════════════════
+  // A pessoa responde do próprio WhatsApp — é isso que comprova o número.
+  // O bot manda o whatsappId de quem escreveu e o número real (numeroReal()).
+
+  //----- Responder ao convite recebido por mensagem (ACEITAR / RECUSAR) -----
+  // URL: POST /api/bot/responsaveis/responder
+  // Body: { whatsappId, telefone?, nome?, resposta: 'aceitar' | 'recusar' }
+  app.post('/responsaveis/responder', async (request, reply) => {
+    const { whatsappId, telefone, nome, resposta } = request.body ?? {}
+    if (!whatsappId || !['aceitar', 'recusar'].includes(resposta)) {
+      return reply.status(400).send({ mensagem: 'Informe whatsappId e resposta (aceitar ou recusar).' })
+    }
+
+    // Convites por mensagem ainda válidos para este WhatsApp ou este número
+    const candidatos = await prisma.conviteResponsavel.findMany({
+      where: { ...whereConviteValido(), codigoHash: null },
+      orderBy: { createdAt: 'desc' },
+    })
+    const convite = candidatos.find(c => c.whatsappId === whatsappId || (telefone && mesmoTelefone(c.telefone, telefone)))
+    if (!convite) {
+      return reply.status(404).send({ mensagem: 'Não há convite pendente para este número.' })
+    }
+
+    if (resposta === 'recusar') {
+      await prisma.conviteResponsavel.updateMany({
+        where: { id_convite: convite.id_convite, status: 'pendente' },
+        data: { status: 'recusado', respondidoEm: new Date() }
+      })
+      return reply.status(200).send({ mensagem: 'Convite recusado.', recusado: true })
+    }
+
+    const resultado = await prisma.$transaction(tx => aceitarConvite(tx, convite, { whatsappId, telefone, nome }))
+    if (!resultado) return reply.status(409).send({ mensagem: 'Este convite já foi respondido.' })
+
+    return reply.status(200).send({
+      mensagem: mensagemBoasVindas(resultado.abrigo),
+      abrigo: { id: resultado.abrigo.id_abrigo, nome: resultado.abrigo.nome },
+      jaEra: resultado.jaEra,
+    })
+  })
+
+
+  //----- Vincular pelo código do link ("vincular 123456") -----
+  // URL: POST /api/bot/responsaveis/vincular
+  // Body: { whatsappId, telefone?, nome?, codigo }
+  // Depois de 5 códigos errados, o número espera 1 hora (o código tem só 6 dígitos)
+  app.post('/responsaveis/vincular', async (request, reply) => {
+    const { whatsappId, telefone, nome, codigo } = request.body ?? {}
+    if (!whatsappId || !/^\d{6}$/.test(String(codigo ?? ''))) {
+      return reply.status(400).send({ mensagem: 'Envie o código de 6 números. Ex: vincular 123456' })
+    }
+
+    const tentativa = tentativasCodigo.get(whatsappId)
+    if (tentativa && tentativa.falhas >= MAX_FALHAS_CODIGO && Date.now() - tentativa.desde < JANELA_FALHAS_MS) {
+      return reply.status(429).send({ mensagem: 'Muitos códigos errados. Tente de novo daqui a 1 hora ou peça um novo link à equipe.' })
+    }
+
+    const convite = await prisma.conviteResponsavel.findFirst({
+      where: { ...whereConviteValido(), codigoHash: hashCodigo(codigo) }
+    })
+    if (!convite) {
+      const atual = tentativa && Date.now() - tentativa.desde < JANELA_FALHAS_MS ? tentativa : { falhas: 0, desde: Date.now() }
+      tentativasCodigo.set(whatsappId, { ...atual, falhas: atual.falhas + 1 })
+      return reply.status(404).send({ mensagem: 'Código inválido ou vencido. Confira os números ou peça um novo link à equipe.' })
+    }
+    tentativasCodigo.delete(whatsappId)
+
+    const resultado = await prisma.$transaction(tx => aceitarConvite(tx, convite, { whatsappId, telefone, nome }))
+    if (!resultado) return reply.status(409).send({ mensagem: 'Este código já foi usado.' })
+
+    return reply.status(200).send({
+      mensagem: mensagemBoasVindas(resultado.abrigo),
+      abrigo: { id: resultado.abrigo.id_abrigo, nome: resultado.abrigo.nome },
+      jaEra: resultado.jaEra,
+    })
+  })
+
+
+  // ═══════════════════════ VOLUNTÁRIOS DO ABRIGO (WHATSAPP) ═══════════════════════
+
+  //----- Sair da lista de voluntários ("sair voluntario") -----
+  // Sai de todos os abrigos em que este WhatsApp é voluntário
+  // URL: POST /api/bot/voluntarios/sair
+  // Body: { whatsappId }
+  app.post('/voluntarios/sair', async (request, reply) => {
+    const { whatsappId } = request.body ?? {}
+    if (!whatsappId) return reply.status(400).send({ mensagem: 'Informe o whatsappId.' })
+
+    const ativos = await prisma.voluntarioWhatsapp.findMany({
+      where: { whatsappId, ativo: true }, include: { abrigo: { select: { nome: true } } }
+    })
+    if (ativos.length === 0) {
+      return reply.status(404).send({ mensagem: 'Este número não está na lista de voluntários de nenhum abrigo.' })
+    }
+
+    await prisma.voluntarioWhatsapp.updateMany({
+      where: { whatsappId, ativo: true },
+      data: { ativo: false, desativadoEm: new Date() }
+    })
+
+    return reply.status(200).send({ mensagem: mensagemSaiu(ativos.map(v => v.abrigo)), total: ativos.length })
   })
 
 

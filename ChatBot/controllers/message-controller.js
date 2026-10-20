@@ -6,6 +6,7 @@ import { psicologicoFlow } from "./psicologico-flow.js";
 import { solicitacaoFlow } from "./solicitacao-flow.js";
 import { alertaFlow, abrirMenuAlertas, mostrarAlertasAtivos } from "./alerta-flow.js";
 import { handleGrupo } from "./grupo-controller.js";
+import { tratarComandoResponsavel } from "./responsavel-flow.js";
 import { enviarMenuPrincipal, MENSAGEM_MENU } from "./menu.js";
 import { titulo, listaNumerada, SEPARADOR, RODAPE_MENU, RODAPE_CANCELAR, ehSaudacao } from "../utils/formato.js";
 
@@ -41,6 +42,10 @@ export const handleMessage = async (msg, client) => {
         await enviarMenuPrincipal(msg);
         return;
     }
+
+    // Responsável de abrigo: "aceitar", "recusar" e "vincular 123456"; voluntário: "sair voluntario"
+    // valem em qualquer etapa (o convite pode chegar no meio de outro fluxo)
+    if (await tratarComandoResponsavel(msg, from, text)) return;
 
     let state = userState.get(from);
 

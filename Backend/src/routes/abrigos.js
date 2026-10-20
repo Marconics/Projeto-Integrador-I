@@ -279,9 +279,14 @@ export default async function abrigoRoutes(app) {
       return reply.status(404).send({ mensagem: 'Abrigo não encontrado.' })
     }
 
+    // Há alerta ativo no bairro do abrigo? (faixa vermelha na tela de detalhes, igual à listagem)
+    const alertasAtivos = abrigo.bairroId
+      ? await prisma.alerta.count({ where: { bairroId: abrigo.bairroId, status: 'ativo' } })
+      : 0
+
     // O Prisma já retorna todos os campos automaticamente com o findUnique
     // achatarLocalizacao devolve cidade, estado e bairro como texto (+ os IDs)
-    return reply.status(200).send(achatarLocalizacao(abrigo))
+    return reply.status(200).send({ ...achatarLocalizacao(abrigo), statusAlerta: alertasAtivos > 0 })
   })
 
 

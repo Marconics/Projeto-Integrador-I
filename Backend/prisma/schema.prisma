@@ -23,6 +23,7 @@ model Admin {
   createdAt   DateTime @default(now()) @map("created_at")
 
   solicitacoesAnalisadas   SolicitacaoAbrigo[]
+  convitesResponsavel      ConviteResponsavel[]
   solicitacoesAjudaCriadas SolicitacaoAjuda[]  @relation("SolicitacoesAjudaCriadas")
   alertasAnalisados        Alerta[]
 
@@ -136,6 +137,12 @@ model Abrigo {
   voluntarios       Voluntario[]
   solicitacoesAjuda SolicitacaoAjuda[]
 
+  // Responsáveis que recebem os avisos do abrigo pelo WhatsApp
+  responsaveis        ResponsavelAbrigo[]
+  convitesResponsavel ConviteResponsavel[]
+  // Voluntários que recebem os pedidos de ajuda do abrigo pelo WhatsApp
+  voluntariosWhatsapp VoluntarioWhatsapp[]
+
   @@map("abrigo")
 }
 
@@ -237,6 +244,14 @@ model SolicitacaoAbrigo {
   solicitanteNome     String
   solicitanteEmail    String
   solicitanteTelefone String? @db.VarChar(15)
+  // Respostas do bot (só o bot, com a chave dele, preenche — o WhatsApp é um número comprovado):
+  //  - quem pediu é o responsável (dono) do local?
+  //  - se é: quer receber os avisos do abrigo (vira convite de responsável ao aprovar)
+  //  - se não é: quer ser voluntário (entra na lista de voluntários do abrigo ao aprovar)
+  solicitanteWhatsappId    String?
+  solicitanteEhResponsavel Boolean @default(false)
+  aceitaAvisosWhatsapp     Boolean @default(false)
+  querVoluntariar          Boolean @default(false)
 
   status       StatusSolicitacao @default(pendente)
   motivoRecusa String?
@@ -475,11 +490,17 @@ model RelatoAlerta {
 enum EventoNotificacao {
   disparo // aviso do alerta
   cancelamento // correção enviada quando o admin cancela um alerta já disparado
+  convite_responsavel // pergunta se a pessoa é responsável por um abrigo
+  aviso_responsavel // avisos do abrigo (vínculo, voluntário interessado...)
+  pedido_ajuda // novo pedido de ajuda do abrigo, para os voluntários no WhatsApp
+  aviso_voluntario // boas-vindas e saída da lista de voluntários do abrigo
 }
 
 enum DestinoNotificacao {
   inscrito
   grupo
+  responsavel
+  voluntario
 }
 
 enum StatusNotificacao {
@@ -495,12 +516,17 @@ enum StatusNotificacao {
 model Notificacao {
   id_notificacao Int @id @default(autoincrement())
 
-  alertaId Int
-  alerta   Alerta @relation(fields: [alertaId], references: [id_alerta], onDelete: Cascade)
+  // Vazio nas mensagens que não são de alerta (convite e avisos dos responsáveis de abrigo)
+  alertaId Int?
+  alerta   Alerta? @relation(fields: [alertaId], references: [id_alerta], onDelete: Cascade)
+
+  // Convite de responsável que esta mensagem leva (para cancelar junto com o convite)
+  conviteId Int?
+  convite   ConviteResponsavel? @relation(fields: [conviteId], references: [id_convite], onDelete: SetNull)
 
   evento      EventoNotificacao  @default(disparo)
   tipoDestino DestinoNotificacao
-  // whatsappId do inscrito ou ID do grupo da cidade
+  // whatsappId do inscrito ou do responsável, ou ID do grupo da cidade
   destino     String
 
   inscritoId Int?
@@ -523,4 +549,119 @@ model Notificacao {
   @@unique([alertaId, evento, destino])
   @@index([status])
   @@map("notificacao")
+}
+
+// ─────────────────────────────────────────────
+// RESPONSÁVEIS DO ABRIGO NO WHATSAPP
+// ─────────────────────────────────────────────
+
+// Como o admin conferiu que a pessoa é mesmo responsável pelo abrigo
+enum MetodoConferencia {
+  solicitacao_aprovada // pediu o abrigo pelo bot, declarou ser o responsável e a solicitação foi aprovada
+  numero_do_cadastro // celular que já estava no cadastro do abrigo
+  ligacao_contato_oficial // o admin ligou para um contato oficial do local
+  orgao_publico // confirmado com a prefeitura / Defesa Civil
+  presencial // código entregue pessoalmente no abrigo
+}
+
+enum OrigemConvite {
+  solicitacao
+  admin
+}
+
+enum StatusConvite {
+  pendente
+  aceito
+  recusado
+  cancelado
+}
+
+// Convite para ser responsável. Vai por mensagem do bot (a pessoa responde
+// ACEITAR) ou por link/código (a pessoa envia "vincular 123456" ao bot).
+// Só vira vínculo quando a própria pessoa responde do número dela.
+model ConviteResponsavel {
+  id_convite Int @id @default(autoincrement())
+
+  abrigoId Int
+  abrigo   Abrigo @relation(fields: [abrigoId], references: [id_abrigo], onDelete: Cascade)
+
+  nome       String?
+  // Convite por mensagem: celular (só dígitos, com o 55) e/ou o WhatsApp já conhecido
+  telefone   String? @db.VarChar(20)
+  whatsappId String?
+  // Convite por link: hash do código de 6 dígitos (o código só aparece uma vez, para o admin)
+  codigoHash String?
+
+  origem            OrigemConvite
+  metodoConferencia MetodoConferencia
+  observacao        String?
+
+  status       StatusConvite @default(pendente)
+  expiraEm     DateTime
+  respondidoEm DateTime?
+
+  criadoPorId Int?
+  criadoPor   Admin? @relation(fields: [criadoPorId], references: [id], onDelete: SetNull)
+
+  responsavel  ResponsavelAbrigo?
+  notificacoes Notificacao[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([abrigoId])
+  @@index([status])
+  @@index([codigoHash])
+  @@map("convite_responsavel")
+}
+
+// Pessoa que recebe os avisos do abrigo no WhatsApp
+model ResponsavelAbrigo {
+  id_responsavel Int @id @default(autoincrement())
+
+  abrigoId Int
+  abrigo   Abrigo @relation(fields: [abrigoId], references: [id_abrigo], onDelete: Cascade)
+
+  nome       String
+  whatsappId String
+  telefone   String? @db.VarChar(20)
+  ativo      Boolean @default(true)
+
+  // Convite aceito que criou o vínculo (mostra como o número foi conferido)
+  conviteId Int?                @unique
+  convite   ConviteResponsavel? @relation(fields: [conviteId], references: [id_convite], onDelete: SetNull)
+
+  desativadoEm DateTime?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([abrigoId])
+  @@index([whatsappId])
+  @@map("responsavel_abrigo")
+}
+
+// Voluntário do abrigo pelo WhatsApp (sem conta no painel). Hoje entra quem
+// indicou o local pelo bot, disse que NÃO é o responsável e quis se voluntariar:
+// ao aprovar a solicitação, passa a receber os pedidos de ajuda do abrigo.
+// Sai com "sair voluntario" no bot ou pelo painel (Detalhes do abrigo).
+model VoluntarioWhatsapp {
+  id_voluntario_whatsapp Int @id @default(autoincrement())
+
+  abrigoId Int
+  abrigo   Abrigo @relation(fields: [abrigoId], references: [id_abrigo], onDelete: Cascade)
+
+  nome       String
+  whatsappId String
+  telefone   String? @db.VarChar(20)
+  ativo      Boolean @default(true)
+
+  // Solicitação de abrigo em que a pessoa se ofereceu
+  solicitacaoId Int?
+
+  desativadoEm DateTime?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([abrigoId, whatsappId])
+  @@index([whatsappId])
+  @@map("voluntario_whatsapp")
 }

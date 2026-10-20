@@ -1,0 +1,165 @@
+/* Detalhes do abrigo (modo visualização) — peças só desta tela.
+   Topo, resumo, painéis, linhas, etiquetas e avisos vêm do tema (styles/sosvale-glass.css). */
+
+.da-subtitulo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.da-subtitulo > span:last-child { display: inline-flex; align-items: center; gap: 5px; }
+.da-subtitulo svg { flex: none; color: var(--sv-azul); }
+
+/* Faixa de alerta no bairro */
+.da-alerta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--sv-raio-s);
+  background: var(--sv-sirene);
+  color: #fff;
+  font-size: 14px;
+}
+.da-alerta > svg { flex: none; font-size: 20px; }
+.da-alerta > span { flex: 1 1 260px; }
+.da-alerta .sv-btn { background: #fff; color: var(--sv-sirene-forte); }
+
+/* ─── Números do abrigo: uma faixa de vidro única, dividida em 4 ───
+   (no lugar dos cards de resumo padrão; segue o visual "glass" dos painéis) */
+.da-indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .62), rgba(255, 255, 255, .18)),
+    var(--sv-fundo-card);
+}
+.da-indicador {
+  --tom: var(--sv-azul);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, .75);
+  background: transparent;
+  color: var(--sv-tinta);
+  font: inherit;
+  text-align: left;
+  transition: background-color .25s var(--sv-suave);
+}
+.da-indicador:last-child { border-right: 0; }
+button.da-indicador { cursor: pointer; }
+button.da-indicador:hover { background: rgba(255, 255, 255, .5); }
+button.da-indicador:focus-visible { outline: 2px solid var(--sv-azul); outline-offset: -4px; }
+/* Linha de cor no topo de cada parte */
+.da-indicador::before {
+  content: '';
+  position: absolute;
+  inset: 0 22px auto;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--tom);
+  opacity: .55;
+}
+.da-indicador--azul     { --tom: var(--sv-azul); }
+.da-indicador--ciano    { --tom: var(--sv-ciano); }
+.da-indicador--anil     { --tom: var(--sv-anil); }
+.da-indicador--petroleo { --tom: var(--sv-petroleo); }
+.da-indicador--sirene   { --tom: var(--sv-sirene); }
+.da-indicador--urgente::before { opacity: 1; }
+
+/* Ícone num círculo de vidro com a cor da parte */
+.da-indicador-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .7);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--tom) 14%, transparent), 0 6px 14px -8px var(--tom);
+  color: var(--tom);
+  font-size: 20px;
+}
+.da-indicador--urgente .da-indicador-icone { background: var(--tom); color: #fff; }
+
+.da-indicador-texto { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
+.da-indicador-valor {
+  font-family: var(--sv-fonte-display);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.05;
+  color: var(--tom);
+  font-variant-numeric: tabular-nums;
+}
+.da-indicador-rotulo { font-size: 13.5px; font-weight: 600; color: var(--sv-tinta); }
+.da-indicador-detalhe { font-size: 12px; color: var(--sv-tinta-2); overflow-wrap: anywhere; }
+.da-indicador-seta { flex: none; color: var(--sv-tinta-3); transition: transform .25s var(--sv-suave); }
+button.da-indicador:hover .da-indicador-seta { transform: translateX(3px); color: var(--tom); }
+.da-barra { margin: 4px 0 2px; }
+
+/* Cadastro à esquerda, pedidos e vítimas à direita */
+.da-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 22px;
+  align-items: start;
+}
+.da-coluna { display: grid; gap: 22px; min-width: 0; }
+
+.da-cadastro { display: grid; gap: 16px; }
+.da-cadastro-topo { display: block; }
+/* Foto grande na largura do painel; sem foto, a área tracejada de antes */
+.da-foto {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-s);
+  background: #fff;
+}
+.da-foto--vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px dashed var(--sv-borda-campo);
+  background: rgba(255, 255, 255, .5);
+  color: var(--sv-tinta-2);
+  font-size: 14px;
+}
+.da-foto--vazia > svg { font-size: 30px; color: var(--sv-tinta-3); }
+.da-dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0; }
+.da-dados dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--sv-tinta-2);
+}
+.da-dados dt svg { color: var(--sv-azul); }
+.da-dados dd { margin: 2px 0 0; font-size: 15px; color: var(--sv-tinta); overflow-wrap: anywhere; }
+.da-aviso { margin: 0; }
+
+.da-subtitulo-painel { font-size: 15px; font-weight: 600; color: var(--sv-azul-forte); }
+.da-estruturas { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; }
+.da-estruturas li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--sv-tinta); }
+
+@media (max-width: 1100px) {
+  .da-grade { grid-template-columns: minmax(0, 1fr); }
+  /* Faixa de números em 2 × 2 */
+  .da-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .da-indicador:nth-child(2n) { border-right: 0; }
+  .da-indicador:nth-child(-n + 2) { border-bottom: 1px solid rgba(255, 255, 255, .75); }
+}
+@media (max-width: 600px) {
+  .da-indicador { padding: 16px 14px; gap: 10px; }
+  .da-indicador-icone { width: 38px; height: 38px; font-size: 17px; }
+  .da-indicador-valor { font-size: 24px; }
+  .da-indicador-seta { display: none; }
+  .da-foto { height: 200px; }
+}

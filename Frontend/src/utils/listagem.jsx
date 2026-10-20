@@ -1,7 +1,10 @@
-// Auxiliares das telas de listagem com filtros (styles/listagem.css):
+// Auxiliares das telas de listagem com filtros e cards:
 // Abrigos do voluntário, Abrigos do admin e Vítimas do admin.
 import { useSyncExternalStore } from 'react';
-import { LuAccessibility, LuPawPrint, LuStethoscope, LuSyringe, LuUtensils } from 'react-icons/lu';
+import {
+  LuAccessibility, LuChurch, LuDumbbell, LuHotel, LuHouse, LuLandmark, LuPawPrint, LuSchool, LuStethoscope,
+  LuSyringe, LuTent, LuUtensils, LuWarehouse
+} from 'react-icons/lu';
 
 // Estrutura do abrigo: campo da API → rótulo e ícone (filtros e cards)
 export const ESTRUTURAS = [
@@ -52,3 +55,16 @@ const assinarCelular = (avisar) => {
 }
 export const useCelular = () =>
   useSyncExternalStore(assinarCelular, () => window.matchMedia(CONSULTA_CELULAR).matches, () => false)
+
+// Tipo do abrigo → nome para exibir e ícone (miniatura do card quando não há foto)
+export const TIPOS_ABRIGO = {
+  'Escola':            { label: 'Escola',             icone: <LuSchool /> },
+  'Ginásio':           { label: 'Ginásio',            icone: <LuDumbbell /> },
+  'Igreja':            { label: 'Igreja',             icone: <LuChurch /> },
+  'Hotel':             { label: 'Hotel',              icone: <LuHotel /> },
+  'Pousada':           { label: 'Pousada',            icone: <LuHotel /> },
+  'CentroCultural':    { label: 'Centro Cultural',    icone: <LuLandmark /> },
+  'CentroComunitário': { label: 'Centro Comunitário', icone: <LuWarehouse /> },
+  'Campo':             { label: 'Campo',              icone: <LuTent /> },
+}
+export const tipoDe = (tipo) => TIPOS_ABRIGO[tipo] ?? { label: tipo, icone: <LuHouse /> }

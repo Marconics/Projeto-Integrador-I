@@ -1,0 +1,45 @@
+/* Responsáveis no WhatsApp (Detalhes do abrigo) — peças só desta seção.
+   Painel, linhas, etiquetas, campos, opções e modal vêm do tema (styles/sosvale-glass.css). */
+
+.rw-subtitulo {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sv-azul-forte);
+}
+
+/* "Como enviar": as duas opções lado a lado (uma embaixo da outra no celular) */
+.rw-formas { display: grid; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.rw-formas legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sv-tinta);
+}
+.rw-formas-opcoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.rw-formas-opcoes .sv-opcao-caixa { height: 100%; }
+
+/* Código do convite em destaque */
+.rw-codigo {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px dashed var(--sv-azul);
+  border-radius: var(--sv-raio-s);
+  background: var(--sv-azul-suave);
+  font-family: var(--sv-fonte-display);
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: .3em;
+  text-align: center;
+  color: var(--sv-azul-forte);
+  font-variant-numeric: tabular-nums;
+}
+.rw-link { margin-top: 8px; font-size: 12.5px; word-break: break-all; }
+
+.rw-fechar { position: absolute; top: 12px; right: 12px; }
+
+@media (max-width: 600px) {
+  .rw-formas-opcoes { grid-template-columns: minmax(0, 1fr); }
+  .rw-codigo { font-size: 28px; letter-spacing: .2em; }
+}

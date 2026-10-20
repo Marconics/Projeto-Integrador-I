@@ -12,6 +12,7 @@
   },
   "scripts": {
     "postinstall": "node scripts/corrigir-wwebjs-midia.cjs",
+    "bot": "node scripts/manter-ligado.mjs",
     "teste:conversa": "node testes/simular-conversa.mjs",
     "teste:interativo": "node testes/conversa-interativa.mjs"
   }

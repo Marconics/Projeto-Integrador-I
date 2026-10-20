@@ -1,31 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuChevronRight, LuDog, LuHandHeart, LuHeartPulse, LuMapPin, LuMapPinned, LuPhone, LuPlus, LuTriangleAlert, LuUpload, LuUser, LuUsers, LuUtensils } from 'react-icons/lu';
-import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
+import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuDog, LuHeartPulse, LuMapPin, LuMapPinned, LuPhone, LuTriangleAlert, LuUpload, LuUser, LuUtensils } from 'react-icons/lu';
+import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 import SeletorLocalidade from '../../../components/SeletorLocalidade';
 import MensagemFeedback from '../../../components/MensagemFeedback';
 import { preencherPorCep, geocodificar } from '../../../services/localizacao';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
+import VisaoAbrigo from './VisaoAbrigo';
 import '../../../styles/sosvale-glass.css';
 import { fetchAdmin } from '../../../services/api';
 import { LIMITES, EXEMPLOS, somenteNome, somenteNumeros, mascaraCep, mascaraTelefone, erroDosCampos } from '../../../utils/campos';
 import { Obrigatorio, AvisoObrigatorios } from '../../../components/MarcasCampo';
-
-// ─── Badges das solicitações de ajuda ────────────────────────────────────────
-const badgeAjuda = {
-  aberto:       { label: 'Aberto',       bg: 'var(--sv-azul-suave)', cor: 'var(--sv-azul-forte)' },
-  em_andamento: { label: 'Em andamento', bg: 'var(--sv-atencao-suave)', cor: 'var(--sv-atencao-forte)' },
-  concluido:    { label: 'Concluído',    bg: 'var(--sv-ok-suave)', cor: 'var(--sv-ok-forte)' },
-  cancelado:    { label: 'Cancelado',    bg: 'var(--sv-sirene-suave)', cor: 'var(--sv-sirene-forte)' },
-}
-
-const categoriaLabel = {
-  doacao:         'Doação',
-  medicamento:    'Medicamento',
-  voluntariado:   'Voluntariado',
-  infraestrutura: 'Infraestrutura',
-  outro:          'Outro',
-}
 
 function DetalhesAbrigo() {
 
@@ -85,8 +70,6 @@ function DetalhesAbrigo() {
   const [latitude, setLatitude] = useState(null)
   const [longitude, setLongitude] = useState(null)
   const [feedbackGeo, setFeedbackGeo] = useState(null)
-
-  const [vitimasRecentes, setVitimasRecentes] = useState([])
 
   // ─── NOVO: solicitações de ajuda ─────────────────────────────────────────────
   const [solicitacoesAjuda, setSolicitacoesAjuda] = useState([])
@@ -148,13 +131,6 @@ function DetalhesAbrigo() {
           possuiCozinha: dados.possuiCozinha ?? false
         });
 
-        if (dados.vitimas && dados.vitimas.length > 0) {
-          const cincoMaisRecentes = [...dados.vitimas]
-            .sort((a, b) => new Date(b.dataEntrada ?? b.createdAt) - new Date(a.dataEntrada ?? a.createdAt))
-            .slice(0, 5)
-          setVitimasRecentes(cincoMaisRecentes)
-        }
-
       } catch (erro) {
         console.error("Erro ao buscar abrigo:", erro);
         setErroCarga(erro.message?.startsWith('Este abrigo') ? erro.message : 'O servidor não respondeu. Verifique a conexão e tente novamente.');
@@ -163,10 +139,10 @@ function DetalhesAbrigo() {
       }
     };
 
-    // ─── NOVO: busca as 3 últimas solicitações deste abrigo ──────────────────
+    // ─── Pedidos de ajuda do abrigo (o resumo e o painel da visualização usam todos) ──
     const buscarSolicitacoesAjuda = async () => {
       try {
-        const resposta = await fetchAdmin(`/solicitacoes-ajuda/abrigo/${id}?limite=3`)
+        const resposta = await fetchAdmin(`/solicitacoes-ajuda/abrigo/${id}`)
         const dados = await resposta.json()
         setSolicitacoesAjuda(dados.solicitacoes ?? [])
       } catch (erro) {
@@ -422,22 +398,6 @@ function DetalhesAbrigo() {
     })
   }
 
-  // ─── UTILITÁRIOS ─────────────────────────────────────────────────────────────
-  const calcularIdade = (dataNascimento) => {
-    if (!dataNascimento) return '—'
-    const hoje = new Date()
-    const nasc = new Date(dataNascimento)
-    let idade = hoje.getFullYear() - nasc.getFullYear()
-    const mes = hoje.getMonth() - nasc.getMonth()
-    if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) idade--
-    return idade
-  }
-
-  const formatarData = (data) => {
-    if (!data) return '—'
-    return new Date(data).toLocaleDateString('pt-BR')
-  }
-
   // ─── CARREGANDO / ERRO ───────────────────────────────────────────────────────
   if (carregando || erroCarga) {
     return (
@@ -467,15 +427,19 @@ function DetalhesAbrigo() {
 
       <main className="sv-main">
 
+        {/* Visualização (novo layout) — o formulário abaixo é só para editar */}
+        {!editando && (
+          <VisaoAbrigo abrigo={dadosAbrigo} fotoUrl={fotoUrl} pedidos={solicitacoesAjuda} onEditar={handleEditar} />
+        )}
+
+        {editando && (<>
         <header className="sv-topo">
           <div className="sv-topo-texto">
             <p className="sv-trilha">
-              Abrigos &gt; <span>{nomeAbrigo}</span>
+              <a href="/abrigos">Abrigos</a> &gt; <span>{dadosAbrigo.nome}</span> &gt; <span>Editar</span>
             </p>
-            <h1 className="sv-titulo">
-              {editando ? 'Editar Abrigo' : 'Detalhes do Abrigo'}
-            </h1>
-            <p className="sv-subtitulo">Gerencia as informações deste abrigo</p>
+            <h1 className="sv-titulo">Editar abrigo</h1>
+            <p className="sv-subtitulo">Altere os dados e clique em Salvar alterações</p>
           </div>
         </header>
 
@@ -762,135 +726,12 @@ function DetalhesAbrigo() {
                   </div>
                 </>
               ) : null}
-              {editando ? null : (
-                <button type="button" onClick={handleEditar} className="sv-btn sv-btn--vidro sv-btn--bloco">
-                  Editar Abrigo
-                </button>
-              )}
             </div>
 
-            {/* ── Vítimas Recentes — só no modo visualização ── */}
-            {!editando && (
-              <div className="sv-pilha">
-
-                <div className="sv-secao-linha">
-                  <h3 className="sv-secao-titulo">
-                    Vítimas Presentes
-                  </h3>
-                  <button
-                    type="button"
-                    className="sv-btn sv-btn--vidro sv-btn--p"
-                    onClick={() => navigate(`/abrigos/${id}/vitimas`)}
-                  >
-                    Ver todas <LuChevronRight className="sv-seta" />
-                  </button>
-                </div>
-
-                {vitimasRecentes.length > 0 ? (
-                  <div className="sv-tabela-caixa">
-                    <table className="sv-tabela sv-tabela--cards">
-                      <thead>
-                        <tr>
-                          <th scope="col">Nome</th>
-                          <th scope="col" className="sv-centro">Idade</th>
-                          <th scope="col" className="sv-centro">Entrada</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vitimasRecentes.map((vitima) => (
-                          <tr key={vitima.id_vitima}>
-                            <td><strong>{vitima.nome}</strong></td>
-                            <td data-rotulo="Idade" className="sv-centro">{calcularIdade(vitima.dataNascimento)}</td>
-                            <td data-rotulo="Entrada" className="sv-centro">{formatarData(vitima.dataEntrada ?? vitima.createdAt)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <Vazio
-                    icone={<LuUsers />}
-                    titulo="Nenhuma vítima vinculada a este abrigo."
-                    dica="As vítimas acolhidas aqui aparecem nesta lista. Para vincular, use “Ver todas”."
-                  />
-                )}
-
-                {/* ── Solicitações de Ajuda ── */}
-                <div className="sv-pilha">
-
-                  <div className="sv-secao-linha">
-                    <h3 className="sv-secao-titulo">
-                      Solicitações de Ajuda
-                    </h3>
-                    <div className="sv-acoes">
-                      <button
-                        type="button"
-                        className="sv-btn sv-btn--primario sv-btn--p"
-                        onClick={() => navigate(`/abrigos/${id}/cadastrar-solicitacao-ajuda`)}
-                      >
-                        <LuPlus /> Nova Solicitação
-                      </button>
-                      <button
-                        type="button"
-                        className="sv-btn sv-btn--vidro sv-btn--p"
-                        onClick={() => navigate(`/abrigos/${id}/solicitacoes-ajuda`)}
-                      >
-                        Ver todas <LuChevronRight className="sv-seta" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {solicitacoesAjuda.length > 0 ? (
-                    <div className="sv-lista">
-                      {solicitacoesAjuda.map((s) => {
-                        const badge = badgeAjuda[s.status] ?? { label: s.status, bg: 'var(--sv-fundo-suave)', cor: 'var(--sv-tinta-2)' }
-                        return (
-                          <div
-                            key={s.id_solicitacao}
-                            className="sv-linha sv-linha--clicavel"
-                            role="link"
-                            tabIndex={0}
-                            onClick={() => navigate(`/visualizar-solicitacao-ajuda/${s.id_solicitacao}`)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/visualizar-solicitacao-ajuda/${s.id_solicitacao}`) }}
-                          >
-                            {/* Ícone */}
-                            <span className="sv-poco sv-poco--p sv-poco--aceso sv-poco--ciano">
-                              <LuHandHeart />
-                            </span>
-
-                            {/* Título + categoria */}
-                            <div className="sv-linha-info">
-                              <p className="sv-linha-titulo">
-                                {s.titulo}
-                              </p>
-                              <p className="sv-linha-meta">
-                                {categoriaLabel[s.categoria] ?? s.categoria}
-                              </p>
-                            </div>
-
-                            {/* Badge status */}
-                            <span className="sv-tag sv-tag--lisa" style={{ background: badge.bg, color: badge.cor }}>
-                              {badge.label}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <Vazio
-                      icone={<LuHandHeart />}
-                      titulo="Nenhuma solicitação de ajuda cadastrada."
-                      dica="Crie uma quando o abrigo precisar de doações, medicamentos ou voluntários."
-                    />
-                  )}
-                </div>
-                {/* ── fim Solicitações de Ajuda ── */}
-
-              </div>
-            )}
 
           </div>
         </form>
+        </>)}
 
         <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>

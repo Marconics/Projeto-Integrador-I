@@ -266,3 +266,62 @@ Content-Type: application/json
   "solicitanteEmail": "prefeitura@email.com",
   "solicitanteTelefone": "(11) 98888-8888"
 }
+###
+# ───── Responsáveis do abrigo no WhatsApp (admin) ─────
+# Defina antes, no topo do arquivo: @tokenAdmin = <token do /api/auth/login> e @botKey = <BOT_API_KEY>
+# Responsáveis e convites de um abrigo
+GET http://localhost:3000/api/responsaveis/listar?abrigoId=1
+Authorization: Bearer {{tokenAdmin}}
+
+###
+# Convidar: forma "mensagem" (o bot pergunta ao celular) ou "link" (devolve um código de 6 dígitos)
+# metodoConferencia: numero_do_cadastro | ligacao_contato_oficial | orgao_publico | presencial
+POST http://localhost:3000/api/responsaveis/convidar
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "abrigoId": 1,
+  "nome": "Ana Souza",
+  "telefone": "(12) 98888-7777",
+  "forma": "mensagem",
+  "metodoConferencia": "ligacao_contato_oficial",
+  "observacao": "Liguei para a secretaria da escola, falei com a diretora"
+}
+
+###
+PATCH http://localhost:3000/api/responsaveis/convites/cancelar/1
+Authorization: Bearer {{tokenAdmin}}
+
+###
+PATCH http://localhost:3000/api/responsaveis/desativar/1
+Authorization: Bearer {{tokenAdmin}}
+
+###
+# ───── Responsáveis (só o ChatBot, cabeçalho x-bot-key) ─────
+POST http://localhost:3000/api/bot/responsaveis/responder
+x-bot-key: {{botKey}}
+Content-Type: application/json
+
+{ "whatsappId": "5512988887777@c.us", "telefone": "5512988887777", "nome": "Ana", "resposta": "aceitar" }
+
+###
+POST http://localhost:3000/api/bot/responsaveis/vincular
+x-bot-key: {{botKey}}
+Content-Type: application/json
+
+{ "whatsappId": "5512988887777@c.us", "telefone": "5512988887777", "codigo": "123456" }
+
+###
+# ───── Voluntários do abrigo no WhatsApp ─────
+# Tirar um voluntário da lista do abrigo (admin) — a lista vem em GET /api/responsaveis/listar?abrigoId=
+PATCH http://localhost:3000/api/responsaveis/voluntarios/desativar/1
+Authorization: Bearer {{tokenAdmin}}
+
+###
+# "sair voluntario" no bot (só o ChatBot)
+POST http://localhost:3000/api/bot/voluntarios/sair
+x-bot-key: {{botKey}}
+Content-Type: application/json
+
+{ "whatsappId": "5512922223333@c.us" }

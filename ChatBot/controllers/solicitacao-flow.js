@@ -40,6 +40,15 @@ const TIPOS_ABRIGO = [
   { valor: 'Campo',             label: '⛺ Campo' },
 ];
 
+// Estrutura do local (os mesmos campos do cadastro de abrigo no painel)
+const ESTRUTURAS = [
+  { campo: 'possuiAtendimentoMedico', label: '🩺 Atendimento médico' },
+  { campo: 'possuiEnfermagem',        label: '💉 Enfermagem' },
+  { campo: 'possuiPets',              label: '🐾 Aceita pets' },
+  { campo: 'possuiAcessibilidade',    label: '♿ Acessibilidade' },
+  { campo: 'possuiCozinha',           label: '🍳 Cozinha' },
+];
+
 // ── Pergunta o tipo do abrigo (depois da cidade/bairro) ────────
 const perguntarTipo = async (msg, from, state) => {
   userState.set(from, { ...state, step: 'sol_tipo' });
@@ -226,6 +235,32 @@ ${RODAPE_OPCAO}`
     }
 
     state.tempData.capacidadeTotal = capacidade;
+    userState.set(from, { ...state, step: 'sol_estrutura' });
+    await msg.reply(
+`🏗️ O que o local *tem*?
+
+${listaNumerada(ESTRUTURAS.map(e => e.label))}
+${opcao(0, '➖ Nenhuma dessas')}
+
+💬 Digite os *números* separados por vírgula.
+_Ex: 1, 3, 5_`
+    );
+    return true;
+  }
+
+  // ── ETAPA 6b: Estrutura (infraestrutura do local) ─────────────
+  // Antes o bot não perguntava e todo abrigo indicado pelo WhatsApp
+  // nascia com a infraestrutura toda desmarcada
+  if (state.step === 'sol_estrutura') {
+    const numeros = [...new Set(text.split(/[\s,;e]+/).filter(Boolean).map(Number))];
+    const validos = numeros.every(n => Number.isInteger(n) && n >= 0 && n <= ESTRUTURAS.length);
+
+    if (numeros.length === 0 || !validos || (numeros.includes(0) && numeros.length > 1)) {
+      await msg.reply(`❌ Digite os números de *1 a ${ESTRUTURAS.length}* separados por vírgula, ou *0* se não tiver nenhuma.\n\n💡 Ex: 1, 3, 5`);
+      return true;
+    }
+
+    ESTRUTURAS.forEach((e, i) => { state.tempData[e.campo] = numeros.includes(i + 1); });
     userState.set(from, { ...state, step: 'sol_responsavel' });
     await msg.reply('👤 Qual o nome do *responsável* pelo local?');
     return true;
@@ -268,6 +303,69 @@ ${RODAPE_OPCAO}`
   if (state.step === 'sol_sol_telefone') {
     const tel = msg.body.trim();
     state.tempData.solicitanteTelefone = tel === '-' ? null : tel;
+    userState.set(from, { ...state, step: 'sol_dono' });
+
+    await msg.reply(
+`🏠 Você é o *responsável (dono)* por este local?
+
+${listaNumerada(['✅ Sim, sou o responsável', '➖ Não, só estou indicando'])}
+
+${RODAPE_OPCAO}`
+    );
+    return true;
+  }
+
+  // ── ETAPA 11b: É o responsável pelo local? ────────────────────
+  // Quem só indicou o local NÃO vira responsável: pode se oferecer como voluntário
+  if (state.step === 'sol_dono') {
+    if (text !== '1' && text !== '2') {
+      await msg.reply(`💬 Digite *1* se você é o responsável pelo local ou *2* se só está indicando.`);
+      return true;
+    }
+    state.tempData.solicitanteEhResponsavel = text === '1';
+
+    if (text === '1') {
+      userState.set(from, { ...state, step: 'sol_avisos' });
+      await msg.reply(
+`🔔 Se o local for *aprovado*, quer receber os avisos do abrigo *neste WhatsApp*?
+_(voluntários interessados em ajudar, avisos da equipe)_
+
+${listaNumerada(['✅ Sim, quero receber', '➖ Não'])}
+
+${RODAPE_OPCAO}`
+      );
+    } else {
+      userState.set(from, { ...state, step: 'sol_voluntario' });
+      await msg.reply(
+`🙋 Gostaria de se *voluntariar* neste abrigo?
+
+Se o local for *aprovado*, você recebe *neste WhatsApp* os pedidos de ajuda do abrigo (doações, medicamentos, mão de obra).
+
+${listaNumerada(['✅ Sim, quero ajudar', '➖ Não'])}
+
+${RODAPE_OPCAO}`
+      );
+    }
+    return true;
+  }
+
+  // ── ETAPA 11c: Avisos (responsável) ou voluntariado (não responsável) ──
+  // - sol_avisos: se aprovada, o bot pergunta de novo (ACEITAR) antes de
+  //   começar a mandar os avisos do abrigo
+  // - sol_voluntario: se aprovada, a pessoa entra na lista de voluntários
+  //   do abrigo e recebe os pedidos de ajuda
+  if (state.step === 'sol_avisos' || state.step === 'sol_voluntario') {
+    if (text !== '1' && text !== '2') {
+      await msg.reply(`💬 Digite *1* para sim ou *2* para não.`);
+      return true;
+    }
+    if (state.step === 'sol_avisos') {
+      state.tempData.aceitaAvisosWhatsapp = text === '1';
+    } else {
+      state.tempData.querVoluntariar = text === '1';
+    }
+    // O WhatsApp só vai junto se a pessoa quis receber alguma coisa nele
+    state.tempData.solicitanteWhatsappId = text === '1' ? from : null;
     userState.set(from, { ...state, step: 'sol_foto' });
 
     await msg.reply(
@@ -324,6 +422,7 @@ Clipe 📎 → Documento → selecione a foto
 🏷️ Nome: ${d.nome}
 ${tipo}
 👥 Capacidade: ${d.capacidadeTotal} pessoas
+🏗️ Estrutura: ${ESTRUTURAS.filter(e => d[e.campo]).map(e => e.label).join(', ') || 'nenhuma'}
 📮 CEP: ${d.cep}
 📍 Endereço: ${d.endereco}
 🌆 Cidade: ${d.cidade}/${d.estado}
@@ -336,6 +435,10 @@ ${tipo}
 👤 ${d.solicitanteNome}
 📧 ${d.solicitanteEmail}
 📱 ${d.solicitanteTelefone ?? '-'}
+🏠 Responsável pelo local: ${d.solicitanteEhResponsavel ? '✅ sim' : '➖ não'}
+${d.solicitanteEhResponsavel
+  ? `🔔 Avisos do abrigo neste WhatsApp: ${d.aceitaAvisosWhatsapp ? '✅ sim' : '➖ não'}`
+  : `🙋 Voluntário do abrigo: ${d.querVoluntariar ? '✅ sim' : '➖ não'}`}
 
 ${SEPARADOR}
 ✅ Digite *confirmar* para enviar

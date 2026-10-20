@@ -5,6 +5,7 @@
 // o resultado (enviada ou falha — a API tenta de novo até 3 vezes).
 import pkg from "whatsapp-web.js";
 import { api } from "./api.js";
+import { ehErroDePaginaQuebrada } from "./saude.js";
 
 const { MessageMedia } = pkg;
 
@@ -23,6 +24,15 @@ const esperar = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // do número ("5512999999999@c.us"). Tentamos primeiro o destino salvo (é o mesmo
 // que as respostas do bot usam) e, se falhar, o número de telefone equivalente.
 const destinosPossiveis = async (client, destino) => {
+  // Celular digitado no painel (convite de responsável): pode ser alguém que nunca
+  // falou com o bot. Pergunta ao WhatsApp o ID certo desse número (resolve também
+  // números antigos sem o 9 da frente) e, se ele não tiver WhatsApp, avisa.
+  if (destino.endsWith('@c.us') && typeof client.getNumberId === 'function') {
+    const id = await client.getNumberId(destino.split('@')[0]);
+    if (!id) throw new Error('Este número não tem WhatsApp.');
+    return id._serialized === destino ? [destino] : [id._serialized, destino];
+  }
+
   if (!destino.endsWith('@lid')) return [destino];
 
   try {
@@ -84,15 +94,17 @@ const enviar = async (client, notificacao) => {
 
 let iniciado = false;
 
-export const iniciarEnvioDeNotificacoes = (client) => {
+// aoQuebrar(motivo): chamado quando a página do WhatsApp Web quebrou (o index.js reinicia o bot)
+export const iniciarEnvioDeNotificacoes = (client, { aoQuebrar } = {}) => {
   // O evento "ready" pode disparar de novo após reconexão
   if (iniciado) return;
   iniciado = true;
 
   let processando = false;
+  let parado = false; // página quebrada: não envia mais nada até o bot reiniciar
 
   const ciclo = async () => {
-    if (processando) return;
+    if (processando || parado) return;
     processando = true;
 
     try {
@@ -110,6 +122,15 @@ export const iniciarEnvioDeNotificacoes = (client) => {
           console.log(`[NOTIF] ✓ ${notificacao.evento} → ${notificacao.destino}`);
         } catch (erro) {
           console.error(`[NOTIF] ✗ ${notificacao.destino}:`, erro.message);
+
+          // Página do WhatsApp Web quebrada: a culpa não é do número. Não conta como
+          // falha (a notificação volta para a fila em alguns minutos) e o bot reinicia.
+          if (ehErroDePaginaQuebrada(erro)) {
+            parado = true;
+            aoQuebrar?.(erro.message);
+            return;
+          }
+
           await api('PATCH', `/bot/notificacoes/${notificacao.id_notificacao}`, { sucesso: false, erro: erro.message });
         }
 

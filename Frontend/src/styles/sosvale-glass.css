@@ -643,7 +643,9 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
 }
 /* Campo com erro: borda e mensagem em vermelho */
 .sv-campo--erro :is(input, select, textarea) { border-color: var(--sv-sirene); }
-.sv-campo-ajuda { font-size: 12.5px; color: var(--sv-tinta-3); }
+/* .sv-campo > .sv-campo-ajuda: vence o ".sv-campo > p" (valor em modo leitura) quando a ajuda é um <p> */
+.sv-campo-ajuda,
+.sv-campo > .sv-campo-ajuda { font-size: 12.5px; color: var(--sv-tinta-3); }
 .sv-campo-erro { font-size: 12.5px; font-weight: 500; color: var(--sv-sirene); }
 
 /* Marcas dos formulários (components/MarcasCampo.jsx)
@@ -732,9 +734,9 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
   .sv-form-duas { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* Opção em formato de card (checkbox escondido; o card acende quando marcado) */
+/* Opção em formato de card (checkbox ou radio escondido; o card acende quando marcado) */
 .sv-opcao { display: block; cursor: pointer; }
-.sv-opcao input[type="checkbox"] { position: absolute; opacity: 0; pointer-events: none; }
+.sv-opcao input:is([type="checkbox"], [type="radio"]) { position: absolute; opacity: 0; pointer-events: none; }
 .sv-opcao-caixa {
   display: flex;
   align-items: center;
@@ -758,6 +760,8 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
 .sv-opcao input:checked + .sv-opcao-caixa .sv-opcao-icone { color: var(--sv-azul); }
 .sv-opcao input:focus-visible + .sv-opcao-caixa { outline: 2px solid var(--sv-azul); outline-offset: 3px; }
 .sv-opcao input:disabled + .sv-opcao-caixa { cursor: default; }
+/* Radio desabilitado (opção que não vale na escolha atual) fica apagado */
+.sv-opcao input[type="radio"]:disabled + .sv-opcao-caixa { opacity: .5; }
 
 /* Envio de foto */
 .sv-upload {

@@ -17,6 +17,7 @@ import alertaRoutes from './routes/alertas.js'
 import inscritoRoutes from './routes/inscritos.js'
 import botRoutes from './routes/bot.js'
 import mapaRoutes from './routes/mapa.js'
+import responsavelRoutes from './routes/responsaveis.js'
 import 'dotenv/config' // Garante que o process.env funcione
 
 //cria a instância
@@ -100,6 +101,7 @@ app.register(alertaRoutes, { prefix: '/api/alertas' })
 app.register(inscritoRoutes, { prefix: '/api/inscritos' })
 app.register(botRoutes, { prefix: '/api/bot' })
 app.register(mapaRoutes, { prefix: '/api/mapa' })
+app.register(responsavelRoutes, { prefix: '/api/responsaveis' })
 
 
 // Inicia o servidor

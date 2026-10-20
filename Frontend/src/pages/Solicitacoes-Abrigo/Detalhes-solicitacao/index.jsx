@@ -1,7 +1,7 @@
 // --------- Imports -----------
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuDog, LuHeartPulse, LuIdCard, LuMail, LuMapPin, LuMapPinned, LuNavigation, LuPhone, LuUser, LuUtensils } from 'react-icons/lu';
+import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuDog, LuHeartPulse, LuIdCard, LuMail, LuMapPin, LuMapPinned, LuMessageCircle, LuNavigation, LuPhone, LuUser, LuUtensils } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
 import { fetchAdmin } from '../../../services/api';
@@ -139,7 +139,12 @@ function DetalhesSolicitacao() {
       setStatus('aprovado')
       setDadosSolicitacao(prev => ({ ...prev, status: 'aprovado' }))
       setPainelDecisao(null)
-      alert(`Solicitação aprovada! Abrigo criado com ID ${dados.abrigoCriado.id_abrigo}.`)
+      const extra = dados.conviteEnviado
+        ? ' O bot vai perguntar a quem pediu (o responsável) se quer receber os avisos do abrigo.'
+        : dados.voluntarioIncluido
+          ? ' Quem pediu entrou na lista de voluntários do abrigo e vai receber os pedidos de ajuda pelo WhatsApp.'
+          : ''
+      alert(`Solicitação aprovada! Abrigo criado com ID ${dados.abrigoCriado.id_abrigo}.${extra}`)
 
     } catch (erro) {
       console.error('Erro ao aprovar:', erro)
@@ -383,6 +388,23 @@ function DetalhesSolicitacao() {
             <div className="sv-campo">
               <label><LuPhone /> Telefone</label>
               <p>{solicitanteTelefone || '—'}</p>
+            </div>
+
+            {/* Respostas do bot: é o responsável? (→ convite de responsável) ou quer ser voluntário? */}
+            <div className="sv-campo">
+              <label><LuUser /> É o responsável pelo local?</label>
+              <p>{dadosSolicitacao.solicitanteEhResponsavel ? 'Sim, declarou ser o responsável' : 'Não, só indicou o local'}</p>
+            </div>
+
+            <div className="sv-campo">
+              <label><LuMessageCircle /> WhatsApp de quem pediu</label>
+              <p>
+                {!dadosSolicitacao.solicitanteWhatsappId
+                  ? 'Não quis receber nada pelo WhatsApp'
+                  : dadosSolicitacao.solicitanteEhResponsavel
+                    ? 'Quer receber os avisos do abrigo — ao aprovar, o bot envia o convite de responsável (a pessoa ainda responde ACEITAR)'
+                    : 'Quer ser voluntário — ao aprovar, entra na lista de voluntários do abrigo e recebe os pedidos de ajuda'}
+              </p>
             </div>
 
             {/* Motivo da recusa — aparece só se já foi recusado */}

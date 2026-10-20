@@ -365,5 +365,157 @@ token = tokenAdmin
 r = await req('POST', `/solicitacoes-ajuda/interesse/${pedidoAjuda}`)
 checar('admin não marca interesse → 403', r.status === 403, r)
 
+// ── Responsáveis do abrigo no WhatsApp
+// Fila do bot (só as mensagens de responsável, para não consumir os alertas
+// que o teste:conversa envia depois): reserva, marca como enviadas e devolve
+async function esvaziarFila() {
+  const lote = []
+  for (const tipoDestino of ['responsavel', 'voluntario']) {
+    lote.push(...(await req('POST', '/bot/notificacoes/reservar', { limite: 50, tipoDestino }, BOT)).dados.notificacoes)
+  }
+  for (const n of lote) await req('PATCH', `/bot/notificacoes/${n.id_notificacao}`, { sucesso: true }, BOT)
+  return lote
+}
+await esvaziarFila()
+r = await req('POST', '/voluntarios/login', { email: 'vol@x.com', senha: '123456' })
+const tokenVoluntario = r.dados.token
+token = tokenAdmin
+
+// Solicitação pelo bot com consentimento → ao aprovar, convite para o WhatsApp de quem pediu
+const SOLICITANTE = '5512911112222@c.us'
+r = await req('POST', '/solicitacoes/criar', {
+  nome: 'Ginásio do Bot', cep: '12000-000', endereco: 'Rua 5', cidadeId: taubate.id_cidade, responsavel: 'Rita', tipoAbrigo: 'Ginásio',
+  capacidadeTotal: 30, solicitanteNome: 'Rita Bot', solicitanteEmail: 'rita@x.com', solicitanteTelefone: '(12) 91111-2222',
+  solicitanteWhatsappId: SOLICITANTE, solicitanteEhResponsavel: true, aceitaAvisosWhatsapp: true,
+}, BOT)
+const solicitacaoBot = r.dados.solicitacao?.id_solicitacao
+checar('solicitação pelo bot guarda o WhatsApp de quem pediu', r.status === 201 && r.dados.solicitacao.solicitanteWhatsappId === SOLICITANTE && r.dados.solicitacao.aceitaAvisosWhatsapp === true, r)
+r = await req('POST', '/solicitacoes/criar', {
+  nome: 'Falsa', cep: '1', endereco: 'Rua', cidadeId: taubate.id_cidade, responsavel: 'X', tipoAbrigo: 'Igreja', capacidadeTotal: 5,
+  solicitanteNome: 'X', solicitanteEmail: 'x@x.com', solicitanteWhatsappId: '5512900000000@c.us', aceitaAvisosWhatsapp: true,
+})
+checar('sem a chave do bot o WhatsApp de quem pediu é ignorado', r.status === 201 && r.dados.solicitacao.solicitanteWhatsappId === null && r.dados.solicitacao.aceitaAvisosWhatsapp === false && r.dados.solicitacao.querVoluntariar === false, r)
+
+r = await req('PATCH', `/solicitacoes/analisar/${solicitacaoBot}`, { status: 'aprovado' })
+checar('aprovar solicitação com consentimento envia convite', r.status === 200 && r.dados.conviteEnviado === true, r)
+const abrigoBot = r.dados.abrigoCriado.id_abrigo
+let saida = await esvaziarFila()
+checar('convite de responsável na fila do bot', saida.some(n => n.evento === 'convite_responsavel' && n.destino === SOLICITANTE && n.tipoDestino === 'responsavel'), saida)
+
+// Responde de outro formato de ID (@lid) mas com o mesmo número, e sem o 9 da frente
+r = await req('POST', '/bot/responsaveis/responder', { whatsappId: '9988776655@lid', telefone: '551211112222', resposta: 'aceitar' }, BOT)
+checar('aceitar o convite pelo número (sem o 9) cria o vínculo', r.status === 200 && r.dados.abrigo?.id === abrigoBot && r.dados.mensagem.includes('Ginásio do Bot'), r)
+r = await req('POST', '/bot/responsaveis/responder', { whatsappId: '9988776655@lid', telefone: '551211112222', resposta: 'aceitar' }, BOT)
+checar('aceitar de novo → não há convite pendente (404)', r.status === 404, r)
+r = await req('GET', `/responsaveis/listar?abrigoId=${abrigoBot}`)
+checar('painel lista o responsável e como foi conferido', r.status === 200 && r.dados.responsaveis.length === 1 && r.dados.responsaveis[0].metodoConferencia === 'solicitacao_aprovada' && r.dados.responsaveis[0].nome === 'Rita Bot', r)
+
+// Convites do admin: validações
+r = await req('POST', '/responsaveis/convidar', { abrigoId, nome: 'Ana', telefone: '(12) 98888-7777', forma: 'mensagem', metodoConferencia: 'numero_do_cadastro' })
+checar('"número do cadastro" com outro número → 400', r.status === 400, r)
+r = await req('POST', '/responsaveis/convidar', { abrigoId, nome: 'Ana', telefone: '(12) 98888-7777', forma: 'mensagem', metodoConferencia: 'ligacao_contato_oficial' })
+checar('ligação sem anotar com quem confirmou → 400', r.status === 400, r)
+r = await req('POST', '/responsaveis/convidar', { abrigoId, nome: 'Ana', telefone: '(12) 3333-4444', forma: 'mensagem', metodoConferencia: 'orgao_publico', observacao: 'Defesa Civil' })
+checar('convite por mensagem para telefone fixo → 400', r.status === 400, r)
+r = await req('POST', '/responsaveis/convidar', { abrigoId, nome: 'Ana', forma: 'mensagem', metodoConferencia: 'solicitacao_aprovada' })
+checar('admin não usa o método automático "solicitação aprovada" → 400', r.status === 400, r)
+
+// Convite por mensagem cancelado: a pessoa não consegue mais aceitar
+r = await req('POST', '/responsaveis/convidar', { abrigoId, nome: 'Ana', telefone: '(12) 98888-7777', forma: 'mensagem', metodoConferencia: 'ligacao_contato_oficial', observacao: 'Secretaria da escola, diretora Ana' })
+checar('convite por mensagem criado', r.status === 201 && r.dados.codigo === null, r)
+r = await req('PATCH', `/responsaveis/convites/cancelar/${r.dados.convite.id_convite}`)
+checar('cancelar convite', r.status === 200, r)
+r = await req('POST', '/bot/responsaveis/responder', { whatsappId: '5512988887777@c.us', telefone: '5512988887777', resposta: 'aceitar' }, BOT)
+checar('convite cancelado não pode ser aceito', r.status === 404, r)
+saida = await esvaziarFila()
+checar('mensagem do convite cancelado não sai', !saida.some(n => n.destino === '5512988887777@c.us'), saida)
+
+// Convite por link (presencial): código de 6 dígitos, usado uma vez só
+r = await req('POST', '/responsaveis/convidar', { abrigoId, nome: 'Bruno', forma: 'link', metodoConferencia: 'presencial' })
+checar('convite por link devolve o código', r.status === 201 && /^\d{6}$/.test(r.dados.codigo), r)
+const codigoLink = r.dados.codigo
+const outroCodigo = codigoLink === '000000' ? '111111' : '000000'
+r = await req('POST', '/bot/responsaveis/vincular', { whatsappId: '5512977776666@c.us', telefone: '5512977776666', codigo: outroCodigo }, BOT)
+checar('código errado → 404', r.status === 404, r)
+r = await req('POST', '/bot/responsaveis/vincular', { whatsappId: '5512977776666@c.us', telefone: '5512977776666', codigo: codigoLink }, BOT)
+checar('vincular com o código certo', r.status === 200 && r.dados.abrigo?.id === abrigoId, r)
+r = await req('POST', '/bot/responsaveis/vincular', { whatsappId: '5512900001111@c.us', codigo: codigoLink }, BOT)
+checar('o mesmo código não vale duas vezes', r.status === 404, r)
+for (let i = 0; i < 5; i++) await req('POST', '/bot/responsaveis/vincular', { whatsappId: 'tentador@c.us', codigo: '999999' === codigoLink ? '888888' : '999999' }, BOT)
+r = await req('POST', '/bot/responsaveis/vincular', { whatsappId: 'tentador@c.us', codigo: '123456' }, BOT)
+checar('5 códigos errados → espera (429)', r.status === 429, r)
+
+// Voluntário marca interesse → o responsável do abrigo recebe o aviso
+token = tokenVoluntario
+r = await req('POST', `/solicitacoes-ajuda/interesse/${pedidoAjuda}`)
+checar('interesse depois do vínculo', r.status === 201, r)
+token = tokenAdmin
+saida = await esvaziarFila()
+checar('responsável recebe "voluntário quer ajudar"', saida.some(n => n.evento === 'aviso_responsavel' && n.destino === '5512977776666@c.us' && n.mensagem.includes('Vol')), saida)
+
+// Desvincular: some do painel e a pessoa é avisada
+r = await req('GET', `/responsaveis/listar?abrigoId=${abrigoId}`)
+const bruno = r.dados.responsaveis.find(x => x.nome === 'Bruno')
+r = await req('PATCH', `/responsaveis/desativar/${bruno?.id_responsavel}`)
+checar('desvincular responsável', r.status === 200, r)
+r = await req('GET', `/responsaveis/listar?abrigoId=${abrigoId}`)
+checar('desvinculado some da lista', !r.dados.responsaveis.some(x => x.nome === 'Bruno'), r)
+saida = await esvaziarFila()
+checar('desvinculado recebe o aviso', saida.some(n => n.destino === '5512977776666@c.us' && n.mensagem.includes('não recebe mais')), saida)
+
+// Quem só indicou o local (não é o responsável) não recebe convite de responsável
+r = await req('POST', '/solicitacoes/criar', {
+  nome: 'Quadra', cep: '1', endereco: 'Rua', cidadeId: taubate.id_cidade, responsavel: 'Y', tipoAbrigo: 'Ginásio', capacidadeTotal: 5,
+  solicitanteNome: 'Y', solicitanteEmail: 'y@y.com', solicitanteWhatsappId: '5512933334444@c.us', solicitanteEhResponsavel: false, aceitaAvisosWhatsapp: true,
+}, BOT)
+checar('não responsável: pedido de avisos de responsável é ignorado', r.status === 201 && r.dados.solicitacao.aceitaAvisosWhatsapp === false && r.dados.solicitacao.solicitanteEhResponsavel === false, r)
+await req('PATCH', `/solicitacoes/analisar/${r.dados.solicitacao.id_solicitacao}`, { status: 'recusado', motivoRecusa: 'teste' })
+
+// Não é o responsável e quer ser voluntário → entra na lista do abrigo e recebe os pedidos de ajuda
+const VOLUNTARIO_ZAP = '5512922223333@c.us'
+const solicitacaoVoluntario = async (nome) => (await req('POST', '/solicitacoes/criar', {
+  nome, cep: '12000-000', endereco: 'Rua 9', cidadeId: taubate.id_cidade, responsavel: 'Dona Lúcia', telefone: '(12) 3600-2222',
+  tipoAbrigo: 'Igreja', capacidadeTotal: 20, solicitanteNome: 'Pedro Vizinho', solicitanteEmail: 'pedro@x.com',
+  solicitanteTelefone: '(12) 92222-3333', solicitanteWhatsappId: VOLUNTARIO_ZAP, solicitanteEhResponsavel: false, querVoluntariar: true,
+}, BOT)).dados.solicitacao
+const solVol = await solicitacaoVoluntario('Capela São Pedro')
+checar('solicitação guarda "quer ser voluntário"', solVol?.querVoluntariar === true && solVol.solicitanteEhResponsavel === false, solVol)
+r = await req('PATCH', `/solicitacoes/analisar/${solVol.id_solicitacao}`, { status: 'aprovado' })
+checar('aprovar inclui quem pediu como voluntário (sem convite de responsável)', r.status === 200 && r.dados.voluntarioIncluido === true && r.dados.conviteEnviado === false, r)
+const abrigoVol = r.dados.abrigoCriado.id_abrigo
+saida = await esvaziarFila()
+checar('voluntário recebe as boas-vindas', saida.some(n => n.evento === 'aviso_voluntario' && n.destino === VOLUNTARIO_ZAP), saida)
+checar('nenhum convite de responsável para quem só indicou', !saida.some(n => n.evento === 'convite_responsavel' && n.destino === VOLUNTARIO_ZAP), saida)
+r = await req('GET', `/responsaveis/listar?abrigoId=${abrigoVol}`)
+checar('painel lista o voluntário no WhatsApp (e nenhum responsável)', r.dados.voluntarios?.length === 1 && r.dados.voluntarios[0].nome === 'Pedro Vizinho' && r.dados.responsaveis.length === 0, r)
+const idVoluntarioZap = r.dados.voluntarios[0]?.id_voluntario_whatsapp
+
+r = await req('POST', '/solicitacoes-ajuda/cadastrar', { titulo: 'Cobertores', descricao: '20 cobertores de casal', categoria: 'doacao', urgencia: 'alta', abrigoId: abrigoVol })
+checar('novo pedido de ajuda avisa 1 voluntário', r.status === 201 && r.dados.voluntariosAvisados === 1, r)
+saida = await esvaziarFila()
+checar('voluntário recebe o pedido de ajuda (com o contato do abrigo)', saida.some(n => n.evento === 'pedido_ajuda' && n.destino === VOLUNTARIO_ZAP && n.mensagem.includes('Cobertores') && n.mensagem.includes('(12) 3600-2222')), saida)
+
+r = await req('PATCH', `/responsaveis/voluntarios/desativar/${idVoluntarioZap}`)
+checar('admin remove o voluntário', r.status === 200, r)
+saida = await esvaziarFila()
+checar('removido recebe o aviso', saida.some(n => n.evento === 'aviso_voluntario' && n.destino === VOLUNTARIO_ZAP && n.mensagem.includes('não recebe mais')), saida)
+r = await req('POST', '/solicitacoes-ajuda/cadastrar', { titulo: 'Água', descricao: 'Galões', categoria: 'doacao', abrigoId: abrigoVol })
+checar('pedido depois de removido não avisa ninguém', r.status === 201 && r.dados.voluntariosAvisados === 0, r)
+
+// "sair voluntario" pelo bot
+const solVol2 = await solicitacaoVoluntario('Salão da Capela')
+await req('PATCH', `/solicitacoes/analisar/${solVol2.id_solicitacao}`, { status: 'aprovado' })
+await esvaziarFila()
+r = await req('POST', '/bot/voluntarios/sair', { whatsappId: VOLUNTARIO_ZAP }, BOT)
+checar('"sair voluntario" tira o número da lista', r.status === 200 && r.dados.total === 1 && r.dados.mensagem.includes('Salão da Capela'), r)
+r = await req('POST', '/bot/voluntarios/sair', { whatsappId: VOLUNTARIO_ZAP }, BOT)
+checar('"sair voluntario" de novo → não está em nenhuma lista (404)', r.status === 404, r)
+
+// Só admin
+token = tokenVoluntario
+r = await req('GET', `/responsaveis/listar?abrigoId=${abrigoId}`)
+checar('voluntário não acessa os responsáveis', r.status === 401 || r.status === 403, r)
+token = tokenAdmin
+
 console.log(falhas === 0 ? '\nTODOS OS TESTES PASSARAM' : `\n${falhas} TESTE(S) FALHARAM`)
 process.exit(falhas ? 1 : 0)

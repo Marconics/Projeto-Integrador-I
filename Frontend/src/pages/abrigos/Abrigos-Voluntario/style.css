@@ -1,0 +1,75 @@
+/* Abrigos do voluntário — peças só desta tela.
+   Página, resumo, filtros, abas, chips, botões, avisos e gaveta vêm do tema
+   (styles/sosvale-glass.css); os cards ha-* vêm de ../Hub-Abrigos/style.css. */
+
+/* ─── Meu abrigo ─── */
+.av-meu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-left: 4px solid var(--sv-azul);
+}
+.av-meu--vazio { border-left-color: var(--sv-linha); }
+.av-meu-info { flex: 1 1 auto; min-width: 0; display: grid; gap: 4px; }
+.av-meu-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--sv-azul);
+}
+.av-meu-nome {
+  font-family: var(--sv-fonte-display);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--sv-azul-forte);
+  overflow-wrap: anywhere;
+}
+.av-meu-local {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--sv-tinta-2);
+  overflow-wrap: anywhere;
+}
+.av-meu-local svg { flex: none; color: var(--sv-azul); }
+.av-meu-acoes { display: flex; flex-wrap: wrap; gap: 10px; flex: none; }
+.av-meu-texto { margin: 0; font-size: 14.5px; color: var(--sv-tinta-2); }
+.av-meu-texto strong { color: var(--sv-tinta); }
+
+/* Aviso do vínculo com botão de fechar */
+.av-aviso { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.av-aviso .sv-btn { flex: none; color: inherit; }
+
+/* ─── Card do abrigo em que o voluntário está ─── */
+.av-card--meu {
+  border-color: var(--sv-azul);
+  box-shadow: 0 0 0 2px var(--sv-azul-suave), var(--sv-sombra-media);
+}
+.av-card-faixa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -20px -22px 0;
+  padding: 8px 22px;
+  background: var(--sv-azul);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.av-card-faixa svg { font-size: 15px; }
+.av-vinculado:disabled { opacity: 1; color: var(--sv-ok-forte); cursor: default; }
+
+/* ─── Celular ─── */
+@media (max-width: 600px) {
+  .av-meu:not(.av-meu--vazio) { flex-wrap: wrap; align-items: flex-start; }
+  .av-meu-acoes { width: 100%; }
+  .av-meu-acoes .sv-btn { flex: 1 1 0; min-width: 0; }
+  .av-card-faixa { margin: -18px -18px 0; padding: 8px 18px; }
+}

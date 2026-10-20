@@ -82,6 +82,9 @@ await diz(eu, '7')            // indicar abrigo
 await diz(eu, 'cancelar')     // cancela qualquer fluxo
 await diz(eu, 'xyz')          // não entendi → menu
 await diz(eu, '3')            // abrigos via API
+await diz(eu, 'vincular 12')  // responsável de abrigo: código curto
+await diz(eu, 'Vincular 123 456') // código que não existe → aviso
+await diz(eu, 'ACEITAR')      // sem convite para este número → aviso
 await diz(eu, '8')            // encerrar
 
 // Grupo

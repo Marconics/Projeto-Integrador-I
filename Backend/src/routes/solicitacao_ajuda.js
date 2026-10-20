@@ -1,6 +1,8 @@
 import prisma from '../lib/prisma.js'
 import { selectLocalizacao, achatarLocalizacao } from '../lib/localizacao.js'
 import { LIMITES, validarTamanhos } from '../lib/validacao.js'
+import { avisarResponsaveis, mensagemInteresseVoluntario } from '../lib/responsaveis.js'
+import { avisarVoluntarios } from '../lib/voluntariosWhatsapp.js'
 
 // Tamanho máximo dos textos da solicitação
 const erroTextos = ({ titulo, descricao, observacaoFechamento }) => validarTamanhos([
@@ -80,9 +82,20 @@ export default async function solicitacaoAjudaRoutes(app) {
         }
       })
 
+      // Avisa os voluntários do abrigo no WhatsApp. Uma falha aqui não desfaz o pedido.
+      let voluntariosAvisados = 0
+      try {
+        voluntariosAvisados = await avisarVoluntarios(prisma, abrigo, solicitacao)
+      } catch (erroAviso) {
+        console.error('Pedido criado, mas o aviso aos voluntários do WhatsApp falhou:', erroAviso)
+      }
+
       return reply.status(201).send({
-        mensagem:    'Solicitação de ajuda criada com sucesso!',
+        mensagem: voluntariosAvisados > 0
+          ? `Solicitação de ajuda criada com sucesso! ${voluntariosAvisados} voluntário(s) do abrigo vão receber o pedido pelo WhatsApp.`
+          : 'Solicitação de ajuda criada com sucesso!',
         solicitacao,
+        voluntariosAvisados,
       })
 
     } catch (erro) {
@@ -366,6 +379,21 @@ export default async function solicitacaoAjudaRoutes(app) {
           voluntarioId:  Number(voluntarioId),
         }
       })
+
+      // Avisa os responsáveis do abrigo pelo WhatsApp (se houver). Uma falha
+      // aqui não desfaz o interesse: o voluntário continua vendo o coração marcado.
+      try {
+        const [abrigo, voluntario] = await Promise.all([
+          prisma.abrigo.findUnique({ where: { id_abrigo: solicitacao.abrigoId } }),
+          prisma.voluntario.findUnique({
+            where: { id_voluntario: Number(voluntarioId) },
+            select: { nome: true, telefone: true, email: true }
+          }),
+        ])
+        await avisarResponsaveis(prisma, solicitacao.abrigoId, mensagemInteresseVoluntario(abrigo, solicitacao, voluntario))
+      } catch (erroAviso) {
+        console.error('Interesse salvo, mas o aviso aos responsáveis falhou:', erroAviso)
+      }
 
       return reply.status(201).send({
         mensagem:   'Interesse registrado! O abrigo entrará em contato.',

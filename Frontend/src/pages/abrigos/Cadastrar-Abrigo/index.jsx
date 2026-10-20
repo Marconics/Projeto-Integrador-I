@@ -373,7 +373,35 @@ const CadastrarAbrigo = () => {
               </p>
             )}
 
-            {/* Checkboxes de infraestrutura */}
+          </div>
+
+          {/* Coluna direita: foto, infraestrutura e botão */}
+          <div className="sv-form-coluna">
+
+            <h3 className="sv-secao-titulo">
+              Imagem do Abrigo<Opcional />
+            </h3>
+
+            <div className="sv-upload">
+              {fotoAbrigo ? (
+                <div className="sv-upload-previa">
+                  <img src={`data:image/jpeg;base64,${fotoAbrigo}`} alt="Preview" />
+                  <button type="button" onClick={() => setFotoAbrigo(null)} className="sv-btn sv-btn--perigo-vidro sv-btn--p">
+                    Remover Foto
+                  </button>
+                </div>
+              ) : (
+                <label className="sv-upload-area">
+                  <input type="file" accept="image/jpeg,image/png" onChange={handleImagem} style={{ display: 'none' }} />
+                  <LuUpload className="sv-upload-icone" />
+                  <p>Foto principal do abrigo (JPG ou PNG, até 2 MB)</p>
+                  <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
+                </label>
+              )}
+            </div>
+
+            {/* Checkboxes de infraestrutura — na coluna da direita, antes do botão,
+                para não ficarem escondidos no fim da página */}
             <div className="sv-form-secao">
               <h3 className="sv-secao-titulo">
                 Infraestrutura<Opcional />
@@ -414,32 +442,6 @@ const CadastrarAbrigo = () => {
                 </div>
               </label>
 
-            </div>
-          </div>
-
-          {/* Coluna direita: foto + botão */}
-          <div className="sv-form-coluna">
-
-            <h3 className="sv-secao-titulo">
-              Imagem do Abrigo<Opcional />
-            </h3>
-
-            <div className="sv-upload">
-              {fotoAbrigo ? (
-                <div className="sv-upload-previa">
-                  <img src={`data:image/jpeg;base64,${fotoAbrigo}`} alt="Preview" />
-                  <button type="button" onClick={() => setFotoAbrigo(null)} className="sv-btn sv-btn--perigo-vidro sv-btn--p">
-                    Remover Foto
-                  </button>
-                </div>
-              ) : (
-                <label className="sv-upload-area">
-                  <input type="file" accept="image/jpeg,image/png" onChange={handleImagem} style={{ display: 'none' }} />
-                  <LuUpload className="sv-upload-icone" />
-                  <p>Foto principal do abrigo (JPG ou PNG, até 2 MB)</p>
-                  <span className="sv-btn sv-btn--vidro sv-btn--p">Selecionar arquivo do computador</span>
-                </label>
-              )}
             </div>
 
             <div className="sv-form-acoes">
