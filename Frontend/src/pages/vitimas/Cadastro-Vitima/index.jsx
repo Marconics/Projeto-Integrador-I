@@ -198,7 +198,7 @@ const CadastroVitima = () => {
               Cadastrar Vítima
             </button>
             {mensagem && (
-              <p role={erroEnvio ? 'alert' : 'status'} style={{ color: erroEnvio ? 'var(--sv-sirene-forte)' : 'var(--sv-ok)', fontSize: '14px', textAlign: 'center' }}>
+              <p role={erroEnvio ? 'alert' : 'status'} className={`sv-aviso ${erroEnvio ? 'sv-aviso--erro' : 'sv-aviso--sucesso'}`}>
                 {mensagem}
               </p>
             )}

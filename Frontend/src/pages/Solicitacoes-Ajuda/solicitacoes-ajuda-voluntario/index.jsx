@@ -1,11 +1,12 @@
 // ─── Imports ──────────────────────────────────────────────────────────────────
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { LuBuilding2, LuHandHeart, LuHeart, LuPhone, LuX } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
 import { API_URL } from '../../../services/api';
 import { fetchVoluntario } from '../../../services/voluntario';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
 
 // ─── Badges e labels ──────────────────────────────────────────────────────────
 const badgeUrgencia = {
@@ -35,6 +36,7 @@ function SolicitacoesAjudaVoluntario() {
 
   const [solicitacoes, setSolicitacoes]   = useState([])
   const [carregando, setCarregando]       = useState(true)
+  const [erroCarga, setErroCarga]         = useState(null)
   const [filtroCategoria, setFiltroCategoria] = useState('todas')
 
   // ?abrigo=ID na URL (vindo do "Quero ajudar" do painel) mostra só as solicitações daquele abrigo
@@ -46,11 +48,14 @@ function SolicitacoesAjudaVoluntario() {
   const [carregandoInteresse, setCarregandoInteresse] = useState(null) // id sendo processado
 
   // ─── Busca — só solicitações abertas ou em andamento ────────────────────────
-  useEffect(() => {
-    const buscar = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const buscar = useCallback(async () => {
+      setCarregando(true)
+      setErroCarga(null)
       try {
         // Rota pública — já filtra status aberto/em_andamento no backend
         const res = await fetch(`${API_URL}/api/solicitacoes-ajuda/publico`)
+        if (!res.ok) throw new Error(`Erro ${res.status}`)
         const dados = await res.json()
         setSolicitacoes(dados.solicitacoes ?? [])
 
@@ -61,12 +66,13 @@ function SolicitacoesAjudaVoluntario() {
         setInteresses(ids)
       } catch (err) {
         console.error('Erro ao buscar solicitações:', err)
+        setErroCarga('O servidor não respondeu. Verifique a conexão e tente novamente.')
       } finally {
         setCarregando(false)
       }
-    }
-    buscar()
   }, [])
+
+  useEffect(() => { buscar() }, [buscar])
 
   // ─── Marcar / desmarcar interesse ───────────────────────────────────────────
   const handleInteresse = async (solicitacaoId) => {
@@ -112,13 +118,20 @@ function SolicitacoesAjudaVoluntario() {
   const abrigoFiltrado = filtroAbrigo ? solicitacoes.find(s => s.abrigoId === filtroAbrigo)?.abrigo : null
 
   // ─── Loading ─────────────────────────────────────────────────────────────────
-  if (carregando) {
+  if (carregando || erroCarga) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass modulo="voluntario" ativo="ajuda" />
         <main className="sv-main">
-          <p className="sv-vazio">Carregando solicitações...</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <h1 className="sv-titulo">Solicitações de ajuda</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="cards" linhas={6} />
+            : <ErroPagina titulo="Não foi possível carregar as solicitações" mensagem={erroCarga} onTentar={buscar} />}
         </main>
       </div>
     )
@@ -183,10 +196,11 @@ function SolicitacoesAjudaVoluntario() {
 
           {/* Lista vazia */}
           {lista.length === 0 ? (
-            <div className="sv-vazio">
-              <LuHandHeart />
-              <p>Nenhuma solicitação aberta no momento.</p>
-            </div>
+            <Vazio
+              icone={<LuHandHeart />}
+              titulo={solicitacoes.length === 0 ? 'Nenhuma solicitação aberta no momento.' : 'Nenhuma solicitação com estes filtros.'}
+              dica="Quando um abrigo precisar de doações, medicamentos ou voluntários, o pedido aparece aqui para você marcar interesse."
+            />
           ) : (
 
             /* Grid de cards */

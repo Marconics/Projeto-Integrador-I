@@ -6,6 +6,7 @@ import '../../styles/sosvale-glass.css';
 import { apiAdmin, formatarDataHora } from '../../services/api';
 import { LIMITES, EXEMPLOS, somenteNome } from '../../utils/campos';
 import { Obrigatorio, Opcional, AvisoObrigatorios } from '../../components/MarcasCampo';
+import { Esqueleto, ErroPagina, Vazio } from '../../components/EstadosPagina';
 
 // Tela "Administradores": um admin logado cadastra outros admins.
 // (O cadastro de admin pela API só é aberto enquanto não existe nenhum — ver auth.js)
@@ -124,23 +125,29 @@ function Administradores() {
           <div className="sv-vidro sv-painel">
             <h3 className="sv-secao-titulo"><LuUserCog /> Administradores cadastrados</h3>
 
-            {erro && <p className="sv-aviso sv-aviso--erro" style={{ marginBottom: '12px' }}>{erro}</p>}
-
             {carregando ? (
-              <p className="sv-apoio">Carregando administradores...</p>
+              <Esqueleto forma="linhas" linhas={3} />
+            ) : erro ? (
+              <ErroPagina
+                titulo="Não foi possível carregar os administradores"
+                mensagem={erro}
+                onTentar={() => { setCarregando(true); setErro(''); carregar() }}
+              />
+            ) : admins.length === 0 ? (
+              <Vazio icone={<LuUserCog />} titulo="Nenhum administrador cadastrado." dica="Os administradores cadastrados no formulário acima aparecem aqui." />
             ) : (
-              <div className="sv-tabela-caixa">
-                <table className="sv-tabela">
+              <div className="sv-tabela-caixa sv-tabela-caixa--fixa">
+                <table className="sv-tabela sv-tabela--cards">
                   <thead>
-                    <tr><th>Nome</th><th>E-mail</th><th>Cargo</th><th>Cadastrado em</th></tr>
+                    <tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Cargo</th><th scope="col">Cadastrado em</th></tr>
                   </thead>
                   <tbody>
                     {admins.map(a => (
                       <tr key={a.id}>
-                        <td>{a.nome}</td>
-                        <td>{a.email}</td>
-                        <td>{a.cargo}</td>
-                        <td>{formatarDataHora(a.createdAt)}</td>
+                        <td><strong>{a.nome}</strong></td>
+                        <td data-rotulo="E-mail">{a.email}</td>
+                        <td data-rotulo="Cargo"><span className="sv-tag sv-tag--azul sv-tag--lisa">{a.cargo}</span></td>
+                        <td data-rotulo="Cadastrado em">{formatarDataHora(a.createdAt)}</td>
                       </tr>
                     ))}
                   </tbody>

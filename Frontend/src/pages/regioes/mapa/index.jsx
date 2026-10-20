@@ -12,6 +12,7 @@ import { LIMITES } from '../../../utils/campos';
 import { API_URL, formatarTempo } from '../../../services/api';
 import { geocodificar } from '../../../services/localizacao';
 import "./mapa.css";
+import { ErroPagina } from '../../../components/EstadosPagina';
 import { iconeDoTipoAlerta } from '../../../utils/alertas';
 
 // ─── Configuração do mapa ───────────────────────────────────────────────────
@@ -113,6 +114,7 @@ function Mapa({ modulo = 'admin' }) {
   const [busca, setBusca] = useState('')
   const [sugestoes, setSugestoes] = useState([])
   const [carregando, setCarregando] = useState(true)
+  const [erroCarga, setErroCarga] = useState(null) // falha ao buscar abrigos/cidades
   const [avisoAlertas, setAvisoAlertas] = useState('')
   const [atualizadoEm, setAtualizadoEm] = useState(null)
 
@@ -123,24 +125,26 @@ function Mapa({ modulo = 'admin' }) {
 
 
   //-------- Busca dos dados ----------------
-  useEffect(() => {
-    const carregar = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const carregar = useCallback(async () => {
       setCarregando(true)
+      setErroCarga(null)
       try {
         const [respAbrigos, respCidades] = await Promise.all([
-          fetch(`${API_URL}/api/abrigos/listar`).then(r => r.json()),
-          fetch(`${API_URL}/api/cidades/listar`).then(r => r.json()),
+          fetch(`${API_URL}/api/abrigos/listar`).then(r => { if (!r.ok) throw new Error(`Erro ${r.status}`); return r.json() }),
+          fetch(`${API_URL}/api/cidades/listar`).then(r => { if (!r.ok) throw new Error(`Erro ${r.status}`); return r.json() }),
         ])
         setAbrigos(respAbrigos.abrigos ?? [])
         setCidades(respCidades.cidades ?? [])
       } catch (erro) {
         console.error('Erro ao carregar o mapa:', erro)
+        setErroCarga('O servidor não respondeu. Verifique a conexão e tente novamente.')
       } finally {
         setCarregando(false)
       }
-    }
-    carregar()
   }, [])
+
+  useEffect(() => { carregar() }, [carregar])
 
   // Alertas ativos: busca agora e a cada 1 minuto
   const buscarAlertas = useCallback(async () => {
@@ -329,13 +333,20 @@ function Mapa({ modulo = 'admin' }) {
 
 
   //------- Tela de loading ------
-  if (carregando) {
+  if (carregando || erroCarga) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         {sidebar}
         <main className="sv-main">
-          <p style={{ padding: '40px', color: '#64748b' }}>Carregando mapa...</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <h1 className="sv-titulo">{mostraAlertas ? 'Mapa de abrigos e alertas' : 'Mapa de abrigos'}</h1>
+            </div>
+          </header>
+          {carregando
+            ? <div className="sv-esqueleto" style={{ height: 'min(70vh, 620px)' }} aria-busy="true" aria-label="Carregando o mapa" />
+            : <ErroPagina titulo="Não foi possível carregar o mapa" mensagem={erroCarga} onTentar={carregar} />}
         </main>
       </div>
     )

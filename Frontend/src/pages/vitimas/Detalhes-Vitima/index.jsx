@@ -1,10 +1,11 @@
 //--------- Imports-----------
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { LuBuilding2, LuCalendar, LuHouse, LuIdCard, LuPhone, LuUpload, LuUserRound } from 'react-icons/lu';
 
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 import { fetchAdmin, formatarDataDia, hojeISO } from '../../../services/api';
 import { LIMITES, EXEMPLOS, somenteNome, mascaraCpf, mascaraTelefone, erroDosCampos } from '../../../utils/campos';
 import { Obrigatorio, Opcional } from '../../../components/MarcasCampo';
@@ -18,6 +19,7 @@ function DetalhesVitimas() {
 
   const [dadosVitima, setDadosVitima] = useState({})
   const [carregando, setCarregando]   = useState(true);
+  const [erroCarga, setErroCarga]     = useState(null); // falha ao buscar a vítima
   const [editando, setEditando]       = useState(false);
 
   const [nomeVitima, setNomeVitima]       = useState('');
@@ -34,10 +36,15 @@ function DetalhesVitimas() {
   const fotoExibida = novaFoto ?? fotoUrl;
 
   // ── Busca dos dados ao carregar ───────────────────────────────────────
-  useEffect(() => {
-    const buscarVitima = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const buscarVitima = useCallback(async () => {
+      setCarregando(true);
+      setErroCarga(null);
       try {
         const resposta = await fetchAdmin(`/vitimas/listar/${id}`);
+        if (!resposta.ok) {
+          throw new Error(resposta.status === 404 ? 'Esta vítima não foi encontrada. O cadastro pode ter sido excluído.' : `Erro ${resposta.status}`)
+        }
         const dados    = await resposta.json();
 
         setDadosVitima(dados)
@@ -65,13 +72,13 @@ function DetalhesVitimas() {
 
       } catch (erro) {
         console.error("Erro ao buscar vitima:", erro);
+        setErroCarga(erro.message?.startsWith('Esta vítima') ? erro.message : 'O servidor não respondeu. Verifique a conexão e tente novamente.');
       } finally {
         setCarregando(false);
       }
-    };
-
-    buscarVitima();
   }, [id]);
+
+  useEffect(() => { buscarVitima() }, [buscarVitima]);
 
   // ── Handlers ─────────────────────────────────────────────────────────
   const handleImagem = (e) => {
@@ -165,14 +172,22 @@ function DetalhesVitimas() {
   // ── Formata data para exibição (em UTC, para não mostrar 1 dia a menos) ──
   const formatarData = formatarDataDia
 
-  // ── Tela de loading ───────────────────────────────────────────────────
-  if (carregando) {
+  // ── Carregando / erro ─────────────────────────────────────────────────
+  if (carregando || erroCarga) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass ativo="vitimas" />
         <main className="sv-main">
-          <p className="sv-vazio">Carregando dados da vítima...</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/vitimas">Vítimas</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Detalhes da Vítima</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="detalhe" />
+            : <ErroPagina titulo="Não foi possível carregar a vítima" mensagem={erroCarga} onTentar={buscarVitima} />}
         </main>
       </div>
     );
@@ -190,7 +205,7 @@ function DetalhesVitimas() {
         <header className="sv-topo">
           <div className="sv-topo-texto">
             <p className="sv-trilha">
-              Vítimas &gt; <span>{nomeVitima}</span>
+              <a href="/vitimas">Vítimas</a> &gt; <span>{nomeVitima}</span>
             </p>
             <h1 className="sv-titulo">
               {editando ? 'Editar Vítima' : 'Detalhes da Vítima'}
@@ -375,7 +390,7 @@ function DetalhesVitimas() {
                     <button type="button" onClick={handleExcluir} className="sv-btn sv-btn--perigo-vidro sv-btn--bloco">
                       Excluir Registro
                     </button>
-                    <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--vidro sv-btn--bloco">
+                    <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--discreto sv-btn--bloco">
                       Cancelar edição
                     </button>
                   </div>

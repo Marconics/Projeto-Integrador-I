@@ -10,6 +10,7 @@ import { LIMITES, EXEMPLOS } from '../../../utils/campos';
 import { Obrigatorio } from '../../../components/MarcasCampo';
 import { STATUS_ALERTA } from '../../alertas/constantes';
 import '../../alertas/alertas.css';
+import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 
 function DetalhesInscrito() {
 
@@ -129,9 +130,19 @@ function DetalhesInscrito() {
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass ativo="inscritos" />
         <main className="sv-main">
-          <p style={{ padding: '40px', color: erro ? 'var(--sv-sirene)' : 'var(--sv-tinta-2)' }}>
-            {erro || 'Carregando inscrito...'}
-          </p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/inscritos">Inscritos</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Inscrito nos alertas</h1>
+            </div>
+          </header>
+          {carregando || !erro
+            ? <Esqueleto forma="detalhe" />
+            : <ErroPagina
+                titulo="Não foi possível carregar o inscrito"
+                mensagem={erro}
+                onTentar={() => { setCarregando(true); setErro(''); buscarInscrito() }}
+              />}
         </main>
       </div>
     )

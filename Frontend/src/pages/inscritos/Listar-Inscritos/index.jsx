@@ -1,9 +1,10 @@
 // --------- Imports -----------
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuEye, LuHouse, LuMail, LuPhone, LuTriangleAlert, LuUsers } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
 import { LIMITES } from '../../../utils/campos';
 import { apiAdmin, formatarTelefone } from '../../../services/api';
 import '../../alertas/alertas.css';
@@ -27,14 +28,22 @@ function ListarInscritos() {
   const [filtroAtivo, setFiltroAtivo] = useState('')
 
   // ─── BUSCA DA API ────────────────────────────────────────────
-  useEffect(() => {
-    apiAdmin('/inscritos/listar')
-      .then(dados => setInscritos(dados.inscritos))
-      .catch(e => setErro(e.message))
-      .finally(() => setCarregando(false))
-
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const buscar = useCallback(async () => {
+    setCarregando(true)
+    setErro('')
     apiAdmin('/cidades/listar').then(d => setCidades(d.cidades)).catch(console.error)
+    try {
+      const dados = await apiAdmin('/inscritos/listar')
+      setInscritos(dados.inscritos)
+    } catch (e) {
+      setErro(e.message)
+    } finally {
+      setCarregando(false)
+    }
   }, [])
+
+  useEffect(() => { buscar() }, [buscar])
 
   // ─── DERIVAÇÕES ──────────────────────────────────────────────
   // O filtro de cidade considera onde a pessoa mora E os bairros que ela acompanha
@@ -89,14 +98,14 @@ function ListarInscritos() {
               onChange={e => setBusca(e.target.value)}
             />
 
-            <select value={filtroCidade} onChange={e => setFiltroCidade(e.target.value)}>
+            <select aria-label="Cidade" value={filtroCidade} onChange={e => setFiltroCidade(e.target.value)}>
               <option value="">Todas as cidades</option>
               {cidades.map(c => (
                 <option key={c.id_cidade} value={c.id_cidade}>{c.nome}/{c.estado}</option>
               ))}
             </select>
 
-            <select value={filtroAtivo} onChange={e => setFiltroAtivo(e.target.value)}>
+            <select aria-label="Situação" value={filtroAtivo} onChange={e => setFiltroAtivo(e.target.value)}>
               <option value="">Ativos e inativos</option>
               <option value="true">Só ativos</option>
               <option value="false">Só inativos</option>
@@ -107,16 +116,16 @@ function ListarInscritos() {
             </span>
           </div>
 
-          {erro && <p className="sv-aviso sv-aviso--erro" style={{ marginBottom: '12px' }}>{erro}</p>}
-
           {carregando ? (
-            <p style={{ color: 'var(--sv-tinta-2)' }}>Carregando inscritos...</p>
+            <Esqueleto forma="linhas" />
+          ) : erro ? (
+            <ErroPagina titulo="Não foi possível carregar os inscritos" mensagem={erro} onTentar={buscar} />
           ) : inscritosFiltrados.length === 0 ? (
-            <div className="sv-vazio">
-              <LuUsers />
-              <p>Nenhum inscrito encontrado.</p>
-              <p style={{ fontSize: '13px' }}>As inscrições são feitas pelo WhatsApp (opção 1 do menu do bot).</p>
-            </div>
+            <Vazio
+              icone={<LuUsers />}
+              titulo={inscritos.length === 0 ? 'Nenhum inscrito ainda.' : 'Nenhum inscrito encontrado com esses filtros.'}
+              dica="As inscrições são feitas pelo WhatsApp (opção 1 do menu do bot). Cada morador inscrito aparece aqui."
+            />
           ) : (
             inscritosFiltrados.map(i => (
               <div className="sv-linha" key={i.id_inscrito}>

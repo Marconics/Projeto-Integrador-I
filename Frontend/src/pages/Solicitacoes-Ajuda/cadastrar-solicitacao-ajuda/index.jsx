@@ -84,7 +84,7 @@ function CadastrarSolicitacaoAjuda() {
         <header className="sv-topo">
           <div className="sv-topo-texto">
             <p className="sv-trilha">
-              Abrigos &gt;{' '}
+              <a href="/abrigos">Abrigos</a> &gt;{' '}
               <button type="button" className="sv-link" onClick={() => navigate(`/detalhes-abrigos/${id}`)}>
                 Detalhes do Abrigo
               </button>
@@ -166,22 +166,22 @@ function CadastrarSolicitacaoAjuda() {
               </p>
             )}
 
-            {/* Botões */}
-            <div className="sv-acoes sv-acoes--inicio">
+            {/* Botões: cancelar discreto, ação principal em azul */}
+            <div className="sv-form-rodape">
+              <button
+                type="button"
+                onClick={() => navigate(`/abrigos/${id}/solicitacoes-ajuda`)}
+                className="sv-btn sv-btn--discreto"
+              >
+                Cancelar
+              </button>
+
               <button
                 type="submit"
                 disabled={enviando}
                 className="sv-btn sv-btn--primario"
               >
                 <LuSend /> {enviando ? 'Enviando...' : 'Criar Solicitação'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate(`/abrigos/${id}/solicitacoes-ajuda`)}
-                className="sv-btn sv-btn--vidro"
-              >
-                Cancelar
               </button>
             </div>
 

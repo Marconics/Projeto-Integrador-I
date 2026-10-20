@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuChevronRight, LuDog, LuHandHeart, LuHeartPulse, LuMapPin, LuMapPinned, LuPhone, LuPlus, LuTriangleAlert, LuUpload, LuUser, LuUtensils } from 'react-icons/lu';
+import { LuAccessibility, LuArrowLeftRight, LuBriefcaseMedical, LuBuilding2, LuChevronRight, LuDog, LuHandHeart, LuHeartPulse, LuMapPin, LuMapPinned, LuPhone, LuPlus, LuTriangleAlert, LuUpload, LuUser, LuUsers, LuUtensils } from 'react-icons/lu';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
 import SeletorLocalidade from '../../../components/SeletorLocalidade';
 import MensagemFeedback from '../../../components/MensagemFeedback';
 import { preencherPorCep, geocodificar } from '../../../services/localizacao';
@@ -34,6 +35,7 @@ function DetalhesAbrigo() {
 
   const [dadosAbrigo, setDadosAbrigo] = useState({})
   const [carregando, setCarregando] = useState(true);
+  const [erroCarga, setErroCarga] = useState(null); // falha ao buscar o abrigo
   const [editando, setEditando] = useState(false);
 
   const [nomeAbrigo, setNomeAbrigo] = useState('');
@@ -98,11 +100,17 @@ function DetalhesAbrigo() {
   });
 
   // ─── BUSCA AO CARREGAR ────────────────────────────────────────────────────────
-  useEffect(() => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const carregarTudo = useCallback(() => {
 
     const buscarAbrigo = async () => {
+      setCarregando(true);
+      setErroCarga(null);
       try {
         const resposta = await fetchAdmin(`/abrigos/listar/${id}`);
+        if (!resposta.ok) {
+          throw new Error(resposta.status === 404 ? 'Este abrigo não foi encontrado. Ele pode ter sido excluído.' : `Erro ${resposta.status}`)
+        }
         const dados = await resposta.json();
 
         setDadosAbrigo(dados)
@@ -149,6 +157,7 @@ function DetalhesAbrigo() {
 
       } catch (erro) {
         console.error("Erro ao buscar abrigo:", erro);
+        setErroCarga(erro.message?.startsWith('Este abrigo') ? erro.message : 'O servidor não respondeu. Verifique a conexão e tente novamente.');
       } finally {
         setCarregando(false);
       }
@@ -168,6 +177,8 @@ function DetalhesAbrigo() {
     buscarAbrigo();
     buscarSolicitacoesAjuda();
   }, [id]);
+
+  useEffect(() => { carregarTudo() }, [carregarTudo]);
 
   // ─── HANDLERS ────────────────────────────────────────────────────────────────
   const handleCheckboxChange = (e) => {
@@ -427,14 +438,22 @@ function DetalhesAbrigo() {
     return new Date(data).toLocaleDateString('pt-BR')
   }
 
-  // ─── LOADING ─────────────────────────────────────────────────────────────────
-  if (carregando) {
+  // ─── CARREGANDO / ERRO ───────────────────────────────────────────────────────
+  if (carregando || erroCarga) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass ativo="abrigos" />
         <main className="sv-main">
-          <p className="sv-vazio">Carregando dados do abrigo...</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/abrigos">Abrigos</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Detalhes do abrigo</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="detalhe" />
+            : <ErroPagina titulo="Não foi possível carregar o abrigo" mensagem={erroCarga} onTentar={carregarTudo} />}
         </main>
       </div>
     );
@@ -739,7 +758,7 @@ function DetalhesAbrigo() {
                   <button type="submit" className="sv-btn sv-btn--primario sv-btn--bloco">Salvar Alterações</button>
                   <div className="sv-form-acoes-par">
                     <button type="button" onClick={handleExcluir} className="sv-btn sv-btn--perigo-vidro sv-btn--bloco">Excluir Registro</button>
-                    <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--vidro sv-btn--bloco">Cancelar edição</button>
+                    <button type="button" onClick={handleCancelExcluir} className="sv-btn sv-btn--discreto sv-btn--bloco">Cancelar edição</button>
                   </div>
                 </>
               ) : null}
@@ -769,29 +788,31 @@ function DetalhesAbrigo() {
 
                 {vitimasRecentes.length > 0 ? (
                   <div className="sv-tabela-caixa">
-                    <table className="sv-tabela">
+                    <table className="sv-tabela sv-tabela--cards">
                       <thead>
                         <tr>
-                          <th>Nome</th>
-                          <th className="sv-centro">Idade</th>
-                          <th className="sv-centro">Entrada</th>
+                          <th scope="col">Nome</th>
+                          <th scope="col" className="sv-centro">Idade</th>
+                          <th scope="col" className="sv-centro">Entrada</th>
                         </tr>
                       </thead>
                       <tbody>
                         {vitimasRecentes.map((vitima) => (
                           <tr key={vitima.id_vitima}>
                             <td><strong>{vitima.nome}</strong></td>
-                            <td className="sv-centro">{calcularIdade(vitima.dataNascimento)}</td>
-                            <td className="sv-centro">{formatarData(vitima.dataEntrada ?? vitima.createdAt)}</td>
+                            <td data-rotulo="Idade" className="sv-centro">{calcularIdade(vitima.dataNascimento)}</td>
+                            <td data-rotulo="Entrada" className="sv-centro">{formatarData(vitima.dataEntrada ?? vitima.createdAt)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <p className="sv-apoio sv-centro">
-                    Nenhuma vítima vinculada a este abrigo.
-                  </p>
+                  <Vazio
+                    icone={<LuUsers />}
+                    titulo="Nenhuma vítima vinculada a este abrigo."
+                    dica="As vítimas acolhidas aqui aparecem nesta lista. Para vincular, use “Ver todas”."
+                  />
                 )}
 
                 {/* ── Solicitações de Ajuda ── */}
@@ -827,7 +848,10 @@ function DetalhesAbrigo() {
                           <div
                             key={s.id_solicitacao}
                             className="sv-linha sv-linha--clicavel"
+                            role="link"
+                            tabIndex={0}
                             onClick={() => navigate(`/visualizar-solicitacao-ajuda/${s.id_solicitacao}`)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/visualizar-solicitacao-ajuda/${s.id_solicitacao}`) }}
                           >
                             {/* Ícone */}
                             <span className="sv-poco sv-poco--p sv-poco--aceso sv-poco--ciano">
@@ -853,9 +877,11 @@ function DetalhesAbrigo() {
                       })}
                     </div>
                   ) : (
-                    <p className="sv-apoio sv-centro">
-                      Nenhuma solicitação de ajuda cadastrada.
-                    </p>
+                    <Vazio
+                      icone={<LuHandHeart />}
+                      titulo="Nenhuma solicitação de ajuda cadastrada."
+                      dica="Crie uma quando o abrigo precisar de doações, medicamentos ou voluntários."
+                    />
                   )}
                 </div>
                 {/* ── fim Solicitações de Ajuda ── */}

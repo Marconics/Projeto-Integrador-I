@@ -1625,6 +1625,9 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
   .sv-tabela--cards tbody tr:hover td { background: transparent; }
   .sv-tabela--cards td.sv-tabela-fim { width: auto; padding-top: 4px; text-align: left; }
   .sv-tabela--cards td.sv-tabela-fim .sv-btn { width: 100%; }
+  /* Colunas centralizadas no desktop voltam ao alinhamento do card */
+  .sv-tabela--cards td.sv-centro { text-align: right !important; }
+  .sv-tabela--cards td.sv-tabela-fim.sv-centro { text-align: left !important; }
 }
 
 /* ─── Estados da página: erro e vazio ─────────────────────────────── */

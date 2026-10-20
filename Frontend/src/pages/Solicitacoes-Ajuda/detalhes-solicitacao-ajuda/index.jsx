@@ -1,5 +1,5 @@
 // ─── Imports ──────────────────────────────────────────────────────────────────
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LuBan, LuBuilding2, LuCircleCheck, LuClock, LuPhone, LuTrash2 } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
@@ -7,6 +7,7 @@ import '../../../styles/sosvale-glass.css';
 import { fetchAdmin } from '../../../services/api';
 import { LIMITES } from '../../../utils/campos';
 import { Opcional, ContadorCaracteres } from '../../../components/MarcasCampo';
+import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 
 // ─── Badges e labels ──────────────────────────────────────────────────────────
 const badgeStatus = {
@@ -56,11 +57,16 @@ function DetalhesSolicitacaoAjuda() {
   const [voluntarios, setVoluntarios]     = useState([])
 
   // ─── Busca ───────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const buscar = async () => {
+  // Função própria para o botão "Tentar novamente" poder chamar de novo
+  const buscar = useCallback(async () => {
+      setCarregando(true)
+      setErro(null)
       try {
         // Rota do backend é /listar/:id, não /:id
         const res = await fetchAdmin(`/solicitacoes-ajuda/listar/${id}`)
+        if (!res.ok) {
+          throw new Error(res.status === 404 ? 'Esta solicitação não foi encontrada. Ela pode ter sido excluída.' : `Erro ${res.status}`)
+        }
         const d = await res.json()
         setDados(d.solicitacao ?? d)
 
@@ -70,13 +76,13 @@ function DetalhesSolicitacaoAjuda() {
         setVoluntarios(dVol.voluntarios ?? [])
       } catch (err) {
         console.error('Erro ao buscar dados:', err)
-        setErro('Não foi possível carregar a solicitação.')
+        setErro(err.message?.startsWith('Esta solicitação') ? err.message : 'O servidor não respondeu. Verifique a conexão e tente novamente.')
       } finally {
         setCarregando(false)
       }
-    }
-    buscar()
   }, [id])
+
+  useEffect(() => { buscar() }, [buscar])
 
   // ─── Atualizar status ────────────────────────────────────────────────────────
   const handleAtualizarStatus = async (novoStatus) => {
@@ -135,25 +141,21 @@ function DetalhesSolicitacaoAjuda() {
   }
 
   // ─── Loading / erro ───────────────────────────────────────────────────────────
-  if (carregando) {
+  if (carregando || !dados) {
     return (
       <div className="sv-app sv-pagina">
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <Sidebar />
         <main className="sv-main">
-          <p className="sv-vazio">Carregando solicitação...</p>
-        </main>
-      </div>
-    )
-  }
-
-  if (!dados) {
-    return (
-      <div className="sv-app sv-pagina">
-        <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
-        <Sidebar />
-        <main className="sv-main">
-          <p className="sv-aviso sv-aviso--erro" role="alert">{erro ?? 'Solicitação não encontrada.'}</p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/solicitacoes-ajuda">Solicitações de ajuda</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Solicitação de ajuda</h1>
+            </div>
+          </header>
+          {carregando
+            ? <Esqueleto forma="detalhe" />
+            : <ErroPagina titulo="Não foi possível carregar a solicitação" mensagem={erro ?? 'Solicitação não encontrada.'} onTentar={buscar} />}
         </main>
       </div>
     )

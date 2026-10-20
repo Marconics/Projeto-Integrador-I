@@ -9,6 +9,7 @@ import { STATUS_ALERTA, STATUS_NOTIFICACAO } from '../constantes';
 import { LIMITES } from '../../../utils/campos';
 import { Obrigatorio, ContadorCaracteres } from '../../../components/MarcasCampo';
 import '../alertas.css';
+import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 
 const SITUACAO_GRUPO = {
   pendente:  'na fila de envio',
@@ -111,9 +112,19 @@ function DetalhesAlerta() {
         <div className="sv-fundo" aria-hidden="true"><span /><span /><span /></div>
         <SidebarGlass ativo="alertas" />
         <main className="sv-main">
-          <p style={{ padding: '40px', color: erro ? 'var(--sv-sirene)' : 'var(--sv-tinta-2)' }}>
-            {erro || 'Carregando alerta...'}
-          </p>
+          <header className="sv-topo">
+            <div className="sv-topo-texto">
+              <p className="sv-trilha"><a href="/alertas">Alertas</a> &gt; <span>Detalhes</span></p>
+              <h1 className="sv-titulo">Detalhes do alerta</h1>
+            </div>
+          </header>
+          {carregando || !erro
+            ? <Esqueleto forma="detalhe" />
+            : <ErroPagina
+                titulo="Não foi possível carregar o alerta"
+                mensagem={erro}
+                onTentar={() => { setCarregando(true); setErro(''); buscarAlerta() }}
+              />}
         </main>
       </div>
     )

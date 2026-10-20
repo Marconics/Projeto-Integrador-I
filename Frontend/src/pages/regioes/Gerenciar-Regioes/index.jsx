@@ -8,6 +8,7 @@ import { LIMITES, EXEMPLOS, somenteNumeros, somenteDecimal, mascaraCep } from '.
 import { Obrigatorio, Opcional } from '../../../components/MarcasCampo';
 import { NIVEIS_RISCO } from '../../alertas/constantes';
 import '../../alertas/alertas.css';
+import { Esqueleto, ErroPagina, Vazio } from '../../../components/EstadosPagina';
 
 const bairroVazio = { nome: '', nivelRisco: 'baixo', populacaoEstimada: '', areaKm2: '' }
 
@@ -22,6 +23,9 @@ function GerenciarRegioes() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [erro, setErro] = useState('')
   const [mensagem, setMensagem] = useState('')
+  // Primeira carga das cidades (esqueleto) e falha dela (tela de erro com "Tentar novamente")
+  const [carregando, setCarregando] = useState(true)
+  const [erroCarga, setErroCarga] = useState(null)
 
   // Formulário de nova cidade
   const [novaCidade, setNovaCidade] = useState({ nome: '', estadoId: '' })
@@ -60,13 +64,22 @@ function GerenciarRegioes() {
     setBairros(dados.bairros)
   }, [])
 
-  useEffect(() => {
+  const carregarInicio = useCallback(async () => {
+    setCarregando(true)
+    setErroCarga(null)
     apiAdmin('/estados/listar').then(d => setEstados(d.estados)).catch(e => avisar(e.message, true))
-    buscarCidades()
-      .then(lista => { if (lista.length > 0) selecionarCidade(lista[0]) })
-      .catch(e => avisar(e.message, true))
+    try {
+      const lista = await buscarCidades()
+      if (lista.length > 0) selecionarCidade(lista[0])
+    } catch (e) {
+      setErroCarga(e.message)
+    } finally {
+      setCarregando(false)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buscarCidades])
+
+  useEffect(() => { carregarInicio() }, [carregarInicio])
 
   const selecionarCidade = (cidade) => {
     setCidadeSelecionadaId(cidade.id_cidade)
@@ -214,7 +227,7 @@ function GerenciarRegioes() {
       <main className="sv-main">
         <header className="sv-topo">
           <div className="sv-topo-texto">
-            <p className="sv-trilha"><a href="/pg_adm">Home</a> &gt; <span>Regiões</span></p>
+            <p className="sv-trilha"><a href="/pg_adm">Visão geral</a> &gt; <span>Regiões</span></p>
             <h1 className="sv-titulo">Regiões</h1>
             <p className="sv-subtitulo">Cidades, bairros, nível de risco e o grupo de WhatsApp que recebe os alertas de cada cidade</p>
           </div>
@@ -227,6 +240,13 @@ function GerenciarRegioes() {
         {mensagem && <p className="sv-aviso sv-aviso--sucesso">{mensagem}</p>}
         {erro && <p className="sv-aviso sv-aviso--erro">{erro}</p>}
 
+        {carregando && <Esqueleto forma="detalhe" />}
+
+        {!carregando && erroCarga && (
+          <ErroPagina titulo="Não foi possível carregar as regiões" mensagem={erroCarga} onTentar={carregarInicio} />
+        )}
+
+        {!carregando && !erroCarga && (
         <section className="regioes-grade">
 
           {/* ── CIDADES ── */}
@@ -234,7 +254,7 @@ function GerenciarRegioes() {
             <h3 className="sv-secao-titulo">Cidades</h3>
 
             <div className="barra-filtros">
-              <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ width: '100%' }}>
+              <select aria-label="Estado" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ width: '100%' }}>
                 <option value="">Todos os estados</option>
                 {estadosComCidades.map(e => (
                   <option key={e.id_estado} value={e.id_estado}>{e.nome}</option>
@@ -243,7 +263,11 @@ function GerenciarRegioes() {
             </div>
 
             {cidadesFiltradas.length === 0 && (
-              <p style={{ fontSize: '14px', color: 'var(--sv-tinta-3)', marginBottom: '16px' }}>Nenhuma cidade cadastrada.</p>
+              <Vazio
+                icone={<LuMapPinned />}
+                titulo="Nenhuma cidade cadastrada."
+                dica="Cadastre a primeira cidade no formulário abaixo. Os bairros e o grupo de alertas ficam dentro dela."
+              />
             )}
 
             {cidadesFiltradas.map(c => (
@@ -385,17 +409,17 @@ function GerenciarRegioes() {
 
                 <div style={{ overflowX: 'auto' }}>
                   <div className="sv-tabela-caixa">
-                  <table className="sv-tabela">
+                  <table className="sv-tabela sv-tabela--cards">
                     <thead>
                       <tr>
-                        <th>Bairro</th>
-                        <th>Risco</th>
-                        <th>População</th>
-                        <th>Área</th>
-                        <th title="Moradores inscritos + pessoas que acompanham">Inscritos</th>
-                        <th>Abrigos</th>
-                        <th>Alertas abertos</th>
-                        <th></th>
+                        <th scope="col">Bairro</th>
+                        <th scope="col">Risco</th>
+                        <th scope="col">População</th>
+                        <th scope="col">Área</th>
+                        <th scope="col" title="Moradores inscritos + pessoas que acompanham">Inscritos</th>
+                        <th scope="col">Abrigos</th>
+                        <th scope="col">Alertas abertos</th>
+                        <th scope="col"><span className="sv-oculto">Ações</span></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -424,13 +448,13 @@ function GerenciarRegioes() {
                         </tr>
                       ) : (
                         <tr key={b.id_bairro}>
-                          <td>{b.nome}</td>
-                          <td><span className={`sv-tag sv-tag--lisa sv-status ${b.nivelRisco}`}>{NIVEIS_RISCO.find(n => n.valor === b.nivelRisco)?.label}</span></td>
-                          <td>{b.populacaoEstimada != null ? Number(b.populacaoEstimada).toLocaleString('pt-BR') : '—'}</td>
-                          <td>{b.areaKm2 != null ? `${Number(b.areaKm2).toLocaleString('pt-BR')} km²` : '—'}</td>
-                          <td>{b.totalMoradores + b.totalInteressados}</td>
-                          <td>{b.totalAbrigos}</td>
-                          <td>
+                          <td><strong>{b.nome}</strong></td>
+                          <td data-rotulo="Risco"><span className={`sv-tag sv-tag--lisa sv-status ${b.nivelRisco}`}>{NIVEIS_RISCO.find(n => n.valor === b.nivelRisco)?.label}</span></td>
+                          <td data-rotulo="População">{b.populacaoEstimada != null ? Number(b.populacaoEstimada).toLocaleString('pt-BR') : '—'}</td>
+                          <td data-rotulo="Área">{b.areaKm2 != null ? `${Number(b.areaKm2).toLocaleString('pt-BR')} km²` : '—'}</td>
+                          <td data-rotulo="Inscritos">{b.totalMoradores + b.totalInteressados}</td>
+                          <td data-rotulo="Abrigos">{b.totalAbrigos}</td>
+                          <td data-rotulo="Alertas abertos">
                             {b.alertasAbertos > 0
                               ? <a href="/alertas" className="sv-tag sv-tag--lisa sv-status ativo">{b.alertasAbertos}</a>
                               : 0}
@@ -451,6 +475,7 @@ function GerenciarRegioes() {
             )}
           </div>
         </section>
+        )}
 
         <footer className="sv-rodape">
           <p>© 2026 S.O.S Vale. Todos os direitos reservados.</p>
