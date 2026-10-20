@@ -1419,3 +1419,260 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
   .sv-pagina,
   .sv-app.pga { grid-template-rows: auto minmax(0, 1fr); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PEÇAS DO REDESENHO (mesma linguagem da home: PgAdmGlass)
+   Componentes React que usam estas peças: components/EstadosPagina.jsx
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Sidebar igual à da home: colada na borda, ocupando o lado esquerdo ── */
+@media (min-width: 961px) {
+  .sv-pagina { padding: 0 16px 16px 0; }
+  .sv-pagina > .sbg {
+    top: 0;
+    height: 100vh;
+    border-radius: 0;
+    border-width: 0 1px 0 0;
+  }
+  .sv-pagina > .sv-main { padding-top: 26px; }
+}
+
+/* ─── Resumo: cards de número no topo (como os cards da home) ─────────
+   <div class="sv-resumo">
+     <button class="sv-resumo-card sv-anima [sv-resumo-card--urgente] [sv-resumo-card--ativo]">
+       <span class="sv-poco sv-poco--azul"><span data-anim="pulo"><Icone/></span></span>
+       <span class="sv-resumo-valor">3</span>
+       <span class="sv-resumo-rotulo">Pendentes</span>
+       <span class="sv-resumo-detalhe">aguardando decisão</span>
+     </button>
+   </div>                                                              */
+.sv-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 18px;
+}
+.sv-resumo-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding: 18px 18px 16px;
+  text-align: left;
+  color: var(--sv-tinta);
+  background: var(--sv-fundo-card);
+  border: 1px solid var(--sv-borda-card);
+  border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l);
+  box-shadow: var(--sv-sombra-media);
+  font: inherit;
+  transition: transform .35s var(--sv-suave), box-shadow .35s var(--sv-suave), border-color .25s;
+}
+/* Canto vermelho da identidade */
+.sv-resumo-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 26px;
+  height: 26px;
+  border-top: 3px solid var(--sv-sirene);
+  border-left: 3px solid var(--sv-sirene);
+  border-top-left-radius: var(--sv-raio-corte);
+  pointer-events: none;
+  transition: width .35s var(--sv-suave), height .35s var(--sv-suave);
+}
+:is(button, a).sv-resumo-card { cursor: pointer; }
+:is(button, a).sv-resumo-card:hover { transform: translateY(-3px); box-shadow: var(--sv-sombra-alta); }
+:is(button, a).sv-resumo-card:hover::before { width: 44px; height: 44px; }
+:is(button, a).sv-resumo-card:active { transform: translateY(0); box-shadow: var(--sv-sombra-funda); }
+.sv-resumo-card .sv-poco { margin-bottom: 12px; }
+.sv-resumo-valor {
+  font-family: var(--sv-fonte-display);
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+.sv-resumo-rotulo { font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.sv-resumo-detalhe { margin-top: auto; padding-top: 6px; font-size: 12.5px; color: var(--sv-tinta-2); }
+/* Pede atenção agora: filete vermelho inteiro no topo e número em vermelho */
+.sv-resumo-card--urgente { border-top: 3px solid var(--sv-sirene); }
+.sv-resumo-card--urgente::before { display: none; }
+.sv-resumo-card--urgente .sv-resumo-valor { color: var(--sv-sirene); }
+/* Card que está servindo de filtro */
+.sv-resumo-card--ativo { border-color: var(--sv-azul); box-shadow: 0 0 0 2px rgba(36, 87, 214, .2), var(--sv-sombra-media); }
+@media (max-width: 600px) {
+  .sv-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  /* Número ímpar de cards: o último ocupa a linha inteira */
+  .sv-resumo > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .sv-resumo-valor { font-size: 30px; }
+  .sv-resumo-card { padding: 14px; }
+}
+
+/* Título de painel com poço de ícone (como "Atividades recentes" da home) */
+.sv-painel-titulo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  font-family: var(--sv-fonte-display);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--sv-azul-forte);
+}
+.sv-painel-titulo .sv-poco { width: 32px; height: 32px; font-size: 16px; border-radius: 8px; }
+.sv-painel-titulo::after {
+  content: '';
+  position: absolute;
+  left: 44px;
+  bottom: 0;
+  width: 28px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--sv-sirene);
+}
+/* Topo do painel: título à esquerda, abas/filtros à direita */
+.sv-painel-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+/* Número pequeno dentro de uma aba ("Pendentes 3") */
+.sv-aba-num {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: var(--sv-raio-xs);
+  background: rgba(15, 35, 65, .08);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.sv-aba[aria-selected="true"] .sv-aba-num { background: rgba(255, 255, 255, .25); }
+@media (max-width: 600px) {
+  .sv-painel-topo .sv-abas { width: 100%; }
+  .sv-painel-topo .sv-aba { padding-inline: 4px; font-size: 12.5px; }
+  .sv-aba-num { margin-left: 3px; }
+}
+
+/* ─── Tabela que vira cards no celular, com cabeçalho fixo ────────────
+   <div class="sv-tabela-caixa sv-tabela-caixa--fixa">
+     <table class="sv-tabela sv-tabela--cards">
+       <thead>...</thead>
+       <tbody><tr><td>nome</td><td data-rotulo="Local">...</td><td class="sv-tabela-fim">botão</td></tr></tbody>
+     </table>
+   </div>
+   No celular cada <tr> vira um card; o data-rotulo aparece antes do valor. */
+.sv-tabela-caixa--fixa { max-height: min(70vh, 680px); overflow: auto; }
+.sv-tabela-caixa--fixa .sv-tabela thead th { position: sticky; top: 0; z-index: 1; }
+.sv-tabela td.sv-tabela-fim { width: 1%; white-space: nowrap; text-align: right; }
+.sv-tabela-principal { display: grid; gap: 2px; min-width: 0; }
+.sv-tabela-principal strong { font-weight: 600; color: var(--sv-tinta); overflow-wrap: anywhere; }
+.sv-tabela-principal span { font-size: 12.5px; color: var(--sv-tinta-2); }
+@media (max-width: 720px) {
+  .sv-tabela-caixa:has(.sv-tabela--cards) {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+  .sv-tabela--cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .sv-tabela--cards { display: block; }
+  .sv-tabela--cards tbody { display: grid; gap: 12px; }
+  .sv-tabela--cards tr {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--sv-borda-card);
+    border-radius: var(--sv-raio-corte) var(--sv-raio-m) var(--sv-raio-m) var(--sv-raio-m);
+    box-shadow: var(--sv-sombra-baixa);
+  }
+  .sv-tabela--cards td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 12px;
+    padding: 0;
+    border: 0;
+    text-align: right;
+  }
+  .sv-tabela--cards td[data-rotulo]::before {
+    content: attr(data-rotulo);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--sv-tinta-3);
+    text-align: left;
+  }
+  /* Célula sem rótulo (nome, ação) ocupa a largura toda */
+  .sv-tabela--cards td:not([data-rotulo]) { display: block; text-align: left; }
+  .sv-tabela--cards tbody tr:hover td { background: transparent; }
+  .sv-tabela--cards td.sv-tabela-fim { width: auto; padding-top: 4px; text-align: left; }
+  .sv-tabela--cards td.sv-tabela-fim .sv-btn { width: 100%; }
+}
+
+/* ─── Estados da página: erro e vazio ─────────────────────────────── */
+/* Erro: ícone, título, explicação e o botão "Tentar novamente" */
+.sv-erro-pagina {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 52px 24px;
+  border-radius: var(--sv-raio-corte) var(--sv-raio-xl) var(--sv-raio-xl) var(--sv-raio-xl);
+  text-align: center;
+}
+.sv-erro-pagina h2 { margin-top: 8px; font-size: 21px; color: var(--sv-tinta); }
+.sv-erro-pagina p { max-width: 46ch; color: var(--sv-tinta-2); }
+.sv-erro-pagina .sv-btn { margin-top: 10px; padding: 11px 20px; }
+/* Vazio: o que vai aparecer ali + ação principal (opcional) */
+.sv-vazio .sv-poco { margin-bottom: 8px; color: var(--sv-tinta-3); }
+.sv-vazio-titulo { font-weight: 600; color: var(--sv-tinta); }
+.sv-vazio-dica { max-width: 46ch; font-size: 13.5px; }
+.sv-vazio .sv-btn { margin-top: 10px; }
+
+/* ─── Esqueleto: formas prontas ───────────────────────────────────── */
+.sv-esq-pilha { display: flex; flex-direction: column; gap: 18px; }
+.sv-esq-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 18px; }
+.sv-esq-card { height: 150px; border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-corte) var(--sv-raio-l); }
+.sv-esq-painel { display: grid; gap: 10px; padding: 22px 24px; border-radius: var(--sv-raio-corte) var(--sv-raio-l) var(--sv-raio-l) var(--sv-raio-l); background: rgba(236, 243, 255, .35); }
+.sv-esq-titulo { width: 220px; max-width: 60%; height: 26px; border-radius: var(--sv-raio-xs); }
+.sv-esq-linha { height: 54px; border-radius: var(--sv-raio-s); }
+.sv-esq-campo { height: 64px; border-radius: var(--sv-raio-s); }
+.sv-esq-bloco { height: 260px; }
+.sv-esq-duas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px; }
+
+/* ─── Formulários: rodapé com ação principal e cancelar discreto ──── */
+.sv-btn--discreto {
+  color: var(--sv-tinta-2);
+  background: transparent;
+  border-color: transparent;
+}
+.sv-btn--discreto:hover { color: var(--sv-azul); background: var(--sv-azul-suave); }
+.sv-form-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sv-linha);
+}
+@media (max-width: 600px) {
+  .sv-form-rodape > .sv-btn { flex: 1 1 100%; }
+}
