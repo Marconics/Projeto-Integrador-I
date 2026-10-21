@@ -12,13 +12,9 @@ import './style.css';
 // Site do munícipe: página pública e só informativa sobre o projeto e o bot
 // de WhatsApp. Não chama a API e não tem formulário.
 
-// ════════════════════════════════════════════════════════════════════
-// ⚠️  NÚMERO DO BOT — TROCAR ANTES DE DIVULGAR O SITE
-// Coloque aqui o número do WhatsApp do bot, só dígitos, com 55 e DDD
-// (ex: '5512999999999'). Enquanto estiver NUMERO_DO_BOT, o botão
-// "Falar com o bot" leva para um link inválido e o número não aparece na tela.
-// ════════════════════════════════════════════════════════════════════
-const NUMERO_DO_BOT = 'NUMERO_DO_BOT';
+// Número do WhatsApp do bot: só dígitos, com 55 e DDD.
+// Se o bot mudar de número, troque aqui (o botão e o número na tela usam este valor).
+const NUMERO_DO_BOT = '5512991018945';
 
 const LINK_BOT = `https://wa.me/${NUMERO_DO_BOT}`;
 const numeroValido = /^55\d{10,11}$/.test(NUMERO_DO_BOT);
