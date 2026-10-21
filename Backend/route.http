@@ -240,6 +240,17 @@ Content-Type: application/json
 ###
 GET http://localhost:3000/api/vitimas/listar
 ###
+# Tipos de deficiência (opções da tela de detalhes)
+GET http://localhost:3000/api/vitimas/deficiencias
+###
+# Troca as deficiências da vítima ([] = nenhuma; sem o campo, mantém as atuais)
+PUT http://localhost:3000/api/vitimas/atualizar/29
+Content-Type: application/json
+
+{
+  "deficienciaIds": [1, 3]
+}
+###
 DELETE http://localhost:3000/api/vitimas/excluir/29
 
 ###

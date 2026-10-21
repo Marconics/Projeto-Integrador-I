@@ -883,6 +883,7 @@ textarea.sv-entrada { min-height: 96px; resize: vertical; }
   border-color: var(--sv-azul);
   box-shadow: 0 6px 14px -8px rgba(36, 87, 214, .8);
 }
+.sv-chip:disabled { cursor: default; opacity: .7; }
 .sv-contagem { font-size: 13px; color: var(--sv-tinta-2); }
 
 /* ─── Listas de linhas ────────────────────────────────────────────── */

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   LuLayoutGrid, LuMap, LuHouse, LuUsers, LuClipboardList, LuHandHeart,
   LuSiren, LuUserCheck, LuMapPinned, LuLogOut, LuMenu, LuX, LuUser, LuUserCog,
+  LuChevronDown, LuArrowLeftRight,
 } from 'react-icons/lu';
 import logoSosVale from '../../assets/logo-sosvale.png';
 import '../../styles/sosvale-glass.css';
@@ -38,19 +39,22 @@ const itensMenuVoluntario = [
   { id: 'perfil',  label: 'Meu perfil',            icon: <LuUser />,       href: '/painel-voluntario?aba=perfil' },
 ];
 
-// Sair: apaga o token do admin e volta para o login
-function sair() {
-  try { localStorage.removeItem('token_adm') } catch { /* storage bloqueado */ }
-  window.location.href = ROTA_LOGIN
-}
+// Tela inicial, onde a pessoa escolhe entre Administrador e Voluntário
+const ROTA_MODULOS = '/';
+const ROTA_LOGIN_VOLUNTARIO = '/login-voluntario';
 
-// Sair do voluntário: apaga os dados dele e volta para a seleção de módulo
-function sairVoluntario() {
+// Sair: apaga o login do módulo e vai para o destino escolhido
+// (seleção de módulos ou a tela de login do próprio módulo)
+function sair(voluntario, destino) {
   try {
-    localStorage.removeItem('token_voluntario')
-    localStorage.removeItem('voluntario')
+    if (voluntario) {
+      localStorage.removeItem('token_voluntario')
+      localStorage.removeItem('voluntario')
+    } else {
+      localStorage.removeItem('token_adm')
+    }
   } catch { /* storage bloqueado */ }
-  window.location.href = '/'
+  window.location.href = destino
 }
 
 // Uso: <SidebarGlass ativo="home" />                       → menu do admin
@@ -62,14 +66,26 @@ const SidebarGlass = ({ ativo, modulo = 'admin' }) => {
 
   // No celular a sidebar vira uma gaveta que abre pelo botão de menu
   const [aberta, setAberta] = useState(false);
+  // "Sair" abre duas opções logo abaixo: seleção de módulos ou login
+  const [opcoesSair, setOpcoesSair] = useState(false);
+  const refOpcoesSair = useRef(null);
 
-  // Fecha a gaveta com a tecla Esc
+  // Esc fecha primeiro as opções de sair; depois, a gaveta
   useEffect(() => {
-    if (!aberta) return
-    const aoTeclar = (e) => { if (e.key === 'Escape') setAberta(false) }
+    if (!aberta && !opcoesSair) return
+    const aoTeclar = (e) => {
+      if (e.key !== 'Escape') return
+      if (opcoesSair) setOpcoesSair(false)
+      else setAberta(false)
+    }
     window.addEventListener('keydown', aoTeclar)
     return () => window.removeEventListener('keydown', aoTeclar)
-  }, [aberta])
+  }, [aberta, opcoesSair])
+
+  // A sidebar pode ter rolagem: garante que as opções apareçam na tela
+  useEffect(() => {
+    if (opcoesSair) refOpcoesSair.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [opcoesSair])
 
   return (
     <>
@@ -128,10 +144,28 @@ const SidebarGlass = ({ ativo, modulo = 'admin' }) => {
         </nav>
 
         <div className="sbg-rodape">
-          <button type="button" className="sbg-link sbg-sair" onClick={voluntario ? sairVoluntario : sair}>
+          <button type="button" className={`sbg-link sbg-sair${opcoesSair ? ' sbg-sair--aberto' : ''}`}
+            aria-expanded={opcoesSair} aria-controls="sbg-opcoes-sair"
+            onClick={() => setOpcoesSair(v => !v)}>
             <span className="sbg-link-icone"><LuLogOut /></span>
             <span className="sbg-link-texto">Sair</span>
+            <LuChevronDown className="sbg-sair-seta" aria-hidden="true" />
           </button>
+          {opcoesSair && (
+            <ul id="sbg-opcoes-sair" ref={refOpcoesSair} className="sbg-opcoes-sair">
+              <li>
+                <button type="button" className="sbg-opcao-sair" onClick={() => sair(voluntario, ROTA_MODULOS)}>
+                  <LuArrowLeftRight aria-hidden="true" /> Voltar à seleção de módulos
+                </button>
+              </li>
+              <li>
+                <button type="button" className="sbg-opcao-sair sbg-opcao-sair--conta"
+                  onClick={() => sair(voluntario, voluntario ? ROTA_LOGIN_VOLUNTARIO : ROTA_LOGIN)}>
+                  <LuLogOut aria-hidden="true" /> Sair da conta
+                </button>
+              </li>
+            </ul>
+          )}
         </div>
       </aside>
     </>

@@ -427,7 +427,7 @@ const ListarAbrigos = () => {
                   style={{ animationDelay: `${Math.min(i, 12) * 50}ms` }}
                 >
                   {abrigo.statusAlerta && (
-                    <div className="ha-card-alerta"><LuSiren aria-hidden="true" /> Em alerta no bairro</div>
+                    <div className="ha-card-alerta"><LuSiren aria-hidden="true" /> Bairro do abrigo em estado de alerta</div>
                   )}
 
                   <div className="ha-card-topo">

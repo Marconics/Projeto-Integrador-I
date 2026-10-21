@@ -1,6 +1,7 @@
 // Detalhes da vítima (admin) — /detalhes-vitimas/:id
 // Mostra o cadastro da pessoa, onde ela está agora e as deficiências; permite
-// editar os dados e a foto, e excluir o cadastro (com confirmação).
+// editar os dados e a foto, editar as deficiências (no próprio painel) e
+// excluir o cadastro (com confirmação).
 // O vínculo com o abrigo não muda aqui: é feito na tela "Vítimas do abrigo".
 //--------- Imports-----------
 import { useState, useEffect, useCallback } from 'react';
@@ -16,6 +17,7 @@ import { Esqueleto, ErroPagina } from '../../../components/EstadosPagina';
 import { fetchAdmin, formatarDataDia, hojeISO } from '../../../services/api';
 import { LIMITES, EXEMPLOS, somenteNome, mascaraCpf, mascaraTelefone, erroDosCampos } from '../../../utils/campos';
 import { Obrigatorio, Opcional, AvisoObrigatorios } from '../../../components/MarcasCampo';
+import SeletorDeficiencias from '../../../components/SeletorDeficiencias';
 
 // Idade a partir de "AAAA-MM-DD" (sem fuso, para não errar o dia)
 const idadeDe = (texto) => {
@@ -62,6 +64,14 @@ function DetalhesVitimas() {
   const [fotoUrl, setFotoUrl]   = useState(null);
   const [novaFoto, setNovaFoto] = useState(null);
   const fotoExibida = novaFoto ?? fotoUrl;
+
+  // Edição das deficiências: independente do "Editar cadastro" (salva sozinha)
+  const [tiposDeficiencia, setTiposDeficiencia] = useState(null); // [{ id, nome }] — carregados ao abrir a edição
+  const [editandoDef, setEditandoDef]   = useState(false);
+  const [carregandoTipos, setCarregandoTipos] = useState(false);
+  const [marcadas, setMarcadas]         = useState([]);   // IDs marcados
+  const [salvandoDef, setSalvandoDef]   = useState(false);
+  const [avisoDef, setAvisoDef]         = useState(null); // { tipo: 'sucesso' | 'erro', texto }
 
   // ── Busca dos dados ao carregar ───────────────────────────────────────
   // Função própria para o botão "Tentar novamente" poder chamar de novo
@@ -197,6 +207,63 @@ function DetalhesVitimas() {
       setExcluindo(false);
     }
   };
+
+  // ── Deficiências ─────────────────────────────────────────────────────
+  // Abre a edição: busca os tipos (só na primeira vez) e marca os que a pessoa já tem
+  const handleEditarDeficiencias = async () => {
+    setAvisoDef(null);
+    let tipos = tiposDeficiencia;
+    if (!tipos) {
+      setCarregandoTipos(true);
+      try {
+        const resposta = await fetchAdmin('/vitimas/deficiencias');
+        if (!resposta.ok) throw new Error(`Erro ${resposta.status}`);
+        tipos = (await resposta.json()).deficiencias ?? [];
+        setTiposDeficiencia(tipos);
+      } catch (erro) {
+        console.error('Erro ao buscar tipos de deficiência:', erro);
+        setAvisoDef({ tipo: 'erro', texto: 'Não foi possível carregar as opções. Verifique a conexão e tente novamente.' });
+        return;
+      } finally {
+        setCarregandoTipos(false);
+      }
+    }
+    const atuais = dadosVitima.deficiencias ?? [];
+    setMarcadas(tipos.filter(t => atuais.includes(t.nome)).map(t => t.id));
+    setEditandoDef(true);
+  }
+
+  const alternarDeficiencia = (idTipo) => {
+    setMarcadas(lista => lista.includes(idTipo) ? lista.filter(d => d !== idTipo) : [...lista, idTipo]);
+  }
+
+  const cancelarDeficiencias = () => { setEditandoDef(false); setAvisoDef(null) }
+
+  const salvarDeficiencias = async () => {
+    setSalvandoDef(true);
+    setAvisoDef(null);
+    try {
+      // Só as deficiências: os demais campos não vão no corpo e a API mantém como estão
+      const resposta = await fetchAdmin(`/vitimas/atualizar/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deficienciaIds: marcadas }),
+      });
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) {
+        setAvisoDef({ tipo: 'erro', texto: dados.mensagem ?? 'Erro ao salvar as deficiências.' });
+        return;
+      }
+      setDadosVitima(atual => ({ ...atual, deficiencias: dados.deficiencias ?? [] }));
+      setEditandoDef(false);
+      setAvisoDef({ tipo: 'sucesso', texto: 'Deficiências atualizadas.' });
+    } catch (erro) {
+      console.error('Erro ao salvar deficiências:', erro);
+      setAvisoDef({ tipo: 'erro', texto: 'Não foi possível salvar. Verifique a conexão e tente novamente.' });
+    } finally {
+      setSalvandoDef(false);
+    }
+  }
 
   const fecharConfirmacao = () => { if (!excluindo) { setConfirmarExclusao(false); setErroExcluir('') } }
 
@@ -413,8 +480,44 @@ function DetalhesVitimas() {
 
             {/* ── Deficiências ── */}
             <section className="sv-vidro sv-painel" aria-labelledby="titulo-deficiencias">
-              <h2 id="titulo-deficiencias" className="sv-secao-titulo">Deficiências</h2>
-              {deficiencias.length > 0 ? (
+              <div className="sv-secao-linha dv-secao-topo">
+                <h2 id="titulo-deficiencias" className="sv-secao-titulo">Deficiências</h2>
+                {!editandoDef && (
+                  <button type="button" className="sv-btn sv-btn--vidro sv-btn--p" onClick={handleEditarDeficiencias} disabled={carregandoTipos}>
+                    <LuPencil /> {carregandoTipos ? 'Carregando...' : 'Editar'}
+                  </button>
+                )}
+              </div>
+
+              {avisoDef && (
+                <p className={`sv-aviso ${avisoDef.tipo === 'erro' ? 'sv-aviso--erro' : 'sv-aviso--sucesso'} dv-aviso-def`} role={avisoDef.tipo === 'erro' ? 'alert' : 'status'}>
+                  {avisoDef.texto}
+                </p>
+              )}
+
+              {editandoDef ? (
+                <>
+                  {tiposDeficiencia.length > 0 ? (
+                    <>
+                      <p className="sv-apoio dv-dica-def">Marque todas que se aplicam. Para nenhuma, desmarque tudo e salve.</p>
+                      <SeletorDeficiencias tipos={tiposDeficiencia} marcadas={marcadas} aoAlternar={alternarDeficiencia}
+                        desabilitado={salvandoDef} rotuloId="titulo-deficiencias" />
+                    </>
+                  ) : (
+                    <p className="sv-aviso sv-aviso--atencao">
+                      <LuTriangleAlert /> Nenhum tipo de deficiência cadastrado no sistema.
+                    </p>
+                  )}
+                  <div className="sv-form-rodape">
+                    <button type="button" className="sv-btn sv-btn--discreto" onClick={cancelarDeficiencias} disabled={salvandoDef}>Cancelar</button>
+                    {tiposDeficiencia.length > 0 && (
+                      <button type="button" className="sv-btn sv-btn--primario" onClick={salvarDeficiencias} disabled={salvandoDef}>
+                        {salvandoDef ? 'Salvando...' : `Salvar (${marcadas.length})`}
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : deficiencias.length > 0 ? (
                 <div className="sv-etiquetas">
                   {deficiencias.map(d => <span key={d} className="sv-tag sv-tag--lisa sv-tag--anil sv-tag--g">{d}</span>)}
                 </div>

@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { LuCalendar, LuIdCard, LuPhone, LuUpload, LuUser, LuUserRound } from 'react-icons/lu';
+import { useState, useEffect } from "react";
+import { LuAccessibility, LuCalendar, LuIdCard, LuPhone, LuUpload, LuUser, LuUserRound } from 'react-icons/lu';
 import SidebarGlass from '../../../components/SidebarGlass/SidebarGlass';
 import '../../../styles/sosvale-glass.css';
 import { fetchAdmin, hojeISO } from '../../../services/api';
 import { LIMITES, EXEMPLOS, aoDigitar, somenteNome, mascaraCpf, mascaraTelefone, erroDosCampos } from '../../../utils/campos';
 import { Obrigatorio, Opcional, AvisoObrigatorios } from '../../../components/MarcasCampo';
+import SeletorDeficiencias from '../../../components/SeletorDeficiencias';
 
 
 const CadastroVitima = () => {
@@ -14,7 +15,23 @@ const CadastroVitima = () => {
   const [erroEnvio, setErroEnvio] = useState(false)
   // Estado para guardar a imagem em Base64
   const [fotoVitima, setfotoVitima] = useState(null)
-  
+
+  // Deficiências: tipos cadastrados (null = carregando) e os IDs marcados
+  const [tiposDeficiencia, setTiposDeficiencia] = useState(null)
+  const [erroTipos, setErroTipos] = useState(false)
+  const [deficienciasMarcadas, setDeficienciasMarcadas] = useState([])
+
+  useEffect(() => {
+    fetchAdmin('/vitimas/deficiencias')
+      .then(resposta => { if (!resposta.ok) throw new Error(`Erro ${resposta.status}`); return resposta.json() })
+      .then(dados => setTiposDeficiencia(dados.deficiencias ?? []))
+      .catch(erro => { console.error('Erro ao buscar tipos de deficiência:', erro); setErroTipos(true) })
+  }, [])
+
+  const alternarDeficiencia = (idTipo) => {
+    setDeficienciasMarcadas(lista => lista.includes(idTipo) ? lista.filter(d => d !== idTipo) : [...lista, idTipo])
+  }
+
 
   //----- Handle Image -----
   // Função que roda quando o usuário seleciona uma imagem
@@ -61,7 +78,8 @@ const CadastroVitima = () => {
       telefone: e.target.telefone.value.trim() || null,
       dataNascimento: e.target.dataNascimento.value,
       genero: e.target.genero.value,
-      fotoVitima: fotoVitima // Base64 da imagem
+      fotoVitima: fotoVitima, // Base64 da imagem
+      deficienciaIds: deficienciasMarcadas,
     }
 
     // Envia os dados para a API
@@ -158,6 +176,21 @@ const CadastroVitima = () => {
               <option value="Feminino">Feminino</option>
               <option value="Outro">Outro</option>
             </select>
+          </div>
+
+          {/* Deficiências: marque todas que se aplicam (nenhuma = não marca nada) */}
+          <div className="sv-campo">
+            <span id="rotulo-deficiencias" className="sv-rotulo"><LuAccessibility /> Deficiências<Opcional /></span>
+            {erroTipos ? (
+              <p className="sv-apoio">Não foi possível carregar as opções. Dá para cadastrar sem e incluir depois nos detalhes da vítima.</p>
+            ) : tiposDeficiencia === null ? (
+              <p className="sv-apoio">Carregando opções...</p>
+            ) : tiposDeficiencia.length === 0 ? (
+              <p className="sv-apoio">Nenhum tipo de deficiência cadastrado no sistema.</p>
+            ) : (
+              <SeletorDeficiencias tipos={tiposDeficiencia} marcadas={deficienciasMarcadas}
+                aoAlternar={alternarDeficiencia} rotuloId="rotulo-deficiencias" />
+            )}
           </div>
 
         </div>

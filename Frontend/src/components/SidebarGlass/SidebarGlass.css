@@ -175,6 +175,53 @@
 .sbg-sair:hover { color: #fff; background: rgba(217, 52, 62, .28); }
 .sbg-sair:hover .sbg-link-icone { background: var(--sv-sirene); }
 
+/* Seta do "Sair": gira quando as opções estão abertas */
+.sbg-sair-seta { flex: none; margin-left: auto; font-size: 16px; opacity: .75; transition: transform .25s; }
+.sbg-sair--aberto { color: #fff; background: rgba(255, 255, 255, .1); }
+.sbg-sair--aberto .sbg-sair-seta { transform: rotate(180deg); }
+
+/* Opções do "Sair": seleção de módulos ou login */
+.sbg-opcoes-sair {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--sv-raio-s);
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .12);
+  animation: sbg-opcoes-entra .2s ease-out;
+}
+.sbg-opcao-sair {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, .88);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .2s, color .2s;
+}
+.sbg-opcao-sair svg { flex: none; font-size: 16px; }
+.sbg-opcao-sair:hover { color: #fff; background: rgba(255, 255, 255, .14); }
+/* Sair da conta: vermelho do logo (ação de saída) */
+.sbg-opcao-sair--conta:hover { background: rgba(217, 52, 62, .32); }
+
+@keyframes sbg-opcoes-entra {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sbg-opcoes-sair { animation: none; }
+  .sbg-sair-seta { transition: none; }
+}
+
 
 /* ─── Barra e véu do celular (escondidos no desktop) ─── */
 .sbg-barra,

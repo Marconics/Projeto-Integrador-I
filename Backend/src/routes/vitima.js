@@ -13,6 +13,23 @@ function erroDuplicado(erro) {
 }
 
 
+// Confere a lista de deficiências que veio da tela (IDs dos tipos marcados).
+// undefined = não veio (no editar, mantém as atuais); [] = nenhuma.
+// Retorna { ids } (sem repetidos) ou { erro }.
+async function validarDeficiencias(deficienciaIds) {
+  if (deficienciaIds === undefined) return { ids: undefined }
+  if (!Array.isArray(deficienciaIds) || !deficienciaIds.every(d => Number.isInteger(Number(d)) && Number(d) > 0)) {
+    return { erro: 'Deficiências inválidas.' }
+  }
+  const ids = [...new Set(deficienciaIds.map(Number))]
+  const encontradas = await prisma.deficiencia.count({ where: { id_deficiencia: { in: ids } } })
+  if (encontradas !== ids.length) {
+    return { erro: 'Uma das deficiências escolhidas não existe mais. Recarregue a página.' }
+  }
+  return { ids }
+}
+
+
 // Exporta a função que define as rotas de vítima
 export default async function vitimaRoutes(app) {
 
@@ -44,6 +61,12 @@ export default async function vitimaRoutes(app) {
       ?? validarFormatos({ cpf, telefone })
     if (erroTamanho) {
       return reply.status(400).send({ mensagem: erroTamanho })
+    }
+
+    // Deficiências marcadas no formulário (opcional)
+    const deficiencias = await validarDeficiencias(request.body.deficienciaIds)
+    if (deficiencias.erro) {
+      return reply.status(400).send({ mensagem: deficiencias.erro })
     }
 
     // Verifica se já existe uma vítima com o mesmo CPF
@@ -85,6 +108,10 @@ export default async function vitimaRoutes(app) {
           abrigoId:   abrigoId ? Number(abrigoId) : null,
           // Se já cadastrou com abrigo, registra a entrada agora
           dataEntrada: abrigoId ? new Date() : null,
+          // Ligações com as deficiências criadas junto com a vítima
+          deficiencias: deficiencias.ids?.length
+            ? { create: deficiencias.ids.map(id_deficiencia => ({ id_deficiencia })) }
+            : undefined,
         }
       })
 
@@ -196,6 +223,17 @@ export default async function vitimaRoutes(app) {
     })
   })
 
+  //----- Tipos de deficiência -----
+  //Rota GET com os tipos cadastrados (pelo seed), para a tela de detalhes
+  //montar as opções ao editar as deficiências de uma vítima
+  //URL http://localhost:3000/api/vitimas/deficiencias
+  app.get('/deficiencias', async (request, reply) => {
+    const deficiencias = await prisma.deficiencia.findMany({ orderBy: { nome: 'asc' } })
+    return reply.status(200).send({
+      deficiencias: deficiencias.map(d => ({ id: d.id_deficiencia, nome: d.nome }))
+    })
+  })
+
   //----- Listar um só ----- (Importante para o Detalhes-vitima)
   //Método GET para buscar uma vitima específico pelo ID
   //Retorna TODOS os campos — usado pela tela de Detalhes
@@ -209,8 +247,8 @@ export default async function vitimaRoutes(app) {
       // Inclui os dados do abrigo vinculado para exibir na tela de detalhes
       include: {
         abrigo: { select: { nome: true, endereco: true, telefone: true, ...selectLocalizacao } },
-        // Nomes das deficiências (a tela de detalhes mostra como etiquetas, igual à listagem)
-        deficiencias: { select: { deficiencia: { select: { nome: true } } } },
+        // Nomes das deficiências em ordem alfabética (a tela de detalhes mostra como etiquetas)
+        deficiencias: { select: { deficiencia: { select: { nome: true } } }, orderBy: { deficiencia: { nome: 'asc' } } },
       }
     })
 
@@ -277,6 +315,13 @@ export default async function vitimaRoutes(app) {
       if (erroTamanho) {
         return reply.status(400).send({ mensagem: erroTamanho })
       }
+
+      // Deficiências (opcional): sem o campo, mantém as atuais
+      const deficiencias = await validarDeficiencias(request.body.deficienciaIds)
+      if (deficiencias.erro) {
+        return reply.status(400).send({ mensagem: deficiencias.erro })
+      }
+      const novasDeficiencias = deficiencias.ids
 
       // Define a URL da foto que vai ser salva no banco
       // Por padrão mantém a foto atual, mas pode mudar dependendo do que veio no body
@@ -393,6 +438,16 @@ export default async function vitimaRoutes(app) {
         }
         // ────────────────────────────────────────────────────────────────────
 
+        // Troca as deficiências pela lista nova (na mesma transação)
+        if (novasDeficiencias !== undefined) {
+          await tx.vitimaDeficiencia.deleteMany({ where: { id_vitima: Number(id) } })
+          if (novasDeficiencias.length) {
+            await tx.vitimaDeficiencia.createMany({
+              data: novasDeficiencias.map(id_deficiencia => ({ id_vitima: Number(id), id_deficiencia }))
+            })
+          }
+        }
+
         return tx.vitima.update({
           where: { id_vitima: Number(id) },
           data: {
@@ -404,7 +459,8 @@ export default async function vitimaRoutes(app) {
             fotoVitima:  fotoUrl,
             abrigoId:    abrigoIdNovo,
             dataEntrada: dataEntradaFinal, // ← agora é salva/limpa corretamente
-          }
+          },
+          include: { deficiencias: { select: { deficiencia: { select: { nome: true } } }, orderBy: { deficiencia: { nome: 'asc' } } } }
         })
       })
 
@@ -419,6 +475,7 @@ export default async function vitimaRoutes(app) {
         fotoVitima:     vitimaAtualizado.fotoVitima,
         abrigoId:       vitimaAtualizado.abrigoId,
         dataEntrada:    vitimaAtualizado.dataEntrada,
+        deficiencias:   vitimaAtualizado.deficiencias.map(d => d.deficiencia.nome),
       })
 
     } catch (erro) {
