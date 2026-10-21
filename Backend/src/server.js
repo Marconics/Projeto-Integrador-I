@@ -107,7 +107,7 @@ app.register(responsavelRoutes, { prefix: '/api/responsaveis' })
 // Inicia o servidor
 const start = async () => {
   try {
-    await app.listen({ port: Number(process.env.PORT) || 3000 })
+    await app.listen({ port: Number(process.env.PORT) || 3000, host: '0.0.0.0' })
     console.log(`Servidor rodando em http://localhost:${Number(process.env.PORT) || 3000}`)
   } catch (err) {
     app.log.error(err)
