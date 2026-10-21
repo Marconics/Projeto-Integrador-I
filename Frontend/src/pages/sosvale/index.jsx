@@ -38,8 +38,8 @@ return (
                     <h2>Sou Munícipe</h2>
                     <p>Sou um cidadão e quero me informar.</p>
                 </div>
-                {/* O módulo do munícipe ainda não existe (hoje o cidadão usa o bot do WhatsApp) */}
-                <button className="sv-btn sv-btn--primario" disabled title="Módulo do munícipe em desenvolvimento">Em breve</button>
+                {/* Site do munícipe: página pública e informativa sobre o projeto e o bot */}
+                <button className="sv-btn sv-btn--primario" onClick={() => { navigate('/municipe')} }>Entrar</button>
             </div>
         </div>
     </div>

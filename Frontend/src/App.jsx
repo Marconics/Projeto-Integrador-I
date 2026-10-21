@@ -30,6 +30,7 @@ import DetalhesAlerta from './pages/alertas/Detalhes-Alerta';
 import ListarInscritos from './pages/inscritos/Listar-Inscritos';
 import DetalhesInscrito from './pages/inscritos/Detalhes-Inscrito';
 import Administradores from './pages/administradores';
+import Municipe from './pages/municipe';
 
 // As telas antigas de teste "/login" e "/cadastro" ficam em pages/descontinuada
 // (não são mais usadas; os endereços levam para a tela inicial)
@@ -46,6 +47,8 @@ function App() {
           <Route path="/login-adm" element={<LoginAdm />} />
           <Route path="/cadastro-voluntario" element={<CadastroVoluntario/>}/>
           <Route path="/login-voluntario" element={<LoginVoluntario/>}/>
+          {/* Site do munícipe: informativo, sem login */}
+          <Route path="/municipe" element={<Municipe/>}/>
 
           {/* Telas do ADMINISTRADOR — sem login de admin, vão para /login-adm */}
           <Route element={<RotaProtegida tipo="admin" />}>
